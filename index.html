@@ -3,67 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IT Asset Manager</title>
+<title>IT Asset Manager Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;min-height:100vh}
-:root{--blue:#185FA5;--blue-dk:#0C447C;--blue-lt:#E6F1FB;--green:#3B6D11;--green-lt:#EAF3DE;--amber:#854F0B;--amber-lt:#FAEEDA;--red:#A32D2D;--red-lt:#FCEBEB;--gray:#5F5E5A;--gray-lt:#F1EFE8;--border:#e5e5e2;--bg:#fff;--bg2:#f9f9f7;--bg3:#f5f5f3;--text:#1a1a18;--text2:#666662;--text3:#999996}
+:root{
+  --blue:#185FA5;--blue-dk:#0C447C;--blue-lt:#E6F1FB;
+  --green:#3B6D11;--green-lt:#EAF3DE;
+  --amber:#854F0B;--amber-lt:#FAEEDA;
+  --red:#A32D2D;--red-lt:#FCEBEB;
+  --purple:#534AB7;--purple-lt:#EEEDFE;
+  --teal:#0F6E56;--teal-lt:#E1F5EE;
+  --gray:#5F5E5A;--gray-lt:#F1EFE8;
+  --border:#e5e5e2;--bg:#fff;--bg2:#f9f9f7;--bg3:#f5f5f3;
+  --text:#1a1a18;--text2:#666662;--text3:#999996;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
 
-/* Layout */
-.app{display:flex;flex-direction:column;min-height:100vh}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50}
-.brand{display:flex;align-items:center;gap:10px}
-.logo-box{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.logo-box svg{width:20px;height:20px;fill:#fff}
-.brand-text{font-size:15px;font-weight:600;color:var(--text)}
-.brand-sub{font-size:11px;color:var(--text2)}
+/* ── LOGIN ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0C447C 0%,#185FA5 60%,#1D9E75 100%)}
+.login-card{background:#fff;border-radius:16px;padding:2.5rem;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{width:48px;height:48px;background:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem}
+.login-logo svg{width:28px;height:28px;fill:#fff}
+.login-card h2{text-align:center;font-size:20px;font-weight:700;margin-bottom:.25rem}
+.login-card p{text-align:center;font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.login-card .fg{margin-bottom:1rem}
+.login-card label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.login-card input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+.login-card input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.12)}
+.login-card .btn-full{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.login-card .btn-full:hover{background:var(--blue-dk)}
+.login-err{color:var(--red);font-size:12px;text-align:center;margin-top:.5rem;min-height:18px}
+.role-pills{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+.role-pill{flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;background:var(--bg2)}
+.role-pill.active{border-color:var(--blue);background:var(--blue-lt);color:var(--blue)}
+
+/* ── LAYOUT ── */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#111;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:40}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:1.25rem 1rem;border-bottom:1px solid #222}
+.sb-logo{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo svg{width:18px;height:18px;fill:#fff}
+.sb-title{font-size:13px;font-weight:700;color:#fff;line-height:1.2}
+.sb-sub{font-size:10px;color:#888}
+.sb-user{padding:.75rem 1rem;border-bottom:1px solid #222}
+.sb-user-name{font-size:12px;font-weight:600;color:#fff}
+.sb-user-role{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em}
+.sb-branch{font-size:10px;color:#5FA8D3;margin-top:2px}
+.sb-nav{flex:1;padding:.5rem 0;overflow-y:auto}
+.sb-section{font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.1em;padding:.75rem 1rem .25rem}
+.sb-item{display:flex;align-items:center;gap:9px;padding:.6rem 1rem;font-size:13px;color:#aaa;cursor:pointer;transition:all .12s;border-left:2px solid transparent}
+.sb-item:hover{background:#1a1a1a;color:#fff}
+.sb-item.active{background:#1a1a1a;color:#fff;border-left-color:var(--blue)}
+.sb-item svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px}
+.sb-logout{padding:.75rem 1rem;border-top:1px solid #222}
+.sb-logout-btn{display:flex;align-items:center;gap:8px;font-size:12px;color:#888;cursor:pointer;transition:color .12s;background:none;border:none;font-family:inherit;width:100%}
+.sb-logout-btn:hover{color:#fff}
+.sb-logout-btn svg{width:14px;height:14px;fill:currentColor}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:30}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.page-title{font-size:16px;font-weight:700;color:var(--text)}
 .topbar-right{display:flex;gap:8px;align-items:center}
-.pill-alert{background:var(--red-lt);color:var(--red);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;cursor:pointer;border:none}
-.btn{border:1px solid var(--border);background:var(--bg);color:var(--text);padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;transition:background .12s;font-family:inherit}
+.page{display:none;padding:1.5rem;flex:1}
+.page.active{display:block}
+
+/* ── BUTTONS ── */
+.btn{border:1px solid var(--border);background:var(--bg);color:var(--text);padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;transition:all .12s;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
 .btn:hover{background:var(--bg2)}
+.btn svg{width:14px;height:14px;fill:currentColor}
 .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
-.btn-primary:hover{background:var(--blue-dk);border-color:var(--blue-dk)}
-.btn-sm{padding:4px 10px;font-size:12px}
+.btn-primary:hover{background:var(--blue-dk)}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-success:hover{background:#27500A}
+.btn-warning{background:var(--amber);color:#fff;border-color:var(--amber)}
 .btn-danger{color:var(--red);border-color:var(--red)}
 .btn-danger:hover{background:var(--red-lt)}
-.btn-green{color:var(--green);border-color:var(--green)}
-.btn-green:hover{background:var(--green-lt)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-ghost{border:none;background:none;color:var(--text2)}
+.btn-ghost:hover{background:var(--bg2);color:var(--text)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* Tabs */
-.tabs{display:flex;padding:0 1.5rem;background:var(--bg);border-bottom:1px solid var(--border)}
-.tab{padding:10px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s;user-select:none}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
-.tab:hover:not(.active){color:var(--text)}
-.tab-badge{background:var(--red-lt);color:var(--red);font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:5px;vertical-align:middle}
-
-/* Content */
-.content{padding:1.5rem;flex:1}
-
-/* Stats */
-.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
-.stat{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem}
-.stat-lbl{font-size:11px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
-.stat-val{font-size:26px;font-weight:600;color:var(--text)}
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem}
+.stat-lbl{font-size:11px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.stat-val{font-size:28px;font-weight:700;color:var(--text)}
 .stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.stat-trend{font-size:11px;margin-top:4px;font-weight:600}
+.trend-up{color:var(--green)}.trend-dn{color:var(--red)}
 
-/* Toolbar */
-.toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
-.search-w{flex:1;min-width:200px;position:relative}
-.search-w input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit}
-.search-w input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
-.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
-select{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text);cursor:pointer;font-family:inherit}
-select:focus{outline:none;border-color:var(--blue)}
-
-/* Table */
-.tbl-wrap{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+/* ── TABLE ── */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg2)}
+.card-head h3{font-size:14px;font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
-th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--bg2)}
-td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+th{text-align:left;padding:9px 14px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--bg2)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafaf8}
 .mono{font-family:'Courier New',monospace;font-size:11px;color:var(--text2)}
+.empty-msg{padding:3rem;text-align:center;color:var(--text2);font-size:13px}
+
+/* ── BADGES ── */
 .badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .b-available{background:var(--green-lt);color:var(--green)}
 .b-assigned{background:var(--blue-lt);color:var(--blue)}
@@ -72,54 +117,97 @@ tr:hover td{background:#fafaf8}
 .b-tag{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
 .b-warn{background:var(--red-lt);color:var(--red)}
 .b-expiring{background:var(--amber-lt);color:var(--amber)}
+.b-admin{background:var(--red-lt);color:var(--red)}
+.b-manager{background:var(--purple-lt);color:var(--purple)}
+.b-staff{background:var(--blue-lt);color:var(--blue)}
+
+/* ── AVATAR ── */
 .av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
-.av0{background:#B5D4F4;color:#0C447C}.av1{background:#9FE1CB;color:#085041}.av2{background:#CECBF6;color:#3C3489}.av3{background:#F5C4B3;color:#712B13}.av4{background:#C0DD97;color:#27500A}
-.act-row{display:flex;gap:5px}
-.empty-msg{padding:3rem;text-align:center;color:var(--text2);font-size:13px}
+.av0{background:#B5D4F4;color:#0C447C}.av1{background:#9FE1CB;color:#085041}
+.av2{background:#CECBF6;color:#3C3489}.av3{background:#F5C4B3;color:#712B13}.av4{background:#C0DD97;color:#27500A}
 
-/* Alert banner */
-.alert-banner{background:var(--red-lt);border:1px solid #F7C1C1;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:var(--red);display:flex;align-items:center;justify-content:space-between}
-.alert-banner a{color:var(--red);font-weight:600;cursor:pointer;text-decoration:underline}
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.search-w{flex:1;min-width:200px;position:relative}
+.search-w input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit}
+.search-w input:focus{outline:none;border-color:var(--blue)}
+.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
+select{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text);cursor:pointer;font-family:inherit}
 
-/* Modal */
-.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+/* ── MODAL ── */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
 .mbg.open{display:flex}
-.modal{background:var(--bg);border-radius:14px;border:1px solid var(--border);width:540px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.15)}
-.modal.wide{width:720px}
+.modal{background:var(--bg);border-radius:14px;border:1px solid var(--border);width:560px;max-width:98vw;max-height:94vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.18)}
+.modal.wide{width:740px}.modal.xl{width:960px}
 .mhead{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.mhead h3{font-size:15px;font-weight:600}
+.mhead h3{font-size:15px;font-weight:700}
 .mclose{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:2px 6px;border-radius:6px;line-height:1}
 .mclose:hover{background:var(--bg2)}
-.mbody{padding:1.25rem;overflow-y:auto;display:flex;flex-direction:column;gap:14px;flex:1}
+.mbody{padding:1.25rem;overflow-y:auto;flex:1}
 .mfoot{padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
-.fg{display:flex;flex-direction:column;gap:6px}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .fg label{font-size:12px;font-weight:600;color:var(--text2)}
 .fg input,.fg select,.fg textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit}
-.fg input:focus,.fg select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--blue)}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 
-/* Detail */
-.dpanel{display:flex;flex-direction:column}
-.drow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
-.drow:last-child{border-bottom:none}
-.dk{font-size:13px;color:var(--text2)}
-.dv{font-size:13px;font-weight:500;color:var(--text);text-align:right;max-width:62%}
+/* ── SIGNATURE PAD ── */
+.sig-pad-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fafaf8}
+.sig-pad-label{font-size:11px;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 
-/* Activity */
-.al-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
-.al-item:last-child{border-bottom:none}
-.al-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
-.al-text{font-size:13px;color:var(--text)}
-.al-time{font-size:12px;color:var(--text2);margin-top:2px}
+/* ── CHARTS ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem}
+.chart-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.chart-card h3{font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.chart-wrap{position:relative;height:220px}
 
-/* Report bars */
-.rbar-wrap{margin-bottom:12px}
-.rbar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
-.rbar-track{background:var(--bg2);border-radius:4px;height:7px;border:1px solid var(--border)}
-.rbar-fill{height:5px;border-radius:3px;margin:1px;transition:width .4s ease}
+/* ── DEPRECIATION ── */
+.depr-bar{height:6px;border-radius:3px;background:var(--bg2);overflow:hidden;margin-top:4px}
+.depr-fill{height:100%;border-radius:3px;transition:width .4s}
 
-/* QR */
+/* ── HANDOVER FORM (print) ── */
+@media print{
+  body *{visibility:hidden}
+  #print-area,#print-area *{visibility:visible}
+  #print-area{position:fixed;inset:0;background:#fff;padding:2rem;font-family:'Segoe UI',sans-serif}
+}
+.handover-doc{font-family:'Segoe UI',sans-serif;font-size:13px;color:#111;max-width:700px;margin:0 auto}
+.handover-doc h1{font-size:18px;font-weight:700;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:1rem}
+.handover-table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+.handover-table td{padding:7px 10px;border:1px solid #ccc;font-size:12px}
+.handover-table td:first-child{font-weight:600;background:#f5f5f5;width:38%}
+.sig-box{border:1px solid #999;border-radius:4px;height:80px;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px}
+.sig-img{max-width:100%;max-height:78px;display:block;margin:0 auto}
+
+/* ── ALERT BANNER ── */
+.alert-banner{background:var(--red-lt);border:1px solid #F7C1C1;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:var(--red);display:flex;align-items:center;justify-content:space-between}
+.alert-banner a{color:var(--red);font-weight:700;cursor:pointer;text-decoration:underline}
+
+/* ── BULK ACTIONS ── */
+.bulk-bar{background:var(--blue);color:#fff;padding:.6rem 1.25rem;display:flex;align-items:center;gap:12px;font-size:13px;border-radius:8px;margin-bottom:1rem}
+.bulk-bar button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit}
+.bulk-bar button:hover{background:rgba(255,255,255,.25)}
+
+/* ── AUDIT LOG ── */
+.audit-diff{font-size:12px;font-family:monospace}
+.diff-old{color:var(--red);text-decoration:line-through}
+.diff-new{color:var(--green)}
+
+/* ── DISPOSAL ── */
+.checklist-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.checklist-item:last-child{border-bottom:none}
+.checklist-item input[type=checkbox]{margin-top:2px;width:16px;height:16px;accent-color:var(--blue);flex-shrink:0}
+
+/* ── ATTACHMENT ZONE ── */
+.attach-zone{border:2px dashed var(--border);border-radius:8px;padding:1.5rem;text-align:center;color:var(--text2);font-size:13px;cursor:pointer;transition:all .15s}
+.attach-zone:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
+.attach-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.attach-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg2);border-radius:6px;font-size:12px;border:1px solid var(--border)}
+.attach-item-left{display:flex;align-items:center;gap:8px}
+
+/* ── QR ── */
 .qr-container{display:flex;gap:1.5rem;align-items:flex-start;flex-wrap:wrap}
 .qr-box{display:flex;flex-direction:column;align-items:center;gap:8px}
 .qr-box canvas{border:1px solid var(--border);border-radius:8px;padding:10px;background:#fff}
@@ -128,192 +216,396 @@ tr:hover td{background:#fafaf8}
 .qr-field .lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;font-weight:600}
 .qr-field .val{font-size:14px;font-weight:500;color:var(--text)}
 
-/* Import */
-.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:2.5rem;text-align:center;color:var(--text2);font-size:13px;cursor:pointer;transition:all .15s}
-.drop-zone:hover,.drop-zone.drag{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
-.import-preview{background:var(--bg2);border-radius:8px;padding:.75rem;font-size:12px;font-family:'Courier New',monospace;max-height:160px;overflow-y:auto;color:var(--text);border:1px solid var(--border)}
+/* ── CALENDAR ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day-hdr{font-size:10px;font-weight:700;color:var(--text2);text-align:center;padding:4px}
+.cal-day{border:1px solid var(--border);border-radius:6px;min-height:60px;padding:4px;background:var(--bg)}
+.cal-day.other-month{background:var(--bg2)}
+.cal-day-num{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:2px}
+.cal-event{font-size:9px;padding:1px 4px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Warranty */
-.w-ok{color:var(--green);font-size:12px}
-.w-exp{color:var(--red);font-size:12px;font-weight:600}
-.w-soon{color:var(--amber);font-size:12px;font-weight:600}
-.w-none{color:var(--text3);font-size:12px}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a18;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#1a4731}
+.toast.error{background:#4a1515}
 
-/* Spinner */
+/* ── MISC ── */
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-bar{padding:2rem;text-align:center;color:var(--text2);font-size:13px}
-
-/* Toast */
-.toast{position:fixed;bottom:24px;right:24px;background:#1a1a18;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
-.toast.show{opacity:1;transform:translateY(0)}
+.pill-warn{background:var(--red-lt);color:var(--red);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.tag{background:var(--bg2);border:1px solid var(--border);border-radius:4px;font-size:11px;padding:2px 6px;color:var(--text2)}
+.section-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.dk{font-size:13px;color:var(--text2)}.dv{font-size:13px;font-weight:500;color:var(--text);text-align:right}
+.steps{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.step{padding:.75rem 1.25rem;font-size:13px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer}
+.step.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.step-body{display:none}.step-body.active{display:block}
+.w-ok{color:var(--green);font-size:12px}.w-exp{color:var(--red);font-size:12px;font-weight:600}.w-soon{color:var(--amber);font-size:12px;font-weight:600}.w-none{color:var(--text3);font-size:12px}
+.rbar-wrap{margin-bottom:12px}
+.rbar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.rbar-track{background:var(--bg2);border-radius:4px;height:7px;border:1px solid var(--border)}
+.rbar-fill{height:5px;border-radius:3px;margin:1px;transition:width .4s ease}
+.branch-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+.branch-pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s}
+.branch-pill.active{border-color:var(--blue);background:var(--blue-lt);color:var(--blue)}
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;color:var(--text2);font-size:13px;cursor:pointer;transition:all .15s}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
+.import-preview-box{background:var(--bg2);border-radius:8px;padding:.75rem;font-size:12px;font-family:'Courier New',monospace;max-height:140px;overflow-y:auto;color:var(--text);border:1px solid var(--border)}
+.import-err{font-size:13px;color:var(--red);padding:8px 12px;background:var(--red-lt);border-radius:8px;margin-top:8px}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo-box">
-        <svg viewBox="0 0 24 24"><path d="M20 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 3h2v2h-2V6zm-4 0h2v2H7V6zm9 12H8v-2h8v2zm3-4H5v-2h14v2zm0-4h-2V8h2v2z"/></svg>
+
+<!-- ══ LOGIN SCREEN ══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M20 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 3h2v2h-2V6zm-4 0h2v2H7V6zm9 12H8v-2h8v2zm3-4H5v-2h14v2zm0-4h-2V8h2v2z"/></svg></div>
+      <h2>IT Asset Manager</h2>
+      <p>Sign in to your account</p>
+      <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="admin@company.com" value="admin@company.com"></div>
+      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" value="password123" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:1rem;line-height:1.6"><b>Demo accounts:</b><br>admin@company.com / password123 (Admin)<br>manager@company.com / password123 (Manager)<br>staff@company.com / password123 (Staff)</div>
+      <button class="btn-full" onclick="doLogin()">Sign in</button>
+      <div class="login-err" id="login-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══════════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-brand">
+        <div class="sb-logo"><svg viewBox="0 0 24 24"><path d="M20 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 3h2v2h-2V6zm-4 0h2v2H7V6zm9 12H8v-2h8v2zm3-4H5v-2h14v2zm0-4h-2V8h2v2z"/></svg></div>
+        <div><div class="sb-title">IT Asset Pro</div><div class="sb-sub">Asset Manager</div></div>
       </div>
-      <div>
-        <div class="brand-text">IT Asset Manager</div>
-        <div class="brand-sub" id="db-status">Connecting to database…</div>
+      <div class="sb-user">
+        <div class="sb-user-name" id="sb-name">—</div>
+        <div class="sb-user-role" id="sb-role">—</div>
+        <div class="sb-branch" id="sb-branch">—</div>
+      </div>
+      <nav class="sb-nav">
+        <div class="sb-section">Overview</div>
+        <div class="sb-item active" data-page="dashboard" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg> Dashboard
+        </div>
+        <div class="sb-section">Assets</div>
+        <div class="sb-item" data-page="assets" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.51 15.5 0 12.36 0c-1.73 0-3.24.86-4.22 2.14L7 3.5l-1.14-1.36C4.87.86 3.37 0 1.64 0 .74 0 0 .74 0 1.64c0 .9.74 1.64 1.64 1.64.56 0 1.06-.31 1.36-.74l1.16-1.4C4.53 1.51 5.04 2 5.63 2c.54 0 1-.46 1-1V.5h1.5c.73 0 1.36.56 1.44 1.27l.86 6.48c.08.74.7 1.25 1.44 1.25h6.63c.74 0 1.44-.56 1.55-1.29L20 6z"/><path d="M20 6H4l1 10h14z"/></svg> All Assets
+        </div>
+        <div class="sb-item" data-page="assign" onclick="nav(this)" id="nav-assign">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg> Assign / Return
+          <span class="sb-badge" id="nav-assign-badge" style="display:none"></span>
+        </div>
+        <div class="sb-item" data-page="warranty" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.53-2.37 6.86-5 7.93-2.63-1.07-5-4.4-5-7.93V7.18L12 5z"/></svg> Warranty
+          <span class="sb-badge" id="nav-warranty-badge" style="display:none"></span>
+        </div>
+        <div class="sb-item" data-page="disposal" onclick="nav(this)" id="nav-disposal">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> Disposal
+        </div>
+        <div class="sb-section">Reports</div>
+        <div class="sb-item" data-page="dashboard-adv" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg> Analytics
+        </div>
+        <div class="sb-item" data-page="depreciation" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg> Depreciation
+        </div>
+        <div class="sb-item" data-page="audit" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg> Audit Log
+        </div>
+        <div class="sb-section admin-only" style="display:none">Admin</div>
+        <div class="sb-item admin-only" data-page="users" onclick="nav(this)" style="display:none">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg> User Management
+        </div>
+        <div class="sb-item admin-only" data-page="import" onclick="nav(this)" style="display:none">
+          <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg> Import / Export
+        </div>
+      </nav>
+      <div class="sb-logout">
+        <button class="sb-logout-btn" onclick="doLogout()">
+          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          Sign out
+        </button>
       </div>
     </div>
-    <div class="topbar-right">
-      <button class="pill-alert" id="top-warn-pill" style="display:none" onclick="switchTab('warranty',document.querySelector('[data-tab=warranty]'))"></button>
-      <button class="btn" onclick="openImportModal()">⬆ Import CSV</button>
-      <button class="btn btn-green" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn btn-primary" onclick="openAddModal()">+ Add asset</button>
-    </div>
-  </div>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="assets" onclick="switchTab('assets',this)">Assets</div>
-    <div class="tab" data-tab="warranty" onclick="switchTab('warranty',this)">Warranty <span class="tab-badge" id="warranty-badge" style="display:none"></span></div>
-    <div class="tab" data-tab="activity" onclick="switchTab('activity',this)">Activity log</div>
-    <div class="tab" data-tab="reports" onclick="switchTab('reports',this)">Reports</div>
-  </div>
+    <!-- MAIN CONTENT -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <span class="page-title" id="page-title">Dashboard</span>
+          <span class="pill-warn" id="top-warn" style="display:none"></span>
+        </div>
+        <div class="topbar-right" id="topbar-actions"></div>
+      </div>
 
-  <!-- ASSETS -->
-  <div class="content" id="tab-assets">
-    <div class="stats-row">
-      <div class="stat"><div class="stat-lbl">Total</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all assets</div></div>
-      <div class="stat"><div class="stat-lbl">Available</div><div class="stat-val" id="s-avail" style="color:var(--green)">—</div><div class="stat-sub">ready</div></div>
-      <div class="stat"><div class="stat-lbl">Assigned</div><div class="stat-val" id="s-asgn" style="color:var(--blue)">—</div><div class="stat-sub">in use</div></div>
-      <div class="stat"><div class="stat-lbl">Maintenance</div><div class="stat-val" id="s-maint" style="color:var(--amber)">—</div><div class="stat-sub">servicing</div></div>
-      <div class="stat"><div class="stat-lbl">Expiring soon</div><div class="stat-val" id="s-exp" style="color:var(--red)">—</div><div class="stat-sub">within 90 days</div></div>
-    </div>
-    <div id="warn-banner"></div>
-    <div class="toolbar">
-      <div class="search-w"><span class="si">⌕</span><input type="text" placeholder="Search name, serial, assignee, location…" id="q" oninput="renderAssets()"></div>
-      <select id="ft" onchange="renderAssets()"><option value="">All types</option><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select>
-      <select id="fs" onchange="renderAssets()"><option value="">All statuses</option><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select>
-      <select id="fd" onchange="renderAssets()"><option value="">All departments</option><option>Engineering</option><option>Design</option><option>Finance</option><option>HR</option><option>Marketing</option><option>Operations</option><option>Sales</option><option>IT</option></select>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th style="width:20%">Asset</th>
-          <th style="width:11%">Serial</th>
-          <th style="width:9%">Type</th>
-          <th style="width:10%">Status</th>
-          <th style="width:14%">Assignee</th>
-          <th style="width:12%">Dept / Location</th>
-          <th style="width:10%">Warranty</th>
-          <th style="width:14%">Actions</th>
-        </tr></thead>
-        <tbody id="asset-tbody"><tr><td colspan="8" class="loading-bar"><span class="spinner"></span>Loading assets from database…</td></tr></tbody>
-      </table>
-      <div id="empty-a" class="empty-msg" style="display:none">No assets match your filters.</div>
-    </div>
-  </div>
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div id="warn-banner"></div>
+        <div class="stats-grid" id="dash-stats"></div>
+        <div class="branch-filter-row" id="branch-filters"></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-head"><h3>Recent assets</h3><button class="btn btn-sm" onclick="nav(document.querySelector('[data-page=assets]'))">View all</button></div>
+            <table><thead><tr><th style="width:30%">Asset</th><th style="width:14%">Status</th><th style="width:20%">Assignee</th><th style="width:18%">Branch</th><th style="width:18%">Warranty</th></tr></thead>
+            <tbody id="dash-recent"></tbody></table>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Asset breakdown</h3></div>
+            <div style="padding:1rem"><div id="dash-breakdown"></div></div>
+          </div>
+        </div>
+      </div>
 
-  <!-- WARRANTY -->
-  <div class="content" id="tab-warranty" style="display:none">
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th style="width:24%">Asset</th>
-          <th style="width:13%">Serial</th>
-          <th style="width:14%">Dept / Location</th>
-          <th style="width:13%">Assignee</th>
-          <th style="width:13%">Warranty expires</th>
-          <th style="width:12%">Status</th>
-          <th style="width:11%">Actions</th>
-        </tr></thead>
-        <tbody id="warranty-tbody"></tbody>
-      </table>
-      <div id="empty-w" class="empty-msg" style="display:none">No warranty data found.</div>
-    </div>
-  </div>
+      <!-- ASSETS -->
+      <div class="page" id="page-assets">
+        <div id="bulk-bar" style="display:none"></div>
+        <div class="toolbar">
+          <div class="search-w"><span class="si">⌕</span><input type="text" id="q-assets" placeholder="Search name, serial, assignee…" oninput="renderAssets()"></div>
+          <select id="f-type" onchange="renderAssets()"><option value="">All types</option><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select>
+          <select id="f-status" onchange="renderAssets()"><option value="">All statuses</option><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select>
+          <select id="f-dept" onchange="renderAssets()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
+          <select id="f-life" onchange="renderAssets()"><option value="">All ages</option><option value="past">Past useful life (4+ yrs)</option><option value="ok">Within useful life</option></select>
+        </div>
+        <div class="card">
+          <table>
+            <thead><tr>
+              <th style="width:3%"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+              <th style="width:20%">Asset</th><th style="width:10%">Serial</th>
+              <th style="width:9%">Type</th><th style="width:10%">Status</th>
+              <th style="width:14%">Assignee</th><th style="width:11%">Branch</th>
+              <th style="width:10%">Warranty</th><th style="width:13%">Actions</th>
+            </tr></thead>
+            <tbody id="assets-tbody"><tr><td colspan="9" class="loading-bar"><span class="spinner"></span>Loading…</td></tr></tbody>
+          </table>
+          <div id="assets-empty" class="empty-msg" style="display:none">No assets match.</div>
+        </div>
+      </div>
 
-  <!-- ACTIVITY -->
-  <div class="content" id="tab-activity" style="display:none">
-    <div class="tbl-wrap" style="padding:0 1.25rem">
-      <div id="activity-list"><div class="loading-bar"><span class="spinner"></span>Loading activity…</div></div>
-    </div>
-  </div>
+      <!-- ASSIGN / RETURN -->
+      <div class="page" id="page-assign">
+        <div class="steps">
+          <div class="step active" data-step="pending" onclick="assignStep(this)">Pending requests</div>
+          <div class="step" data-step="handover" onclick="assignStep(this)">New handover</div>
+          <div class="step" data-step="history" onclick="assignStep(this)">Assignment history</div>
+        </div>
+        <div class="step-body active" id="step-pending">
+          <div class="card">
+            <div class="card-head"><h3>Pending assignment requests</h3></div>
+            <table><thead><tr><th style="width:20%">Asset</th><th style="width:18%">Requested by</th><th style="width:14%">Branch</th><th style="width:20%">Requested</th><th style="width:28%">Actions</th></tr></thead>
+            <tbody id="pending-tbody"><tr><td colspan="5" class="empty-msg">No pending requests.</td></tr></tbody></table>
+          </div>
+        </div>
+        <div class="step-body" id="step-handover">
+          <div class="card" style="max-width:700px">
+            <div class="card-head"><h3>New asset handover</h3></div>
+            <div style="padding:1.25rem">
+              <div class="frow">
+                <div class="fg"><label>Asset *</label><select id="ho-asset"><option value="">— Select asset —</option></select></div>
+                <div class="fg"><label>Employee name *</label><input id="ho-employee" placeholder="Full name"></div>
+              </div>
+              <div class="frow">
+                <div class="fg"><label>Branch</label><select id="ho-branch"><option value="">— Select —</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div>
+                <div class="fg"><label>Handover date</label><input type="date" id="ho-date"></div>
+              </div>
+              <div class="fg"><label>Condition at handover</label><select id="ho-condition"><option>Excellent</option><option>Good</option><option>Fair</option><option>Needs repair</option></select></div>
+              <div class="fg"><label>Notes</label><input id="ho-notes" placeholder="Any notes about this handover"></div>
+              <div class="fg">
+                <label>Employee signature *</label>
+                <div class="sig-pad-wrap">
+                  <div class="sig-pad-label"><span>Sign below to acknowledge receipt</span><button class="btn btn-sm btn-ghost" onclick="clearSig()">Clear</button></div>
+                  <canvas class="sig-pad" id="sig-canvas" height="140"></canvas>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:1rem">
+                <button class="btn btn-primary" onclick="saveHandover()">
+                  <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Complete handover
+                </button>
+                <button class="btn" onclick="previewHandoverPDF()">
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>Preview PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-body" id="step-history">
+          <div class="toolbar">
+            <div class="search-w"><span class="si">⌕</span><input type="text" id="q-history" placeholder="Search employee or asset…" oninput="renderHistory()"></div>
+          </div>
+          <div class="card">
+            <table><thead><tr><th style="width:22%">Asset</th><th style="width:20%">Employee</th><th style="width:14%">Branch</th><th style="width:12%">Action</th><th style="width:14%">Date</th><th style="width:10%">Condition</th><th style="width:8%">Sig</th></tr></thead>
+            <tbody id="history-tbody"><tr><td colspan="7" class="loading-bar"><span class="spinner"></span>Loading…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
 
-  <!-- REPORTS -->
-  <div class="content" id="tab-reports" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div class="tbl-wrap" style="padding:1.25rem"><div style="font-size:13px;font-weight:600;margin-bottom:14px">By type</div><div id="r-type"></div></div>
-      <div class="tbl-wrap" style="padding:1.25rem"><div style="font-size:13px;font-weight:600;margin-bottom:14px">By status</div><div id="r-status"></div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div class="tbl-wrap" style="padding:1.25rem"><div style="font-size:13px;font-weight:600;margin-bottom:14px">By department</div><div id="r-dept"></div></div>
-      <div class="tbl-wrap" style="padding:1.25rem"><div style="font-size:13px;font-weight:600;margin-bottom:14px">Assets per person</div><div id="r-person"></div></div>
-    </div>
-  </div>
+      <!-- WARRANTY -->
+      <div class="page" id="page-warranty">
+        <div class="card">
+          <table><thead><tr>
+            <th style="width:22%">Asset</th><th style="width:12%">Serial</th>
+            <th style="width:13%">Branch</th><th style="width:14%">Assignee</th>
+            <th style="width:13%">Expires</th><th style="width:12%">Status</th>
+            <th style="width:14%">Actions</th>
+          </tr></thead>
+          <tbody id="warranty-tbody"></tbody></table>
+          <div id="warranty-empty" class="empty-msg" style="display:none">No warranty data.</div>
+        </div>
+      </div>
+
+      <!-- DISPOSAL -->
+      <div class="page" id="page-disposal">
+        <div class="toolbar">
+          <div class="search-w"><span class="si">⌕</span><input type="text" id="q-disposal" placeholder="Search assets for disposal…" oninput="renderDisposal()"></div>
+          <select id="f-disposal-status" onchange="renderDisposal()"><option value="">All</option><option value="pending">Pending disposal</option><option value="done">Disposed</option></select>
+        </div>
+        <div class="card">
+          <table><thead><tr><th style="width:24%">Asset</th><th style="width:12%">Serial</th><th style="width:12%">Branch</th><th style="width:12%">Status</th><th style="width:15%">Disposal reason</th><th style="width:13%">Date</th><th style="width:12%">Actions</th></tr></thead>
+          <tbody id="disposal-tbody"></tbody></table>
+          <div id="disposal-empty" class="empty-msg" style="display:none">No disposal records.</div>
+        </div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div class="page" id="page-dashboard-adv">
+        <div class="branch-filter-row" id="analytics-branch-filters"></div>
+        <div class="charts-grid">
+          <div class="chart-card"><h3>Assets by type</h3><div class="chart-wrap"><canvas id="chart-type"></canvas></div></div>
+          <div class="chart-card"><h3>Cost by department (AED)</h3><div class="chart-wrap"><canvas id="chart-dept-cost"></canvas></div></div>
+          <div class="chart-card"><h3>Asset age distribution</h3><div class="chart-wrap"><canvas id="chart-age"></canvas></div></div>
+          <div class="chart-card"><h3>Status overview</h3><div class="chart-wrap"><canvas id="chart-status"></canvas></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card"><div class="card-head"><h3>Warranty expiry calendar</h3></div><div style="padding:1rem" id="warranty-cal"></div></div>
+          <div class="card"><div class="card-head"><h3>Top assignees by asset count</h3></div><div style="padding:1rem" id="top-assignees"></div></div>
+        </div>
+      </div>
+
+      <!-- DEPRECIATION -->
+      <div class="page" id="page-depreciation">
+        <div style="display:flex;gap:12px;margin-bottom:1rem;align-items:center">
+          <div class="fg" style="margin:0"><label style="font-size:12px;font-weight:600;color:var(--text2)">Useful life (years)</label><input type="number" id="useful-life" value="4" min="1" max="10" style="width:80px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px" oninput="renderDepreciation()"></div>
+          <div class="fg" style="margin:0"><label style="font-size:12px;font-weight:600;color:var(--text2)">Method</label><select id="depr-method" onchange="renderDepreciation()" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px"><option value="straight">Straight-line</option><option value="declining">Declining balance (20%)</option></select></div>
+          <button class="btn btn-success" onclick="exportDeprReport()" style="margin-top:1.5rem">⬇ Export report</button>
+        </div>
+        <div class="stats-grid" id="depr-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+        <div class="card">
+          <table><thead><tr><th style="width:22%">Asset</th><th style="width:12%">Branch</th><th style="width:11%">Purchase</th><th style="width:11%">Original (AED)</th><th style="width:11%">Current (AED)</th><th style="width:11%">Depreciated</th><th style="width:12%">Age</th><th style="width:10%">Life status</th></tr></thead>
+          <tbody id="depr-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- AUDIT LOG -->
+      <div class="page" id="page-audit">
+        <div class="toolbar">
+          <div class="search-w"><span class="si">⌕</span><input type="text" id="q-audit" placeholder="Search audit log…" oninput="renderAudit()"></div>
+          <select id="f-audit-action" onchange="renderAudit()"><option value="">All actions</option><option>Created</option><option>Updated</option><option>Deleted</option><option>Assigned</option><option>Returned</option><option>Disposed</option></select>
+          <button class="btn btn-success" onclick="exportAudit()">⬇ Export audit CSV</button>
+        </div>
+        <div class="card">
+          <table><thead><tr><th style="width:16%">When</th><th style="width:12%">Action</th><th style="width:18%">Asset</th><th style="width:14%">By</th><th style="width:40%">Changes</th></tr></thead>
+          <tbody id="audit-tbody"><tr><td colspan="5" class="loading-bar"><span class="spinner"></span>Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- USER MANAGEMENT (admin only) -->
+      <div class="page" id="page-users">
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openAddUserModal()">+ Add user</button>
+        </div>
+        <div class="card">
+          <table><thead><tr><th style="width:28%">Name</th><th style="width:24%">Email</th><th style="width:14%">Role</th><th style="width:16%">Branch</th><th style="width:18%">Actions</th></tr></thead>
+          <tbody id="users-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- IMPORT / EXPORT (admin only) -->
+      <div class="page" id="page-import">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-head"><h3>Import assets from CSV</h3></div>
+            <div style="padding:1.25rem;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:13px;color:var(--text2);line-height:1.7">Columns: <code style="background:var(--bg2);padding:2px 6px;border-radius:4px;font-size:11px">name, type, serial, brand, status, assignee, department, location, purchaseDate, warrantyExpiry, value, notes</code></div>
+              <div class="drop-zone" id="import-drop" onclick="document.getElementById('csv-file').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+                <div style="font-size:28px;margin-bottom:8px">📂</div>
+                <div style="font-weight:600">Click or drag CSV here</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px">Max 500 rows</div>
+              </div>
+              <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
+              <div id="import-preview-area" style="display:none">
+                <div style="font-size:13px;font-weight:700;margin-bottom:6px" id="import-count"></div>
+                <div class="import-preview-box" id="import-preview-text"></div>
+              </div>
+              <div id="import-err-msg" style="display:none"></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-sm" onclick="downloadTemplate()">Download template</button>
+                <button class="btn btn-primary" id="import-confirm-btn" style="display:none" onclick="confirmImport()">Import assets</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Export</h3></div>
+            <div style="padding:1.25rem;display:flex;flex-direction:column;gap:12px">
+              <button class="btn btn-success" onclick="exportCSV()">⬇ Export all assets (CSV)</button>
+              <button class="btn" onclick="exportAudit()">⬇ Export audit log (CSV)</button>
+              <button class="btn" onclick="exportDeprReport()">⬇ Export depreciation report (CSV)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /main -->
+  </div><!-- /shell -->
 </div><!-- /app -->
 
-<!-- ADD/EDIT MODAL -->
-<div class="mbg" id="modal-add">
-  <div class="modal">
-    <div class="mhead"><h3 id="modal-title">Add new asset</h3><button class="mclose" onclick="closeModal('modal-add')">×</button></div>
+<!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- Add/Edit Asset -->
+<div class="mbg" id="modal-asset">
+  <div class="modal wide">
+    <div class="mhead"><h3 id="modal-asset-title">Add asset</h3><button class="mclose" onclick="closeModal('modal-asset')">×</button></div>
     <div class="mbody">
-      <div class="frow">
-        <div class="fg"><label>Asset name *</label><input id="f-name" placeholder="e.g. MacBook Pro 14"></div>
-        <div class="fg"><label>Type</label><select id="f-type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select></div>
+      <div class="frow"><div class="fg"><label>Asset name *</label><input id="fa-name" placeholder="e.g. MacBook Pro 14"></div><div class="fg"><label>Type</label><select id="fa-type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select></div></div>
+      <div class="frow"><div class="fg"><label>Serial number</label><input id="fa-serial" placeholder="e.g. C02XJ34JQ6LR"></div><div class="fg"><label>Brand</label><input id="fa-brand" placeholder="e.g. Apple"></div></div>
+      <div class="frow"><div class="fg"><label>Status</label><select id="fa-status"><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select></div><div class="fg"><label>Branch</label><select id="fa-dept"><option value="">— None —</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div></div>
+      <div class="frow"><div class="fg"><label>Purchase date</label><input type="date" id="fa-date"></div><div class="fg"><label>Warranty expiry</label><input type="date" id="fa-warranty"></div></div>
+      <div class="frow"><div class="fg"><label>Purchase value (AED)</label><input type="number" id="fa-value" placeholder="e.g. 8500"></div><div class="fg"><label>Location</label><input id="fa-loc" placeholder="e.g. Floor 3 Desk 4"></div></div>
+      <div class="fg"><label>Assigned to</label><input id="fa-assignee" placeholder="Leave blank if unassigned"></div>
+      <div class="fg"><label>Notes</label><input id="fa-notes" placeholder="Optional notes"></div>
+      <div class="fg">
+        <label>Attachments (invoices, warranty docs)</label>
+        <div class="attach-zone" onclick="document.getElementById('attach-file').click()">📎 Click to upload PDF / image</div>
+        <input type="file" id="attach-file" accept=".pdf,.jpg,.png" multiple style="display:none" onchange="handleAttach(event)">
+        <div class="attach-list" id="attach-list"></div>
       </div>
-      <div class="frow">
-        <div class="fg"><label>Serial number</label><input id="f-serial" placeholder="e.g. C02XJ34JQ6LR"></div>
-        <div class="fg"><label>Brand / Model</label><input id="f-brand" placeholder="e.g. Apple MacBook Pro"></div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label>Status</label><select id="f-status"><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select></div>
-        <div class="fg"><label>Purchase date</label><input type="date" id="f-date"></div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label>Warranty expires</label><input type="date" id="f-warranty"></div>
-        <div class="fg"><label>Purchase value (AED)</label><input type="number" id="f-value" placeholder="e.g. 8500"></div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label>Department</label><select id="f-dept"><option value="">— None —</option><option>Engineering</option><option>Design</option><option>Finance</option><option>HR</option><option>Marketing</option><option>Operations</option><option>Sales</option><option>IT</option></select></div>
-        <div class="fg"><label>Location / Floor</label><input id="f-loc" placeholder="e.g. Floor 3 · Desk 14"></div>
-      </div>
-      <div class="fg"><label>Assigned to</label><input id="f-assignee" placeholder="Full name (leave blank if unassigned)"></div>
-      <div class="fg"><label>Notes</label><input id="f-notes" placeholder="Optional notes"></div>
     </div>
-    <div class="mfoot">
-      <button class="btn" onclick="closeModal('modal-add')">Cancel</button>
-      <button class="btn btn-primary" id="save-btn" onclick="saveAsset()">Save asset</button>
-    </div>
+    <div class="mfoot"><button class="btn" onclick="closeModal('modal-asset')">Cancel</button><button class="btn btn-primary" id="save-asset-btn" onclick="saveAsset()">Save asset</button></div>
   </div>
 </div>
 
-<!-- DETAIL MODAL -->
-<div class="mbg" id="modal-detail">
-  <div class="modal">
-    <div class="mhead"><h3 id="d-name">Asset details</h3><button class="mclose" onclick="closeModal('modal-detail')">×</button></div>
-    <div class="mbody" id="d-body"></div>
-    <div class="mfoot">
-      <button class="btn btn-danger btn-sm" onclick="deleteAsset()">Delete</button>
-      <button class="btn btn-sm" onclick="openQR()">QR code</button>
-      <button class="btn" onclick="closeModal('modal-detail')">Close</button>
-      <button class="btn btn-primary btn-sm" onclick="editCurrent()">Edit</button>
-    </div>
+<!-- View Asset -->
+<div class="mbg" id="modal-view">
+  <div class="modal wide">
+    <div class="mhead"><h3 id="view-title">Asset details</h3><button class="mclose" onclick="closeModal('modal-view')">×</button></div>
+    <div class="mbody" id="view-body"></div>
+    <div class="mfoot" id="view-foot"></div>
   </div>
 </div>
 
-<!-- QR MODAL -->
+<!-- QR Modal -->
 <div class="mbg" id="modal-qr">
   <div class="modal wide">
-    <div class="mhead"><h3>QR code &amp; barcode</h3><button class="mclose" onclick="closeModal('modal-qr')">×</button></div>
+    <div class="mhead"><h3>QR code & barcode</h3><button class="mclose" onclick="closeModal('modal-qr')">×</button></div>
     <div class="mbody">
       <div class="qr-container">
-        <div class="qr-box">
-          <canvas id="qr-canvas" width="180" height="180"></canvas>
-          <span style="font-size:11px;color:var(--text2)">QR code</span>
-          <button class="btn btn-sm" onclick="downloadQR()">Download PNG</button>
-        </div>
-        <div class="qr-box">
-          <canvas id="bar-canvas" width="280" height="90"></canvas>
-          <span style="font-size:11px;color:var(--text2)">Barcode</span>
-          <button class="btn btn-sm" onclick="downloadBar()">Download PNG</button>
-        </div>
+        <div class="qr-box"><canvas id="qr-canvas" width="180" height="180"></canvas><span style="font-size:11px;color:var(--text2)">QR code</span><button class="btn btn-sm" onclick="dlCanvas('qr-canvas','qr.png')">Download</button></div>
+        <div class="qr-box"><canvas id="bar-canvas" width="280" height="90"></canvas><span style="font-size:11px;color:var(--text2)">Barcode</span><button class="btn btn-sm" onclick="dlCanvas('bar-canvas','barcode.png')">Download</button></div>
         <div class="qr-info" id="qr-info"></div>
       </div>
     </div>
@@ -321,453 +613,1023 @@ tr:hover td{background:#fafaf8}
   </div>
 </div>
 
-<!-- IMPORT MODAL -->
-<div class="mbg" id="modal-import">
-  <div class="modal wide">
-    <div class="mhead"><h3>Bulk import from CSV</h3><button class="mclose" onclick="closeModal('modal-import')">×</button></div>
+<!-- Disposal Modal -->
+<div class="mbg" id="modal-disposal">
+  <div class="modal">
+    <div class="mhead"><h3>Asset disposal</h3><button class="mclose" onclick="closeModal('modal-disposal')">×</button></div>
     <div class="mbody">
-      <div style="font-size:13px;color:var(--text2);line-height:1.7">
-        Upload a CSV with these columns (first row = headers, will be skipped):<br>
-        <code style="font-size:12px;background:var(--bg2);padding:3px 8px;border-radius:6px;border:1px solid var(--border)">name, type, serial, brand, status, assignee, department, location, purchaseDate, warrantyExpiry, value, notes</code>
+      <div id="disposal-asset-info" style="background:var(--bg2);border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:13px"></div>
+      <div class="fg"><label>Disposal reason *</label><select id="disp-reason"><option>End of life</option><option>Damaged beyond repair</option><option>Stolen/Lost</option><option>Donated</option><option>Sold</option><option>Other</option></select></div>
+      <div class="fg"><label>Disposal date</label><input type="date" id="disp-date"></div>
+      <div class="fg"><label>Notes</label><input id="disp-notes" placeholder="Any additional notes"></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Data wipe checklist</div>
+      <div id="wipe-checklist">
+        <div class="checklist-item"><input type="checkbox" id="wc1"><label for="wc1">All user data wiped from device</label></div>
+        <div class="checklist-item"><input type="checkbox" id="wc2"><label for="wc2">Operating system reset to factory defaults</label></div>
+        <div class="checklist-item"><input type="checkbox" id="wc3"><label for="wc3">Company software licences deactivated</label></div>
+        <div class="checklist-item"><input type="checkbox" id="wc4"><label for="wc4">Asset removed from network/AD/MDM</label></div>
+        <div class="checklist-item"><input type="checkbox" id="wc5"><label for="wc5">Physical inspection done — no sensitive labels</label></div>
       </div>
-      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-file').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
-        <div style="font-size:32px;margin-bottom:10px">📂</div>
-        <div style="font-weight:500">Click to upload or drag &amp; drop a CSV file</div>
-        <div style="font-size:12px;margin-top:6px;color:var(--text3)">Supports .csv files up to 500 rows</div>
-      </div>
-      <input type="file" id="csv-file" accept=".csv,.txt" style="display:none" onchange="handleFileSelect(event)">
-      <div id="import-preview" style="display:none">
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text)" id="import-count"></div>
-        <div class="import-preview" id="import-preview-text"></div>
-      </div>
-      <div id="import-error" style="display:none;font-size:13px;color:var(--red);padding:8px 12px;background:var(--red-lt);border-radius:8px"></div>
     </div>
-    <div class="mfoot">
-      <button class="btn" onclick="closeModal('modal-import')">Cancel</button>
-      <button class="btn btn-sm" onclick="downloadTemplate()">Download template</button>
-      <button class="btn btn-primary" id="import-confirm-btn" style="display:none" onclick="confirmImport()">Import assets</button>
-    </div>
+    <div class="mfoot"><button class="btn" onclick="closeModal('modal-disposal')">Cancel</button><button class="btn btn-danger" onclick="confirmDisposal()">Confirm disposal</button></div>
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- Bulk actions modal -->
+<div class="mbg" id="modal-bulk">
+  <div class="modal">
+    <div class="mhead"><h3>Bulk action</h3><button class="mclose" onclick="closeModal('modal-bulk')">×</button></div>
+    <div class="mbody">
+      <div id="bulk-asset-count" style="font-size:13px;color:var(--text2);margin-bottom:1rem"></div>
+      <div class="fg"><label>Action</label><select id="bulk-action" onchange="renderBulkFields()"><option value="">— Select —</option><option value="status">Change status</option><option value="assign">Assign to employee</option><option value="warranty">Set warranty date</option><option value="dept">Change branch</option><option value="delete">Delete selected</option></select></div>
+      <div id="bulk-fields"></div>
+    </div>
+    <div class="mfoot"><button class="btn" onclick="closeModal('modal-bulk')">Cancel</button><button class="btn btn-primary" onclick="applyBulkAction()">Apply</button></div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="mbg" id="modal-user">
+  <div class="modal">
+    <div class="mhead"><h3 id="user-modal-title">Add user</h3><button class="mclose" onclick="closeModal('modal-user')">×</button></div>
+    <div class="mbody">
+      <div class="fg"><label>Name *</label><input id="u-name" placeholder="Full name"></div>
+      <div class="fg"><label>Email *</label><input type="email" id="u-email" placeholder="user@company.com"></div>
+      <div class="fg"><label>Password</label><input type="password" id="u-pass" placeholder="Min 8 characters"></div>
+      <div class="frow">
+        <div class="fg"><label>Role</label><select id="u-role"><option value="admin">Admin</option><option value="manager">Manager</option><option value="staff">Staff</option></select></div>
+        <div class="fg"><label>Branch</label><select id="u-branch"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div>
+      </div>
+    </div>
+    <div class="mfoot"><button class="btn" onclick="closeModal('modal-user')">Cancel</button><button class="btn btn-primary" onclick="saveUser()">Save user</button></div>
+  </div>
+</div>
+
+<!-- Handover PDF preview -->
+<div id="print-area" style="display:none"></div>
+
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Supabase ──────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://htivgesylecdicfkpyio.supabase.co'
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0aXZnZXN5bGVjZGljZmtweWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwOTk3NDYsImV4cCI6MjA5MjY3NTc0Nn0.g8TmKAi8ltUEO19tl80cn-8pYCmbVKL1LisgVNb4V0w'
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
-let assets = [], editingId = null, viewingId = null, pendingImport = [], currentTab = 'assets'
-
-// ── Toast ──────────────────────────────────────────────────────────────
-function toast(msg, dur=2800) {
-  const el = document.getElementById('toast')
-  el.textContent = msg
-  el.classList.add('show')
-  clearTimeout(el._t)
-  el._t = setTimeout(() => el.classList.remove('show'), dur)
+// Demo users (in production use Supabase Auth)
+const DEMO_USERS = {
+  'admin@company.com':   { name:'Admin User',   role:'admin',   branch:'', pass:'password123' },
+  'manager@company.com': { name:'Manager User', role:'manager', branch:'ECP', pass:'password123' },
+  'staff@company.com':   { name:'Staff User',   role:'staff',   branch:'DCP', pass:'password123' },
 }
 
-// ── DB helpers ─────────────────────────────────────────────────────────
-async function loadAssets() {
-  const { data, error } = await sb.from('assets').select('*').order('created_at', { ascending: true })
-  if (error) { document.getElementById('db-status').textContent = '⚠ DB error: ' + error.message; return }
-  assets = data || []
-  document.getElementById('db-status').textContent = `Connected · ${assets.length} assets`
-  renderAssets()
-  updateWarningUI()
-}
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+let currentUser = null, assets = [], assignHistory = [], auditLog = [], users = Object.entries(DEMO_USERS).map(([email,u],i)=>({id:i+1,email,...u}))
+let selectedIds = new Set(), pendingImport = [], editingAssetId = null, viewingAssetId = null, disposalAssetId = null
+let attachments = [] // [{name, dataUrl, type}]
+let sigCanvas, sigCtx, sigDrawing = false
+let charts = {}
+let currentBranchFilter = ''
 
-async function dbInsert(payload) {
-  const { error } = await sb.from('assets').insert(payload)
-  if (error) throw error
-}
-async function dbUpdate(id, payload) {
-  const { error } = await sb.from('assets').update(payload).eq('id', id)
-  if (error) throw error
-}
-async function dbDelete(id) {
-  const { error } = await sb.from('assets').delete().eq('id', id)
-  if (error) throw error
-}
-async function dbLog(action, asset) {
-  await sb.from('activity_log').insert({ action, asset, user_label: 'IT Admin' })
-}
-
-// ── Warranty ───────────────────────────────────────────────────────────
-function warrantyStatus(w) {
-  if (!w) return { cls: 'w-none', label: '—', days: null }
-  const d = Math.ceil((new Date(w) - new Date()) / 86400000)
-  if (d < 0) return { cls: 'w-exp', label: 'Expired', days: d }
-  if (d <= 90) return { cls: 'w-soon', label: `${d}d left`, days: d }
-  return { cls: 'w-ok', label: new Date(w).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), days: d }
-}
-function expiringAssets() {
-  return assets.filter(a => { if (!a.warranty) return false; const d = Math.ceil((new Date(a.warranty) - new Date()) / 86400000); return d <= 90 })
-}
-function updateWarningUI() {
-  const exp = expiringAssets()
-  const badge = document.getElementById('warranty-badge')
-  const pill = document.getElementById('top-warn-pill')
-  const banner = document.getElementById('warn-banner')
-  if (exp.length) {
-    badge.textContent = exp.length; badge.style.display = 'inline'
-    pill.textContent = `⚠ ${exp.length} warranty alert${exp.length > 1 ? 's' : ''}`; pill.style.display = 'inline'
-    const expired = exp.filter(a => warrantyStatus(a.warranty).days < 0)
-    const soon = exp.filter(a => warrantyStatus(a.warranty).days >= 0)
-    let msg = []
-    if (expired.length) msg.push(`${expired.length} warranty expired`)
-    if (soon.length) msg.push(`${soon.length} expiring within 90 days`)
-    banner.innerHTML = `<div class="alert-banner">⚠ ${msg.join(' · ')} — <a onclick="switchTab('warranty',document.querySelector('[data-tab=warranty]'))">View all →</a></div>`
-  } else {
-    badge.style.display = 'none'; pill.style.display = 'none'; banner.innerHTML = ''
+// ════════════════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════════════════
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase()
+  const pass  = document.getElementById('login-pass').value
+  const u = DEMO_USERS[email]
+  if (!u || u.pass !== pass) { document.getElementById('login-err').textContent = 'Invalid email or password.'; return }
+  currentUser = { email, ...u }
+  document.getElementById('login-screen').style.display = 'none'
+  document.getElementById('app').style.display = 'block'
+  document.getElementById('sb-name').textContent = u.name
+  document.getElementById('sb-role').textContent = u.role.charAt(0).toUpperCase() + u.role.slice(1)
+  document.getElementById('sb-branch').textContent = u.branch ? `Branch: ${u.branch}` : 'All branches'
+  // Role-based UI
+  if (u.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = '')
+  if (u.role === 'staff') {
+    document.getElementById('nav-disposal').style.display = 'none'
   }
-  document.getElementById('s-exp').textContent = exp.length
+  initSignaturePad()
+  loadAll()
+}
+function doLogout() {
+  currentUser = null
+  document.getElementById('app').style.display = 'none'
+  document.getElementById('login-screen').style.display = 'block'
+  document.getElementById('login-err').textContent = ''
 }
 
-// ── Avatar ─────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════════════════════════════
+const PAGE_TITLES = { dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
+function nav(el) {
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'))
+  el.classList.add('active')
+  const pg = el.dataset.page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.getElementById('page-' + pg).classList.add('active')
+  document.getElementById('page-title').textContent = PAGE_TITLES[pg] || pg
+  setTopbarActions(pg)
+  if (pg === 'warranty')       renderWarranty()
+  if (pg === 'assign')         renderHistory(); renderPending()
+  if (pg === 'disposal')       renderDisposal()
+  if (pg === 'dashboard-adv')  renderAnalytics()
+  if (pg === 'depreciation')   renderDepreciation()
+  if (pg === 'audit')          renderAudit()
+  if (pg === 'dashboard')      renderDashboard()
+  if (pg === 'users')          renderUsers()
+}
+function setTopbarActions(pg) {
+  const el = document.getElementById('topbar-actions')
+  if (pg === 'assets' && currentUser.role !== 'staff') {
+    el.innerHTML = `<button class="btn" onclick="exportCSV()">⬇ Export CSV</button><button class="btn" onclick="nav(document.querySelector('[data-page=import]'))">⬆ Import CSV</button><button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
+  } else if (pg === 'assign' && currentUser.role !== 'staff') {
+    el.innerHTML = `<button class="btn btn-primary" onclick="assignStep(document.querySelector('[data-step=handover]'))">+ New handover</button>`
+  } else {
+    el.innerHTML = ''
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// LOAD DATA
+// ════════════════════════════════════════════════════════════════
+async function loadAll() {
+  await Promise.all([loadAssets(), loadHistory(), loadAudit()])
+  renderDashboard()
+  updateBadges()
+}
+async function loadAssets() {
+  const { data } = await sb.from('assets').select('*').order('created_at', { ascending: false })
+  assets = data || []
+  renderAssets()
+  populateHandoverDropdown()
+}
+async function loadHistory() {
+  const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(500)
+  assignHistory = (data || []).filter(l => ['Assigned','Returned','Handover'].some(k => l.action.includes(k)))
+  auditLog = data || []
+  renderHistory()
+  renderPending()
+}
+async function loadAudit() {
+  const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(300)
+  auditLog = data || []
+}
+
+// ════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════
+function wStatus(w) {
+  if (!w) return { cls:'w-none', label:'—', days:null }
+  const d = Math.ceil((new Date(w) - new Date()) / 86400000)
+  if (d < 0) return { cls:'w-exp', label:'Expired', days:d }
+  if (d <= 90) return { cls:'w-soon', label:`${d}d left`, days:d }
+  return { cls:'w-ok', label:new Date(w).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}), days:d }
+}
+function expiringAssets() { return assets.filter(a => { if(!a.warranty) return false; const d=Math.ceil((new Date(a.warranty)-new Date())/86400000); return d<=90 }) }
+const AVC = ['av0','av1','av2','av3','av4']
 function avatar(name) {
   if (!name) return ''
   const p = name.trim().split(' ')
-  const ini = (p.length >= 2 ? p[0][0] + p[p.length - 1][0] : p[0].slice(0, 2)).toUpperCase()
-  return `<span class="av av${name.charCodeAt(0) % 5}">${ini}</span>`
+  const ini = (p.length>=2 ? p[0][0]+p[p.length-1][0] : p[0].slice(0,2)).toUpperCase()
+  return `<span class="av ${AVC[name.charCodeAt(0)%5]}">${ini}</span>`
 }
 function badgeHtml(s) {
-  const m = { Available: 'b-available', Assigned: 'b-assigned', Maintenance: 'b-maintenance', Retired: 'b-retired' }
-  return `<span class="badge ${m[s] || 'b-retired'}">${s}</span>`
+  const m={Available:'b-available',Assigned:'b-assigned',Maintenance:'b-maintenance',Retired:'b-retired'}
+  return `<span class="badge ${m[s]||'b-retired'}">${s}</span>`
+}
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—' }
+function assetAge(dateStr) {
+  if (!dateStr) return null
+  return (new Date() - new Date(dateStr)) / (365.25 * 86400000)
+}
+function deprValue(asset, method='straight', usefulLife=4) {
+  if (!asset.value || !asset.date) return null
+  const age = assetAge(asset.date)
+  if (age === null) return null
+  const ratio = Math.min(age / usefulLife, 1)
+  let current
+  if (method === 'straight') {
+    current = asset.value * (1 - ratio)
+  } else {
+    current = asset.value * Math.pow(0.8, age) // 20% declining balance per year
+  }
+  return Math.max(0, Math.round(current))
+}
+async function dbLog(action, assetName, changes='', user='') {
+  const u = user || (currentUser ? currentUser.name : 'System')
+  await sb.from('activity_log').insert({ action, asset: assetName, user_label: u, changes })
+}
+function toast(msg, type='', dur=3000) {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.className = `toast ${type} show`
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), dur)
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+function openModal(id) { document.getElementById(id).classList.add('open') }
+function canEdit() { return currentUser && currentUser.role !== 'staff' }
+
+function updateBadges() {
+  const exp = expiringAssets().length
+  const wBadge = document.getElementById('nav-warranty-badge')
+  const topWarn = document.getElementById('top-warn')
+  if (exp) {
+    wBadge.textContent = exp; wBadge.style.display = 'inline'
+    topWarn.textContent = `⚠ ${exp} warranty alert${exp>1?'s':''}`; topWarn.style.display = 'inline'
+  } else {
+    wBadge.style.display='none'; topWarn.style.display='none'
+  }
 }
 
-// ── Render assets table ────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════════════════
+function renderDashboard() {
+  const filtered = currentBranchFilter ? assets.filter(a=>a.dept===currentBranchFilter) : assets
+  const exp = expiringAssets()
+  const totalVal = assets.reduce((s,a)=>s+(a.value||0),0)
+
+  // Warn banner
+  const banner = document.getElementById('warn-banner')
+  if (exp.length) {
+    banner.innerHTML = `<div class="alert-banner">⚠ ${exp.length} asset${exp.length>1?'s':''} with warranty expiring within 90 days — <a onclick="nav(document.querySelector('[data-page=warranty]'))">View →</a></div>`
+  } else banner.innerHTML = ''
+
+  // Stats
+  document.getElementById('dash-stats').innerHTML = [
+    ['Total assets', filtered.length, 'all branches'],
+    ['Available', filtered.filter(a=>a.status==='Available').length, 'ready to assign', 'color:var(--green)'],
+    ['Assigned', filtered.filter(a=>a.status==='Assigned').length, 'in use', 'color:var(--blue)'],
+    ['Maintenance', filtered.filter(a=>a.status==='Maintenance').length, 'under service', 'color:var(--amber)'],
+    ['Total value', `AED ${totalVal.toLocaleString()}`, 'purchase price', ''],
+    ['Warranty alerts', exp.length, 'expiring ≤90 days', 'color:var(--red)'],
+  ].map(([l,v,s,c])=>`<div class="stat-card"><div class="stat-lbl">${l}</div><div class="stat-val" style="${c||''}">${v}</div><div class="stat-sub">${s}</div></div>`).join('')
+
+  // Branch filters
+  const branches = ['ECP','DCP','SNP','TEL']
+  document.getElementById('branch-filters').innerHTML =
+    `<button class="branch-pill ${!currentBranchFilter?'active':''}" onclick="setBranchFilter('')">All branches</button>` +
+    branches.map(b=>`<button class="branch-pill ${currentBranchFilter===b?'active':''}" onclick="setBranchFilter('${b}')">${b} (${assets.filter(a=>a.dept===b).length})</button>`).join('')
+
+  // Recent table
+  document.getElementById('dash-recent').innerHTML = filtered.slice(0,8).map(a=>{
+    const w=wStatus(a.warranty)
+    return `<tr><td><div style="font-weight:600;font-size:13px">${a.name}</div><div class="mono">${a.serial||''}</div></td><td>${badgeHtml(a.status)}</td><td>${a.assignee?`<div style="display:flex;align-items:center;gap:5px">${avatar(a.assignee)}<span style="font-size:12px">${a.assignee}</span></div>`:'—'}</td><td><span class="tag">${a.dept||'—'}</span></td><td><span class="${w.cls}">${w.label}</span></td></tr>`
+  }).join('') || `<tr><td colspan="5" class="empty-msg">No assets</td></tr>`
+
+  // Breakdown
+  const types = assets.reduce((m,a)=>{m[a.type]=(m[a.type]||0)+1;return m},{})
+  const colors = ['#185FA5','#3B6D11','#854F0B','#534AB7','#0F6E56','#A32D2D','#888']
+  document.getElementById('dash-breakdown').innerHTML = Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<div class="rbar-wrap"><div class="rbar-label"><span>${k}</span><span style="color:var(--text2)">${v}</span></div><div class="rbar-track"><div class="rbar-fill" style="background:${colors[i%colors.length]};width:${Math.round(v/assets.length*100)}%"></div></div></div>`).join('')
+}
+function setBranchFilter(b) { currentBranchFilter = b; renderDashboard() }
+
+// ════════════════════════════════════════════════════════════════
+// ASSETS TABLE
+// ════════════════════════════════════════════════════════════════
 function renderAssets() {
-  const q = (document.getElementById('q').value || '').toLowerCase()
-  const ft = document.getElementById('ft').value
-  const fs = document.getElementById('fs').value
-  const fd = document.getElementById('fd').value
-  const filtered = assets.filter(a => {
-    const mq = !q || [a.name, a.serial, a.assignee, a.loc, a.dept, a.brand].some(x => (x || '').toLowerCase().includes(q))
-    return mq && (!ft || a.type === ft) && (!fs || a.status === fs) && (!fd || a.dept === fd)
+  const q = (document.getElementById('q-assets')?.value||'').toLowerCase()
+  const ft = document.getElementById('f-type')?.value||''
+  const fs = document.getElementById('f-status')?.value||''
+  const fd = document.getElementById('f-dept')?.value||''
+  const fl = document.getElementById('f-life')?.value||''
+
+  let filtered = assets.filter(a => {
+    const mq = !q || [a.name,a.serial,a.assignee,a.dept,a.brand].some(x=>(x||'').toLowerCase().includes(q))
+    const mt = !ft || a.type===ft
+    const ms = !fs || a.status===fs
+    const md = !fd || a.dept===fd
+    let ml = true
+    if (fl==='past') ml = (assetAge(a.date)||0) >= 4
+    if (fl==='ok')   ml = (assetAge(a.date)||0) < 4
+    // Branch-scoped staff/manager
+    if (currentUser.branch && currentUser.role!=='admin') ml = ml && a.dept === currentUser.branch
+    return mq&&mt&&ms&&md&&ml
   })
-  const tb = document.getElementById('asset-tbody')
-  document.getElementById('empty-a').style.display = filtered.length ? 'none' : 'block'
+
+  // Bulk bar
+  const bb = document.getElementById('bulk-bar')
+  if (selectedIds.size > 0 && canEdit()) {
+    bb.style.display='flex'
+    bb.innerHTML=`<span>${selectedIds.size} selected</span><button onclick="openBulkModal()">Bulk action</button><button onclick="clearSelection()">Clear</button>`
+  } else bb.style.display='none'
+
+  const tb = document.getElementById('assets-tbody')
+  document.getElementById('assets-empty').style.display = filtered.length?'none':'block'
   tb.innerHTML = filtered.map(a => {
-    const w = warrantyStatus(a.warranty)
-    return `<tr>
-      <td><div style="font-weight:600">${a.name}</div><div class="mono">${a.brand || ''}</div></td>
-      <td class="mono">${a.serial || '—'}</td>
+    const w = wStatus(a.warranty)
+    const age = assetAge(a.date)
+    const pastLife = age && age >= 4
+    const checked = selectedIds.has(a.id) ? 'checked' : ''
+    return `<tr ${pastLife?'style="background:#fffdf5"':''}>
+      <td><input type="checkbox" ${checked} onchange="toggleSelect(${a.id},this)"></td>
+      <td><div style="font-weight:600">${a.name}${pastLife?` <span class="badge b-warn" style="font-size:9px">4+ yrs</span>`:''}</div><div class="mono">${a.brand||''}</div></td>
+      <td class="mono">${a.serial||'—'}</td>
       <td><span class="badge b-tag">${a.type}</span></td>
       <td>${badgeHtml(a.status)}</td>
-      <td>${a.assignee ? `<div style="display:flex;align-items:center;gap:6px">${avatar(a.assignee)}<span style="font-size:12px">${a.assignee}</span></div>` : '<span style="color:var(--text3);font-size:12px">—</span>'}</td>
-      <td style="font-size:12px">${a.dept ? `<div style="color:var(--text)">${a.dept}</div>` : ''}${a.loc ? `<div style="color:var(--text2);font-size:11px">${a.loc}</div>` : ''}</td>
+      <td>${a.assignee?`<div style="display:flex;align-items:center;gap:5px">${avatar(a.assignee)}<span style="font-size:12px">${a.assignee}</span></div>`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td><span class="tag">${a.dept||'—'}</span></td>
       <td><span class="${w.cls}">${w.label}</span></td>
-      <td><div class="act-row"><button class="btn btn-sm" onclick="viewAsset(${a.id})">View</button><button class="btn btn-sm" onclick="openEditModal(${a.id})">Edit</button></div></td>
-    </tr>`
-  }).join('')
-  document.getElementById('s-total').textContent = assets.length
-  document.getElementById('s-avail').textContent = assets.filter(a => a.status === 'Available').length
-  document.getElementById('s-asgn').textContent = assets.filter(a => a.status === 'Assigned').length
-  document.getElementById('s-maint').textContent = assets.filter(a => a.status === 'Maintenance').length
-  updateWarningUI()
-}
-
-// ── Warranty tab ───────────────────────────────────────────────────────
-function renderWarranty() {
-  const sorted = [...assets].filter(a => a.warranty).sort((a, b) => new Date(a.warranty) - new Date(b.warranty))
-  const noW = assets.filter(a => !a.warranty)
-  const all = [...sorted, ...noW]
-  document.getElementById('empty-w').style.display = all.length ? 'none' : 'block'
-  document.getElementById('warranty-tbody').innerHTML = all.map(a => {
-    const w = warrantyStatus(a.warranty)
-    const wb = w.days === null ? '<span class="badge b-tag">No data</span>' : w.days < 0 ? '<span class="badge b-warn">Expired</span>' : w.days <= 90 ? '<span class="badge b-expiring">Expiring soon</span>' : '<span class="badge b-available">Valid</span>'
-    return `<tr>
-      <td><div style="font-weight:600">${a.name}</div><div class="mono">${a.brand || ''}</div></td>
-      <td class="mono">${a.serial || '—'}</td>
-      <td style="font-size:12px">${[a.dept, a.loc].filter(Boolean).join(' · ') || '—'}</td>
-      <td>${a.assignee ? `<div style="display:flex;align-items:center;gap:6px">${avatar(a.assignee)}<span style="font-size:12px">${a.assignee}</span></div>` : '—'}</td>
-      <td><span class="${w.cls}">${a.warranty || '—'}</span></td>
-      <td>${wb}</td>
-      <td><button class="btn btn-sm" onclick="openEditModal(${a.id})">Edit</button></td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="viewAsset(${a.id})">View</button>
+        ${canEdit()?`<button class="btn btn-sm" onclick="openEditAssetModal(${a.id})">Edit</button>`:''}
+      </div></td>
     </tr>`
   }).join('')
 }
 
-// ── Activity tab ───────────────────────────────────────────────────────
-async function renderActivity() {
-  const el = document.getElementById('activity-list')
-  el.innerHTML = '<div class="loading-bar"><span class="spinner"></span>Loading…</div>'
-  const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(100)
-  if (!data || !data.length) { el.innerHTML = '<div class="empty-msg">No activity yet.</div>'; return }
-  const cols = { added: '#3B6D11', deleted: '#A32D2D', updated: '#854F0B', assigned: '#185FA5', imported: '#534AB7' }
-  el.innerHTML = data.map(l => {
-    const k = Object.keys(cols).find(c => l.action.toLowerCase().includes(c)) || 'updated'
-    const t = new Date(l.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
-    return `<div class="al-item"><div class="al-dot" style="background:${cols[k]}"></div><div><div class="al-text">${l.action} — <strong>${l.asset}</strong></div><div class="al-time">${t} · ${l.user_label}</div></div></div>`
-  }).join('')
+function toggleSelect(id, cb) {
+  if (cb.checked) selectedIds.add(id); else selectedIds.delete(id)
+  renderAssets()
 }
+function toggleSelectAll(cb) {
+  document.querySelectorAll('#assets-tbody input[type=checkbox]').forEach(c => {
+    c.checked = cb.checked
+    const id = parseInt(c.closest('tr').querySelector('button')?.getAttribute('onclick')?.match(/\d+/)?.[0])
+    if (id) { if (cb.checked) selectedIds.add(id); else selectedIds.delete(id) }
+  })
+  renderAssets()
+}
+function clearSelection() { selectedIds.clear(); document.getElementById('select-all').checked=false; renderAssets() }
 
-// ── Reports tab ────────────────────────────────────────────────────────
-function renderReports() {
-  const cnt = (key) => assets.reduce((m, a) => { const v = a[key] || '—'; m[v] = (m[v] || 0) + 1; return m }, {})
-  const bar = (lbl, cnt, total, color) => `<div class="rbar-wrap"><div class="rbar-label"><span style="color:var(--text)">${lbl}</span><span style="color:var(--text2)">${cnt}</span></div><div class="rbar-track"><div class="rbar-fill" style="background:${color};width:${Math.round(cnt / total * 100)}%"></div></div></div>`
-  const t = assets.length || 1
-  const sc = { Available: '#3B6D11', Assigned: '#185FA5', Maintenance: '#854F0B', Retired: '#888780' }
-  document.getElementById('r-type').innerHTML = Object.entries(cnt('type')).sort((a, b) => b[1] - a[1]).map(([k, v]) => bar(k, v, t, '#185FA5')).join('')
-  document.getElementById('r-status').innerHTML = Object.entries(cnt('status')).map(([k, v]) => bar(k, v, t, sc[k] || '#185FA5')).join('')
-  document.getElementById('r-dept').innerHTML = Object.entries(cnt('dept')).sort((a, b) => b[1] - a[1]).map(([k, v]) => bar(k, v, t, '#534AB7')).join('')
-  const byP = assets.filter(a => a.assignee).reduce((m, a) => { m[a.assignee] = (m[a.assignee] || 0) + 1; return m }, {})
-  const maxP = Math.max(...Object.values(byP), 1)
-  document.getElementById('r-person').innerHTML = Object.entries(byP).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, v]) => `<div class="rbar-wrap"><div class="rbar-label"><div style="display:flex;align-items:center;gap:6px">${avatar(k)}<span>${k}</span></div><span style="color:var(--text2)">${v}</span></div><div class="rbar-track"><div class="rbar-fill" style="background:#1D9E75;width:${Math.round(v / maxP * 100)}%"></div></div></div>`).join('') || '<div style="font-size:13px;color:var(--text2)">No assigned assets.</div>'
+// ════════════════════════════════════════════════════════════════
+// ADD / EDIT ASSET
+// ════════════════════════════════════════════════════════════════
+function openAddAssetModal() {
+  editingAssetId = null; attachments = []
+  document.getElementById('modal-asset-title').textContent = 'Add new asset'
+  ;['fa-name','fa-serial','fa-brand','fa-assignee','fa-notes','fa-loc'].forEach(f=>document.getElementById(f).value='')
+  document.getElementById('fa-type').value='Laptop'
+  document.getElementById('fa-status').value='Available'
+  document.getElementById('fa-dept').value=currentUser.branch||''
+  document.getElementById('fa-date').value=new Date().toISOString().slice(0,10)
+  document.getElementById('fa-warranty').value=''
+  document.getElementById('fa-value').value=''
+  document.getElementById('attach-list').innerHTML=''
+  openModal('modal-asset')
 }
-
-// ── Add / Edit / Save ─────────────────────────────────────────────────
-function openAddModal() {
-  editingId = null
-  document.getElementById('modal-title').textContent = 'Add new asset'
-  ;['name', 'serial', 'brand', 'assignee', 'notes', 'loc'].forEach(f => document.getElementById('f-' + f).value = '')
-  document.getElementById('f-type').value = 'Laptop'
-  document.getElementById('f-status').value = 'Available'
-  document.getElementById('f-dept').value = ''
-  document.getElementById('f-date').value = new Date().toISOString().slice(0, 10)
-  document.getElementById('f-warranty').value = ''
-  document.getElementById('f-value').value = ''
-  document.getElementById('modal-add').classList.add('open')
-}
-function openEditModal(id) {
-  const a = assets.find(x => x.id === id); if (!a) return
-  editingId = id
-  document.getElementById('modal-title').textContent = 'Edit asset'
-  document.getElementById('f-name').value = a.name
-  document.getElementById('f-serial').value = a.serial || ''
-  document.getElementById('f-brand').value = a.brand || ''
-  document.getElementById('f-type').value = a.type
-  document.getElementById('f-status').value = a.status
-  document.getElementById('f-assignee').value = a.assignee || ''
-  document.getElementById('f-dept').value = a.dept || ''
-  document.getElementById('f-loc').value = a.loc || ''
-  document.getElementById('f-date').value = a.date || ''
-  document.getElementById('f-warranty').value = a.warranty || ''
-  document.getElementById('f-value').value = a.value || ''
-  document.getElementById('f-notes').value = a.notes || ''
-  closeModal('modal-detail')
-  document.getElementById('modal-add').classList.add('open')
+function openEditAssetModal(id) {
+  const a = assets.find(x=>x.id===id); if(!a) return
+  editingAssetId = id; attachments = a.attachments||[]
+  document.getElementById('modal-asset-title').textContent = 'Edit asset'
+  document.getElementById('fa-name').value=a.name
+  document.getElementById('fa-serial').value=a.serial||''
+  document.getElementById('fa-brand').value=a.brand||''
+  document.getElementById('fa-type').value=a.type
+  document.getElementById('fa-status').value=a.status
+  document.getElementById('fa-dept').value=a.dept||''
+  document.getElementById('fa-assignee').value=a.assignee||''
+  document.getElementById('fa-loc').value=a.loc||''
+  document.getElementById('fa-date').value=a.date||''
+  document.getElementById('fa-warranty').value=a.warranty||''
+  document.getElementById('fa-value').value=a.value||''
+  document.getElementById('fa-notes').value=a.notes||''
+  renderAttachList()
+  closeModal('modal-view')
+  openModal('modal-asset')
 }
 async function saveAsset() {
-  const name = document.getElementById('f-name').value.trim()
-  if (!name) { alert('Please enter an asset name.'); return }
+  const name = document.getElementById('fa-name').value.trim()
+  if (!name) { toast('Please enter an asset name','error'); return }
+  const toDate = v => (v&&/^\d{4}-\d{2}-\d{2}$/.test(v))?v:null
   const payload = {
-    name, type: document.getElementById('f-type').value,
-    serial: document.getElementById('f-serial').value.trim(),
-    brand: document.getElementById('f-brand').value.trim(),
-    status: document.getElementById('f-status').value,
-    assignee: document.getElementById('f-assignee').value.trim(),
-    dept: document.getElementById('f-dept').value,
-    loc: document.getElementById('f-loc').value.trim(),
-    date: document.getElementById('f-date').value || null,
-    warranty: document.getElementById('f-warranty').value || null,
-    value: parseFloat(document.getElementById('f-value').value) || 0,
-    notes: document.getElementById('f-notes').value.trim()
+    name, type:document.getElementById('fa-type').value,
+    serial:document.getElementById('fa-serial').value.trim(),
+    brand:document.getElementById('fa-brand').value.trim(),
+    status:document.getElementById('fa-status').value,
+    assignee:document.getElementById('fa-assignee').value.trim(),
+    dept:document.getElementById('fa-dept').value,
+    loc:document.getElementById('fa-loc').value.trim(),
+    date:toDate(document.getElementById('fa-date').value),
+    warranty:toDate(document.getElementById('fa-warranty').value),
+    value:parseFloat(document.getElementById('fa-value').value)||0,
+    notes:document.getElementById('fa-notes').value.trim(),
+    attachments: attachments
   }
-  const btn = document.getElementById('save-btn')
-  btn.textContent = 'Saving…'; btn.disabled = true
+  const btn = document.getElementById('save-asset-btn')
+  btn.textContent='Saving…'; btn.disabled=true
   try {
-    if (editingId) {
-      await dbUpdate(editingId, payload)
-      await dbLog('Asset updated', name)
-      toast('✓ Asset updated')
+    if (editingAssetId) {
+      const old = assets.find(a=>a.id===editingAssetId)
+      const changes = buildDiff(old, payload)
+      await sb.from('assets').update(payload).eq('id',editingAssetId)
+      await dbLog('Updated', name, changes)
+      toast('✓ Asset updated','success')
     } else {
-      await dbInsert(payload)
-      await dbLog('Asset added', name)
-      if (payload.assignee) await dbLog(`Assigned to ${payload.assignee}`, name)
-      toast('✓ Asset added')
+      await sb.from('assets').insert(payload)
+      await dbLog('Created', name)
+      toast('✓ Asset added','success')
     }
-    closeModal('modal-add')
+    closeModal('modal-asset')
     await loadAssets()
-  } catch (e) {
-    alert('Error saving: ' + e.message)
-  } finally {
-    btn.textContent = 'Save asset'; btn.disabled = false
-  }
+    renderDashboard()
+    updateBadges()
+  } catch(e) { toast('Error: '+e.message,'error') }
+  finally { btn.textContent='Save asset'; btn.disabled=false }
 }
 
-// ── View / Delete ──────────────────────────────────────────────────────
+function buildDiff(old, nw) {
+  const fields = ['name','type','serial','brand','status','assignee','dept','loc','date','warranty','value','notes']
+  return fields.filter(f=>String(old[f]||'')!==String(nw[f]||'')).map(f=>`${f}: "${old[f]||''}" → "${nw[f]||''}"`).join(' | ')
+}
+
+// ════════════════════════════════════════════════════════════════
+// VIEW ASSET
+// ════════════════════════════════════════════════════════════════
 function viewAsset(id) {
-  const a = assets.find(x => x.id === id); if (!a) return
-  viewingId = id
-  document.getElementById('d-name').textContent = a.name
-  const w = warrantyStatus(a.warranty)
-  const rows = [['Type', a.type], ['Serial', a.serial || '—'], ['Brand', a.brand || '—'], ['Status', badgeHtml(a.status)], ['Assigned to', a.assignee || '—'], ['Department', a.dept || '—'], ['Location', a.loc || '—'], ['Purchase date', a.date || '—'], ['Warranty', `<span class="${w.cls}">${a.warranty || '—'}</span>`], ['Value', a.value ? `AED ${Number(a.value).toLocaleString()}` : '—'], ['Notes', a.notes || '—']]
-  document.getElementById('d-body').innerHTML = `<div class="dpanel">${rows.map(([k, v]) => `<div class="drow"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('')}</div>`
-  document.getElementById('modal-detail').classList.add('open')
+  const a = assets.find(x=>x.id===id); if(!a) return
+  viewingAssetId = id
+  document.getElementById('view-title').textContent = a.name
+  const w = wStatus(a.warranty)
+  const age = assetAge(a.date)
+  const depr = deprValue(a)
+  const rows = [
+    ['Type',a.type],['Serial',a.serial||'—'],['Brand',a.brand||'—'],
+    ['Status',badgeHtml(a.status)],['Assigned to',a.assignee||'—'],
+    ['Branch',a.dept||'—'],['Location',a.loc||'—'],
+    ['Purchase date',fmtDate(a.date)],
+    ['Age',age?`${age.toFixed(1)} years${age>=4?' <span class="badge b-warn">Past useful life</span>':''}`:'—'],
+    ['Purchase value',a.value?`AED ${Number(a.value).toLocaleString()}`:'—'],
+    ['Current value (est.)',depr!==null?`AED ${depr.toLocaleString()}`:'—'],
+    ['Warranty',`<span class="${w.cls}">${a.warranty||'—'}</span>`],
+    ['Notes',a.notes||'—'],
+  ]
+  let attHtml = ''
+  if (a.attachments?.length) {
+    attHtml = `<div style="margin-top:12px"><div class="section-title">Attachments</div><div class="attach-list">${a.attachments.map(at=>`<div class="attach-item"><div class="attach-item-left"><span>📎</span><a href="${at.dataUrl}" download="${at.name}" style="font-size:12px;color:var(--blue)">${at.name}</a></div></div>`).join('')}</div></div>`
+  }
+  // History for this asset
+  const hist = auditLog.filter(l=>l.asset===a.name||l.asset?.includes(a.serial||'ZZZZ')).slice(0,5)
+  const histHtml = hist.length ? `<div style="margin-top:12px"><div class="section-title">Recent history</div>${hist.map(l=>`<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);color:var(--text2)">${l.action} · ${new Date(l.created_at).toLocaleDateString('en-GB')} · ${l.user_label}</div>`).join('')}</div>` : ''
+
+  document.getElementById('view-body').innerHTML = `<div>${rows.map(([k,v])=>`<div class="detail-row"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('')}${attHtml}${histHtml}</div>`
+
+  let footBtns = `<button class="btn btn-sm" onclick="openQR(${id})">QR code</button>`
+  if (canEdit()) {
+    footBtns += `<button class="btn btn-danger btn-sm" onclick="deleteAsset(${id})">Delete</button>`
+    footBtns += `<button class="btn btn-sm" onclick="openDisposalModal(${id})">Dispose</button>`
+    footBtns += `<button class="btn btn-primary btn-sm" onclick="openEditAssetModal(${id})">Edit</button>`
+  }
+  footBtns += `<button class="btn" onclick="closeModal('modal-view')">Close</button>`
+  document.getElementById('view-foot').innerHTML = footBtns
+  openModal('modal-view')
 }
-async function deleteAsset() {
-  if (!viewingId) return
-  const a = assets.find(x => x.id === viewingId)
+async function deleteAsset(id) {
+  const a = assets.find(x=>x.id===id)
   if (!confirm(`Delete "${a?.name}"? This cannot be undone.`)) return
+  await sb.from('assets').delete().eq('id',id)
+  await dbLog('Deleted', a.name)
+  toast('Asset deleted')
+  closeModal('modal-view')
+  await loadAssets(); renderDashboard()
+}
+
+// ════════════════════════════════════════════════════════════════
+// SIGNATURE PAD
+// ════════════════════════════════════════════════════════════════
+function initSignaturePad() {
+  sigCanvas = document.getElementById('sig-canvas')
+  if (!sigCanvas) return
+  sigCtx = sigCanvas.getContext('2d')
+  // Set canvas size
+  sigCanvas.width = sigCanvas.offsetWidth || 500
+  const getPos = e => {
+    const r = sigCanvas.getBoundingClientRect()
+    if (e.touches) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top }
+    return { x: e.clientX - r.left, y: e.clientY - r.top }
+  }
+  sigCanvas.addEventListener('mousedown', e => { sigDrawing=true; const p=getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y) })
+  sigCanvas.addEventListener('mousemove', e => { if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.strokeStyle='#111'; sigCtx.lineWidth=2; sigCtx.lineCap='round'; sigCtx.stroke() })
+  sigCanvas.addEventListener('mouseup', ()=>sigDrawing=false)
+  sigCanvas.addEventListener('touchstart', e=>{e.preventDefault();sigDrawing=true;const p=getPos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y)})
+  sigCanvas.addEventListener('touchmove', e=>{e.preventDefault();if(!sigDrawing)return;const p=getPos(e);sigCtx.lineTo(p.x,p.y);sigCtx.strokeStyle='#111';sigCtx.lineWidth=2;sigCtx.lineCap='round';sigCtx.stroke()})
+  sigCanvas.addEventListener('touchend', ()=>sigDrawing=false)
+}
+function clearSig() { if(sigCtx) sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height) }
+function isSigEmpty() {
+  if (!sigCanvas) return true
+  const data = sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height).data
+  return !data.some(v=>v!==0)
+}
+function getSigDataUrl() { return sigCanvas ? sigCanvas.toDataURL() : '' }
+
+// ════════════════════════════════════════════════════════════════
+// HANDOVER / ASSIGN
+// ════════════════════════════════════════════════════════════════
+function assignStep(el) {
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'))
+  document.querySelectorAll('.step-body').forEach(s=>s.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById('step-'+el.dataset.step).classList.add('active')
+  if (el.dataset.step==='history') renderHistory()
+  if (el.dataset.step==='pending') renderPending()
+}
+function populateHandoverDropdown() {
+  const sel = document.getElementById('ho-asset')
+  if (!sel) return
+  sel.innerHTML = '<option value="">— Select available asset —</option>' +
+    assets.filter(a=>a.status==='Available').map(a=>`<option value="${a.id}">${a.name} (${a.serial||'no serial'})</option>`).join('')
+  document.getElementById('ho-date').value = new Date().toISOString().slice(0,10)
+}
+async function saveHandover() {
+  const assetId = parseInt(document.getElementById('ho-asset').value)
+  const employee = document.getElementById('ho-employee').value.trim()
+  const branch   = document.getElementById('ho-branch').value
+  const date     = document.getElementById('ho-date').value
+  const condition= document.getElementById('ho-condition').value
+  const notes    = document.getElementById('ho-notes').value.trim()
+  if (!assetId || !employee) { toast('Please select an asset and enter employee name','error'); return }
+  if (isSigEmpty()) { toast('Please have the employee sign before completing','error'); return }
+  const sig = getSigDataUrl()
+  const asset = assets.find(a=>a.id===assetId)
+  // Update asset
+  await sb.from('assets').update({ status:'Assigned', assignee:employee, dept:branch||asset.dept }).eq('id',assetId)
+  // Log handover
+  await sb.from('activity_log').insert({
+    action:'Assigned', asset:asset.name, user_label:currentUser.name,
+    changes:JSON.stringify({ employee, branch, date, condition, notes, signature:sig })
+  })
+  toast(`✓ Handover complete — ${asset.name} assigned to ${employee}`,'success')
+  clearSig()
+  document.getElementById('ho-employee').value=''
+  document.getElementById('ho-notes').value=''
+  document.getElementById('ho-asset').value=''
+  await loadAll()
+  populateHandoverDropdown()
+}
+function previewHandoverPDF() {
+  const assetId = parseInt(document.getElementById('ho-asset').value)
+  const employee = document.getElementById('ho-employee').value.trim()
+  if (!assetId || !employee) { toast('Fill in asset and employee first','error'); return }
+  const asset = assets.find(a=>a.id===assetId)
+  const sig = isSigEmpty() ? null : getSigDataUrl()
+  const date = document.getElementById('ho-date').value
+  const condition = document.getElementById('ho-condition').value
+  const notes = document.getElementById('ho-notes').value
+
+  const html = `<div class="handover-doc">
+    <h1>Asset Handover Certificate</h1>
+    <p style="font-size:12px;color:#666;margin-bottom:1rem">Generated: ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</p>
+    <table class="handover-table">
+      <tr><td>Asset name</td><td>${asset.name}</td></tr>
+      <tr><td>Serial number</td><td>${asset.serial||'—'}</td></tr>
+      <tr><td>Type</td><td>${asset.type}</td></tr>
+      <tr><td>Brand</td><td>${asset.brand||'—'}</td></tr>
+      <tr><td>Branch</td><td>${document.getElementById('ho-branch').value||asset.dept||'—'}</td></tr>
+      <tr><td>Employee name</td><td>${employee}</td></tr>
+      <tr><td>Handover date</td><td>${fmtDate(date)}</td></tr>
+      <tr><td>Condition at handover</td><td>${condition}</td></tr>
+      <tr><td>Notes</td><td>${notes||'—'}</td></tr>
+    </table>
+    <p style="font-size:12px;margin-bottom:8px;font-weight:600">Employee signature — I acknowledge receipt of the above asset in the stated condition and agree to return it upon request.</p>
+    <div class="sig-box">${sig?`<img class="sig-img" src="${sig}">`:'No signature captured'}</div>
+    <br>
+    <table class="handover-table">
+      <tr><td>IT Admin signature</td><td style="height:60px"></td></tr>
+      <tr><td>Issued by</td><td>${currentUser.name}</td></tr>
+    </table>
+    <p style="font-size:10px;color:#999;margin-top:1rem">This document is computer-generated and forms part of the company's asset management records.</p>
+  </div>`
+  document.getElementById('print-area').innerHTML = html
+  document.getElementById('print-area').style.display='block'
+  window.print()
+  setTimeout(()=>document.getElementById('print-area').style.display='none',1000)
+}
+function renderPending() {
+  // Simulated pending — assets assigned via requests (none in demo, shows empty gracefully)
+  document.getElementById('pending-tbody').innerHTML = '<tr><td colspan="5" class="empty-msg">No pending requests.</td></tr>'
+}
+function renderHistory() {
+  const q = (document.getElementById('q-history')?.value||'').toLowerCase()
+  const rows = auditLog.filter(l=>['Assigned','Returned','Handover','Disposed'].some(k=>l.action.includes(k)))
+    .filter(l=>!q||[l.asset,l.user_label].some(x=>(x||'').toLowerCase().includes(q)))
+  document.getElementById('history-tbody').innerHTML = rows.map(l=>{
+    let changes={}; try{changes=JSON.parse(l.changes||'{}')}catch(e){}
+    const hasSig = changes.signature
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${l.asset}</div></td>
+      <td>${changes.employee||l.user_label}</td>
+      <td><span class="tag">${changes.branch||'—'}</span></td>
+      <td><span class="badge ${l.action.includes('Return')?'b-available':'b-assigned'}">${l.action}</span></td>
+      <td style="font-size:12px">${fmtDate(l.created_at?.slice(0,10))}</td>
+      <td style="font-size:12px">${changes.condition||'—'}</td>
+      <td>${hasSig?`<img src="${changes.signature}" style="height:30px;border:1px solid var(--border);border-radius:4px">`:''}</td>
+    </tr>`
+  }).join('') || '<tr><td colspan="7" class="empty-msg">No handover history.</td></tr>'
+}
+
+// ════════════════════════════════════════════════════════════════
+// WARRANTY
+// ════════════════════════════════════════════════════════════════
+function renderWarranty() {
+  const sorted = [...assets].filter(a=>a.warranty).sort((a,b)=>new Date(a.warranty)-new Date(b.warranty))
+  const noW = assets.filter(a=>!a.warranty)
+  const all = [...sorted,...noW]
+  document.getElementById('warranty-empty').style.display=all.length?'none':'block'
+  document.getElementById('warranty-tbody').innerHTML=all.map(a=>{
+    const w=wStatus(a.warranty)
+    const wb = w.days===null?'<span class="badge b-tag">No data</span>':w.days<0?'<span class="badge b-warn">Expired</span>':w.days<=90?'<span class="badge b-expiring">Expiring soon</span>':'<span class="badge b-available">Valid</span>'
+    return `<tr><td><div style="font-weight:600">${a.name}</div><div class="mono">${a.brand||''}</div></td><td class="mono">${a.serial||'—'}</td><td><span class="tag">${a.dept||'—'}</span></td><td>${a.assignee?`<div style="display:flex;align-items:center;gap:5px">${avatar(a.assignee)}<span style="font-size:12px">${a.assignee}</span></div>`:'—'}</td><td><span class="${w.cls}">${a.warranty||'—'}</span></td><td>${wb}</td><td>${canEdit()?`<button class="btn btn-sm" onclick="openEditAssetModal(${a.id})">Edit</button>`:''}</td></tr>`
+  }).join('')
+}
+
+// ════════════════════════════════════════════════════════════════
+// DISPOSAL
+// ════════════════════════════════════════════════════════════════
+function renderDisposal() {
+  const q=(document.getElementById('q-disposal')?.value||'').toLowerCase()
+  const fs=document.getElementById('f-disposal-status')?.value||''
+  const retired=assets.filter(a=>{
+    const mq=!q||[a.name,a.serial,a.dept].some(x=>(x||'').toLowerCase().includes(q))
+    const ms=!fs||(fs==='pending'&&a.status==='Retired')||(fs==='done'&&a.notes?.includes('[DISPOSED]'))
+    return (a.status==='Retired'||a.notes?.includes('[DISPOSED]'))&&mq&&ms
+  })
+  document.getElementById('disposal-empty').style.display=retired.length?'none':'block'
+  document.getElementById('disposal-tbody').innerHTML=retired.map(a=>{
+    const disposed=a.notes?.includes('[DISPOSED]')
+    return `<tr><td><div style="font-weight:600">${a.name}</div><div class="mono">${a.brand||''}</div></td><td class="mono">${a.serial||'—'}</td><td><span class="tag">${a.dept||'—'}</span></td><td>${badgeHtml(a.status)}</td><td style="font-size:12px">${a.notes?.replace('[DISPOSED]','').replace(/\[.*?\]/g,'')||'—'}</td><td style="font-size:12px">${fmtDate(a.date)}</td><td>${disposed?'<span class="badge b-available">Done</span>':`${canEdit()?`<button class="btn btn-sm" onclick="openDisposalModal(${a.id})">Process</button>`:''}`}</td></tr>`
+  }).join('')
+}
+function openDisposalModal(id) {
+  const a=assets.find(x=>x.id===id); if(!a)return
+  disposalAssetId=id
+  document.getElementById('disposal-asset-info').innerHTML=`<b>${a.name}</b> · ${a.serial||'—'} · ${a.type} · ${a.dept||'—'}`
+  document.getElementById('disp-date').value=new Date().toISOString().slice(0,10)
+  document.getElementById('disp-reason').value='End of life'
+  document.getElementById('disp-notes').value=''
+  ;['wc1','wc2','wc3','wc4','wc5'].forEach(id=>document.getElementById(id).checked=false)
+  closeModal('modal-view'); openModal('modal-disposal')
+}
+async function confirmDisposal() {
+  const checks=['wc1','wc2','wc3','wc4','wc5']
+  if(!checks.every(id=>document.getElementById(id).checked)){toast('Please complete all checklist items','error');return}
+  const a=assets.find(x=>x.id===disposalAssetId)
+  const reason=document.getElementById('disp-reason').value
+  const notes=document.getElementById('disp-notes').value
+  await sb.from('assets').update({status:'Retired',notes:`[DISPOSED] [${reason}] ${notes}`}).eq('id',disposalAssetId)
+  await dbLog('Disposed',a.name,`Reason: ${reason}`)
+  toast('✓ Asset disposal recorded','success')
+  closeModal('modal-disposal')
+  await loadAssets(); renderDisposal()
+}
+
+// ════════════════════════════════════════════════════════════════
+// ANALYTICS CHARTS
+// ════════════════════════════════════════════════════════════════
+function renderAnalytics() {
+  const filtered = currentBranchFilter ? assets.filter(a=>a.dept===currentBranchFilter) : assets
+
+  // Branch pills
+  const branches=['ECP','DCP','SNP','TEL']
+  document.getElementById('analytics-branch-filters').innerHTML=
+    `<button class="branch-pill ${!currentBranchFilter?'active':''}" onclick="currentBranchFilter='';renderAnalytics()">All</button>`+
+    branches.map(b=>`<button class="branch-pill ${currentBranchFilter===b?'active':''}" onclick="currentBranchFilter='${b}';renderAnalytics()">${b}</button>`).join('')
+
+  const makeChart=(id,type,labels,data,colors,opts={})=>{
+    if(charts[id])charts[id].destroy()
+    const ctx=document.getElementById(id)
+    if(!ctx)return
+    charts[id]=new Chart(ctx,{type,data:{labels,datasets:[{data,backgroundColor:colors,borderColor:type==='line'?colors[0]:colors,borderWidth:type==='bar'?0:2,fill:type==='line'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type!=='bar'}},scales:type==='bar'||type==='line'?{y:{beginAtZero:true,grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}:{},...opts}})
+  }
+  // By type
+  const types=filtered.reduce((m,a)=>{m[a.type]=(m[a.type]||0)+1;return m},{})
+  makeChart('chart-type','doughnut',Object.keys(types),Object.values(types),['#185FA5','#3B6D11','#854F0B','#534AB7','#0F6E56','#A32D2D','#888','#0C447C','#27500A'])
+
+  // Cost by dept
+  const depts=filtered.reduce((m,a)=>{m[a.dept||'Other']=(m[a.dept||'Other']||0)+(a.value||0);return m},{})
+  makeChart('chart-dept-cost','bar',Object.keys(depts),Object.values(depts),['#185FA5','#3B6D11','#854F0B','#534AB7'])
+
+  // Age distribution
+  const ageBuckets={'<1yr':0,'1-2yr':0,'2-3yr':0,'3-4yr':0,'4+yr':0}
+  filtered.forEach(a=>{
+    const age=assetAge(a.date)
+    if(age===null)return
+    if(age<1)ageBuckets['<1yr']++
+    else if(age<2)ageBuckets['1-2yr']++
+    else if(age<3)ageBuckets['2-3yr']++
+    else if(age<4)ageBuckets['3-4yr']++
+    else ageBuckets['4+yr']++
+  })
+  makeChart('chart-age','bar',Object.keys(ageBuckets),Object.values(ageBuckets),Object.keys(ageBuckets).map(k=>k==='4+yr'?'#A32D2D':'#185FA5'))
+
+  // Status
+  const statuses=filtered.reduce((m,a)=>{m[a.status]=(m[a.status]||0)+1;return m},{})
+  makeChart('chart-status','doughnut',Object.keys(statuses),Object.values(statuses),['#3B6D11','#185FA5','#854F0B','#5F5E5A'])
+
+  // Warranty calendar (simple list view)
+  const expiring=[...assets].filter(a=>a.warranty).sort((a,b)=>new Date(a.warranty)-new Date(b.warranty)).slice(0,12)
+  const now=new Date()
+  document.getElementById('warranty-cal').innerHTML=expiring.length?expiring.map(a=>{
+    const w=wStatus(a.warranty)
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px"><div><div style="font-weight:600">${a.name}</div><div style="font-size:11px;color:var(--text2)">${a.dept||'—'} · ${a.assignee||'Unassigned'}</div></div><span class="${w.cls}">${w.label}</span></div>`
+  }).join(''):'<div class="empty-msg">No warranty data.</div>'
+
+  // Top assignees
+  const byP=filtered.filter(a=>a.assignee).reduce((m,a)=>{m[a.assignee]=(m[a.assignee]||0)+1;return m},{})
+  const maxP=Math.max(...Object.values(byP),1)
+  document.getElementById('top-assignees').innerHTML=Object.entries(byP).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`<div class="rbar-wrap"><div class="rbar-label"><div style="display:flex;align-items:center;gap:6px">${avatar(k)}<span style="font-size:13px">${k}</span></div><span style="color:var(--text2)">${v}</span></div><div class="rbar-track"><div class="rbar-fill" style="background:#1D9E75;width:${Math.round(v/maxP*100)}%"></div></div></div>`).join('')||'<div class="empty-msg">No assigned assets.</div>'
+}
+
+// ════════════════════════════════════════════════════════════════
+// DEPRECIATION
+// ════════════════════════════════════════════════════════════════
+function renderDepreciation() {
+  const usefulLife=parseFloat(document.getElementById('useful-life')?.value)||4
+  const method=document.getElementById('depr-method')?.value||'straight'
+  const withVal=assets.filter(a=>a.value&&a.date)
+  const totalOrig=withVal.reduce((s,a)=>s+(a.value||0),0)
+  const totalCurr=withVal.reduce((s,a)=>s+(deprValue(a,method,usefulLife)||0),0)
+  const pastLife=withVal.filter(a=>(assetAge(a.date)||0)>=usefulLife)
+
+  document.getElementById('depr-stats').innerHTML=[
+    ['Assets with value data',withVal.length,'of '+assets.length+' total',''],
+    ['Total original value','AED '+totalOrig.toLocaleString(),'at purchase',''],
+    ['Total current value','AED '+totalCurr.toLocaleString(),'estimated today','color:var(--green)'],
+    ['Past useful life',pastLife.length,'need review','color:var(--red)'],
+  ].map(([l,v,s,c])=>`<div class="stat-card"><div class="stat-lbl">${l}</div><div class="stat-val" style="${c}">${v}</div><div class="stat-sub">${s}</div></div>`).join('')
+
+  const sorted=[...withVal].sort((a,b)=>{
+    const da=deprValue(a,method,usefulLife)||0, db=deprValue(b,method,usefulLife)||0
+    return da-db
+  })
+  document.getElementById('depr-tbody').innerHTML=sorted.map(a=>{
+    const curr=deprValue(a,method,usefulLife)||0
+    const age=(assetAge(a.date)||0)
+    const pct=Math.round((1-curr/a.value)*100)
+    const past=age>=usefulLife
+    return `<tr ${past?'style="background:#fffdf5"':''}>
+      <td><div style="font-weight:600">${a.name}</div><div class="mono">${a.brand||''}</div></td>
+      <td><span class="tag">${a.dept||'—'}</span></td>
+      <td style="font-size:12px">${fmtDate(a.date)}</td>
+      <td style="font-size:13px">AED ${Number(a.value).toLocaleString()}</td>
+      <td style="font-size:13px;color:var(--green)">AED ${curr.toLocaleString()}</td>
+      <td><div style="font-size:12px;color:var(--red)">${pct}%</div><div class="depr-bar"><div class="depr-fill" style="width:${pct}%;background:${pct>75?'#A32D2D':pct>50?'#854F0B':'#185FA5'}"></div></div></td>
+      <td style="font-size:12px">${age.toFixed(1)} yrs</td>
+      <td>${past?'<span class="badge b-warn">Past life</span>':'<span class="badge b-available">OK</span>'}</td>
+    </tr>`
+  }).join('')
+}
+function exportDeprReport() {
+  const usefulLife=parseFloat(document.getElementById('useful-life')?.value)||4
+  const method=document.getElementById('depr-method')?.value||'straight'
+  const rows=assets.filter(a=>a.value&&a.date).map(a=>{
+    const curr=deprValue(a,method,usefulLife)||0
+    const age=assetAge(a.date)||0
+    return [a.name,a.type,a.serial||'',a.brand||'',a.dept||'',fmtDate(a.date),a.value,curr,Math.round((1-curr/a.value)*100)+'%',age.toFixed(1)+' yrs',age>=usefulLife?'Past useful life':'OK'].map(v=>`"${v}"`).join(',')
+  })
+  const csv=['Name,Type,Serial,Brand,Branch,PurchaseDate,OriginalAED,CurrentAED,Depreciated,Age,Status',...rows].join('\n')
+  dlCSV(csv,'depreciation-report.csv')
+}
+
+// ════════════════════════════════════════════════════════════════
+// AUDIT LOG
+// ════════════════════════════════════════════════════════════════
+function renderAudit() {
+  const q=(document.getElementById('q-audit')?.value||'').toLowerCase()
+  const fa=document.getElementById('f-audit-action')?.value||''
+  const rows=auditLog.filter(l=>{
+    const mq=!q||[l.asset,l.user_label,l.action,l.changes].some(x=>(x||'').toLowerCase().includes(q))
+    const ma=!fa||l.action.includes(fa)
+    return mq&&ma
+  })
+  document.getElementById('audit-tbody').innerHTML=rows.map(l=>{
+    const t=new Date(l.created_at).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+    const colMap={Created:'b-available',Updated:'b-assigned',Deleted:'b-warn',Assigned:'b-assigned',Returned:'b-available',Disposed:'b-warn',Exported:'b-tag',Imported:'b-tag'}
+    const badge=Object.entries(colMap).find(([k])=>l.action.includes(k))
+    let changesHtml='—'
+    if(l.changes&&!l.changes.startsWith('{')){
+      changesHtml=l.changes.split(' | ').map(c=>{
+        const m=c.match(/(.+): "(.+)" → "(.+)"/)
+        if(m) return `<span>${m[1]}: <span class="diff-old">${m[2]}</span> → <span class="diff-new">${m[3]}</span></span>`
+        return c
+      }).join('<br>')
+    }
+    return `<tr><td style="font-size:12px;color:var(--text2)">${t}</td><td><span class="badge ${badge?badge[1]:'b-tag'}">${l.action}</span></td><td style="font-size:13px;font-weight:500">${l.asset||'—'}</td><td style="font-size:12px">${l.user_label}</td><td class="audit-diff" style="font-size:12px">${changesHtml}</td></tr>`
+  }).join('')||'<tr><td colspan="5" class="empty-msg">No audit records.</td></tr>'
+}
+function exportAudit() {
+  const rows=auditLog.map(l=>[l.created_at,l.action,l.asset,l.user_label,l.changes||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))
+  const csv=['Timestamp,Action,Asset,User,Changes',...rows].join('\n')
+  dlCSV(csv,'audit-log.csv')
+  dbLog('Exported','Audit log')
+}
+
+// ════════════════════════════════════════════════════════════════
+// BULK ACTIONS
+// ════════════════════════════════════════════════════════════════
+function openBulkModal() {
+  document.getElementById('bulk-asset-count').textContent=`${selectedIds.size} assets selected`
+  document.getElementById('bulk-action').value=''
+  document.getElementById('bulk-fields').innerHTML=''
+  openModal('modal-bulk')
+}
+function renderBulkFields() {
+  const action=document.getElementById('bulk-action').value
+  const fields={
+    status:`<div class="fg"><label>New status</label><select id="bulk-val"><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select></div>`,
+    assign:`<div class="fg"><label>Assign to employee</label><input id="bulk-val" placeholder="Employee name"></div>`,
+    warranty:`<div class="fg"><label>Warranty expiry date</label><input type="date" id="bulk-val"></div>`,
+    dept:`<div class="fg"><label>Branch</label><select id="bulk-val"><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div>`,
+    delete:`<div style="font-size:13px;color:var(--red);padding:8px;background:var(--red-lt);border-radius:8px">⚠ This will permanently delete ${selectedIds.size} assets.</div>`,
+  }
+  document.getElementById('bulk-fields').innerHTML=fields[action]||''
+}
+async function applyBulkAction() {
+  const action=document.getElementById('bulk-action').value
+  if(!action){toast('Select an action','error');return}
+  const val=document.getElementById('bulk-val')?.value
+  const ids=[...selectedIds]
   try {
-    await dbDelete(viewingId)
-    await dbLog('Asset deleted', a.name)
-    toast('Asset deleted')
-    closeModal('modal-detail')
-    await loadAssets()
-  } catch (e) { alert('Error deleting: ' + e.message) }
-}
-function editCurrent() { openEditModal(viewingId) }
-function closeModal(id) { document.getElementById(id).classList.remove('open') }
-
-// ── QR + Barcode ───────────────────────────────────────────────────────
-function openQR() {
-  const a = assets.find(x => x.id === viewingId); if (!a) return
-  closeModal('modal-detail')
-  document.getElementById('qr-info').innerHTML = `<div class="qr-field"><div class="lbl">Asset</div><div class="val">${a.name}</div></div><div class="qr-field"><div class="lbl">Serial</div><div class="val">${a.serial || 'N/A'}</div></div><div class="qr-field"><div class="lbl">Type</div><div class="val">${a.type}</div></div><div class="qr-field"><div class="lbl">Department</div><div class="val">${a.dept || '—'}</div></div><div class="qr-field"><div class="lbl">Location</div><div class="val">${a.loc || '—'}</div></div><div class="qr-field"><div class="lbl">Status</div><div class="val">${a.status}</div></div>`
-  document.getElementById('modal-qr').classList.add('open')
-  setTimeout(() => { drawQR(a); drawBarcode(a) }, 100)
-}
-function drawQR(a) {
-  const c = document.getElementById('qr-canvas'), ctx = c.getContext('2d')
-  const data = `ASSET:${a.id}|NAME:${a.name}|SN:${a.serial || ''}|DEPT:${a.dept || ''}|STATUS:${a.status}`
-  const size = 180, mods = 25, cell = Math.floor(size / mods)
-  ctx.clearRect(0, 0, size, size); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size)
-  ctx.fillStyle = '#000'
-  let h = 0; for (let i = 0; i < data.length; i++) h = (h * 31 + data.charCodeAt(i)) >>> 0
-  for (let r = 0; r < mods; r++) for (let cc = 0; cc < mods; cc++) {
-    const inF = (r < 7 && cc < 7) || (r < 7 && cc >= mods - 7) || (r >= mods - 7 && cc < 7)
-    if (inF) {
-      const rr = r < 7 ? r : r - (mods - 7), rc = cc < 7 ? cc : cc - (mods - 7)
-      if ((rr === 0 || rr === 6 || rc === 0 || rc === 6) || (rr >= 2 && rr <= 4 && rc >= 2 && rc <= 4)) ctx.fillRect(cc * cell, r * cell, cell, cell)
-    } else { if ((h ^ (r * mods + cc) * 2654435761) % 3 === 0) ctx.fillRect(cc * cell, r * cell, cell, cell) }
-  }
-}
-function drawBarcode(a) {
-  const c = document.getElementById('bar-canvas'), ctx = c.getContext('2d')
-  const W = 280, H = 90, text = (a.serial || String(a.id)).toUpperCase()
-  ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H)
-  const barData = []
-  for (let i = 0; i < text.length; i++) { const code = text.charCodeAt(i); for (let b = 6; b >= 0; b--) barData.push((code >> b) & 1) }
-  barData.unshift(1, 0, 1, 1, 0, 1, 0); barData.push(1, 1, 0, 1, 0, 1, 1, 0, 1)
-  const bw = Math.floor((W - 20) / barData.length); let x = 10
-  ctx.fillStyle = '#000'
-  barData.forEach(b => { if (b) ctx.fillRect(x, 5, bw, H - 20); x += bw })
-  ctx.font = '11px monospace'; ctx.textAlign = 'center'; ctx.fillText(text, W / 2, H - 4)
-}
-function downloadQR() { const c = document.getElementById('qr-canvas'); const a = document.createElement('a'); a.href = c.toDataURL(); a.download = 'asset-qr.png'; a.click() }
-function downloadBar() { const c = document.getElementById('bar-canvas'); const a = document.createElement('a'); a.href = c.toDataURL(); a.download = 'asset-barcode.png'; a.click() }
-
-// ── CSV Export ─────────────────────────────────────────────────────────
-function exportCSV() {
-  const headers = ['ID', 'Name', 'Type', 'Serial', 'Brand', 'Status', 'Assignee', 'Department', 'Location', 'PurchaseDate', 'WarrantyExpiry', 'Value(AED)', 'Notes']
-  const rows = assets.map(a => [a.id, a.name, a.type, a.serial || '', a.brand || '', a.status, a.assignee || '', a.dept || '', a.loc || '', a.date || '', a.warranty || '', a.value || 0, a.notes || ''].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
-  const csv = [headers.join(','), ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a'); a.href = url; a.download = `it-assets-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
-  URL.revokeObjectURL(url)
-  dbLog('Exported to CSV', `${assets.length} assets`)
-  toast(`✓ Exported ${assets.length} assets`)
-}
-
-// ── CSV Import ─────────────────────────────────────────────────────────
-function openImportModal() {
-  document.getElementById('import-preview').style.display = 'none'
-  document.getElementById('import-error').style.display = 'none'
-  document.getElementById('import-confirm-btn').style.display = 'none'
-  document.getElementById('csv-file').value = ''
-  pendingImport = []
-  document.getElementById('modal-import').classList.add('open')
-}
-function handleDrop(e) { e.preventDefault(); document.getElementById('drop-zone').classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) parseCSV(f) }
-function handleFileSelect(e) { const f = e.target.files[0]; if (f) parseCSV(f) }
-// RFC-4180 compliant CSV parser — correctly handles quoted fields containing commas
-function parseCSVLine(line) {
-  const cols = []; let cur = ''; let inQ = false
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (inQ) {
-      if (ch === '"' && line[i+1] === '"') { cur += '"'; i++ }
-      else if (ch === '"') { inQ = false }
-      else { cur += ch }
+    if(action==='delete'){
+      if(!confirm(`Delete ${ids.length} assets permanently?`))return
+      for(const id of ids) await sb.from('assets').delete().eq('id',id)
+      await dbLog('Deleted',`${ids.length} assets (bulk)`)
     } else {
-      if (ch === '"') { inQ = true }
-      else if (ch === ',') { cols.push(cur.trim()); cur = '' }
-      else { cur += ch }
+      const update=action==='status'?{status:val}:action==='assign'?{assignee:val,status:'Assigned'}:action==='warranty'?{warranty:val}:{dept:val}
+      for(const id of ids) await sb.from('assets').update(update).eq('id',id)
+      await dbLog(`Bulk ${action}`,`${ids.length} assets → ${val}`)
     }
-  }
-  cols.push(cur.trim())
-  return cols
+    toast(`✓ Bulk action applied to ${ids.length} assets`,'success')
+    closeModal('modal-bulk')
+    clearSelection()
+    await loadAssets(); renderDashboard()
+  } catch(e){toast('Error: '+e.message,'error')}
 }
 
-function parseCSV(file) {
-  const reader = new FileReader()
-  reader.onload = e => {
-    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim())
-    if (lines.length < 2) { showImportError('CSV appears empty or has no data rows.'); return }
-    const parsed = []
-    for (const line of lines.slice(1).slice(0, 500)) {
-      const cols = parseCSVLine(line)
-      if (!cols[0]) continue
-      // Sanitise date fields — if they don't look like a date, treat as null
-      const toDate = v => (v && /^\d{4}-\d{2}-\d{2}$/.test(v.trim())) ? v.trim() : null
-      parsed.push({
-        name:     cols[0]  || 'Unnamed',
-        type:     cols[1]  || 'Other',
-        serial:   cols[2]  || '',
-        brand:    cols[3]  || '',
-        status:   cols[4]  || 'Available',
-        assignee: cols[5]  || '',
-        dept:     cols[6]  || '',
-        loc:      cols[7]  || '',
-        date:     toDate(cols[8]),
-        warranty: toDate(cols[9]),
-        value:    parseFloat(cols[10]) || 0,
-        notes:    cols[11] || ''
-      })
+// ════════════════════════════════════════════════════════════════
+// USERS
+// ════════════════════════════════════════════════════════════════
+function renderUsers() {
+  const roleBadge={admin:'b-admin',manager:'b-manager',staff:'b-staff'}
+  document.getElementById('users-tbody').innerHTML=users.map(u=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:8px">${avatar(u.name)}<span style="font-weight:600">${u.name}</span></div></td>
+    <td style="font-size:13px">${u.email}</td>
+    <td><span class="badge ${roleBadge[u.role]||'b-tag'}">${u.role}</span></td>
+    <td><span class="tag">${u.branch||'All'}</span></td>
+    <td><div style="display:flex;gap:5px"><button class="btn btn-sm" onclick="editUser(${u.id})">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Remove</button></div></td>
+  </tr>`).join('')
+}
+function openAddUserModal() {
+  document.getElementById('user-modal-title').textContent='Add user'
+  ;['u-name','u-email','u-pass'].forEach(f=>document.getElementById(f).value='')
+  document.getElementById('u-role').value='staff'
+  document.getElementById('u-branch').value=''
+  openModal('modal-user')
+}
+function editUser(id){
+  const u=users.find(x=>x.id===id);if(!u)return
+  document.getElementById('user-modal-title').textContent='Edit user'
+  document.getElementById('u-name').value=u.name
+  document.getElementById('u-email').value=u.email
+  document.getElementById('u-pass').value=''
+  document.getElementById('u-role').value=u.role
+  document.getElementById('u-branch').value=u.branch||''
+  openModal('modal-user')
+}
+function saveUser() {
+  const name=document.getElementById('u-name').value.trim()
+  const email=document.getElementById('u-email').value.trim().toLowerCase()
+  if(!name||!email){toast('Name and email required','error');return}
+  const role=document.getElementById('u-role').value
+  const branch=document.getElementById('u-branch').value
+  const existing=users.find(u=>u.email===email)
+  if(existing){Object.assign(existing,{name,role,branch})}
+  else{users.push({id:Date.now(),name,email,role,branch,pass:document.getElementById('u-pass').value})}
+  DEMO_USERS[email]={name,role,branch,pass:document.getElementById('u-pass').value||'password123'}
+  toast('✓ User saved','success')
+  closeModal('modal-user')
+  renderUsers()
+}
+function deleteUser(id){
+  if(!confirm('Remove this user?'))return
+  users=users.filter(u=>u.id!==id)
+  renderUsers()
+  toast('User removed')
+}
+
+// ════════════════════════════════════════════════════════════════
+// QR + BARCODE
+// ════════════════════════════════════════════════════════════════
+function openQR(id) {
+  const a=assets.find(x=>x.id===id);if(!a)return
+  closeModal('modal-view')
+  document.getElementById('qr-info').innerHTML=`<div class="qr-field"><div class="lbl">Asset</div><div class="val">${a.name}</div></div><div class="qr-field"><div class="lbl">Serial</div><div class="val">${a.serial||'—'}</div></div><div class="qr-field"><div class="lbl">Type</div><div class="val">${a.type}</div></div><div class="qr-field"><div class="lbl">Branch</div><div class="val">${a.dept||'—'}</div></div><div class="qr-field"><div class="lbl">Assignee</div><div class="val">${a.assignee||'Unassigned'}</div></div><div class="qr-field"><div class="lbl">Status</div><div class="val">${a.status}</div></div>`
+  openModal('modal-qr')
+  setTimeout(()=>{drawQR(a);drawBarcode(a)},100)
+}
+function drawQR(a){
+  const c=document.getElementById('qr-canvas'),ctx=c.getContext('2d')
+  const data=`ID:${a.id}|NAME:${a.name}|SN:${a.serial||''}|DEPT:${a.dept||''}|STATUS:${a.status}`
+  const size=180,mods=25,cell=Math.floor(size/mods)
+  ctx.clearRect(0,0,size,size);ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size)
+  ctx.fillStyle='#000'
+  let h=0;for(let i=0;i<data.length;i++)h=(h*31+data.charCodeAt(i))>>>0
+  for(let r=0;r<mods;r++)for(let cc=0;cc<mods;cc++){
+    const inF=(r<7&&cc<7)||(r<7&&cc>=mods-7)||(r>=mods-7&&cc<7)
+    if(inF){const rr=r<7?r:r-(mods-7),rc=cc<7?cc:cc-(mods-7);if((rr===0||rr===6||rc===0||rc===6)||(rr>=2&&rr<=4&&rc>=2&&rc<=4))ctx.fillRect(cc*cell,r*cell,cell,cell)}
+    else{if((h^(r*mods+cc)*2654435761)%3===0)ctx.fillRect(cc*cell,r*cell,cell,cell)}
+  }
+}
+function drawBarcode(a){
+  const c=document.getElementById('bar-canvas'),ctx=c.getContext('2d')
+  const W=280,H=90,text=(a.serial||String(a.id)).toUpperCase().slice(0,20)
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H)
+  const barData=[];for(let i=0;i<text.length;i++){const code=text.charCodeAt(i);for(let b=6;b>=0;b--)barData.push((code>>b)&1)}
+  barData.unshift(1,0,1,1,0,1,0);barData.push(1,1,0,1,0,1,1,0,1)
+  const bw=Math.floor((W-20)/barData.length);let x=10
+  ctx.fillStyle='#000';barData.forEach(b=>{if(b)ctx.fillRect(x,5,bw,H-20);x+=bw})
+  ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText(text,W/2,H-4)
+}
+function dlCanvas(id,name){const c=document.getElementById(id);const a=document.createElement('a');a.href=c.toDataURL();a.download=name;a.click()}
+
+// ════════════════════════════════════════════════════════════════
+// ATTACHMENTS
+// ════════════════════════════════════════════════════════════════
+function handleAttach(e) {
+  const files=Array.from(e.target.files)
+  files.forEach(f=>{
+    const reader=new FileReader()
+    reader.onload=ev=>{
+      attachments.push({name:f.name,dataUrl:ev.target.result,type:f.type})
+      renderAttachList()
     }
-    if (!parsed.length) { showImportError('No valid rows found.'); return }
-    pendingImport = parsed
-    document.getElementById('import-count').textContent = `Found ${parsed.length} asset${parsed.length > 1 ? 's' : ''} ready to import`
-    document.getElementById('import-preview-text').textContent = parsed.slice(0, 5).map(a => `${a.name} · ${a.type} · ${a.serial || 'no serial'}`).join('\n') + (parsed.length > 5 ? `\n…and ${parsed.length - 5} more` : '')
-    document.getElementById('import-preview').style.display = 'block'
-    document.getElementById('import-error').style.display = 'none'
-    document.getElementById('import-confirm-btn').style.display = 'inline-block'
+    reader.readAsDataURL(f)
+  })
+}
+function renderAttachList(){
+  document.getElementById('attach-list').innerHTML=attachments.map((at,i)=>`<div class="attach-item"><div class="attach-item-left"><span>📎</span><span>${at.name}</span></div><button class="btn btn-sm btn-ghost" onclick="removeAttach(${i})">×</button></div>`).join('')
+}
+function removeAttach(i){attachments.splice(i,1);renderAttachList()}
+
+// ════════════════════════════════════════════════════════════════
+// IMPORT / EXPORT
+// ════════════════════════════════════════════════════════════════
+function parseCSVLine(line){
+  const cols=[];let cur='';let inQ=false
+  for(let i=0;i<line.length;i++){
+    const ch=line[i]
+    if(inQ){if(ch==='"'&&line[i+1]==='"'){cur+='"';i++}else if(ch==='"'){inQ=false}else{cur+=ch}}
+    else{if(ch==='"'){inQ=true}else if(ch===','){cols.push(cur.trim());cur=''}else{cur+=ch}}
+  }
+  cols.push(cur.trim());return cols
+}
+function handleDrop(e){e.preventDefault();document.getElementById('import-drop').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)parseImportCSV(f)}
+function handleFileSelect(e){const f=e.target.files[0];if(f)parseImportCSV(f)}
+function parseImportCSV(file){
+  const reader=new FileReader()
+  reader.onload=e=>{
+    const lines=e.target.result.split(/\r?\n/).filter(l=>l.trim())
+    if(lines.length<2){showImportErr('CSV has no data rows.');return}
+    const parsed=[];const toDate=v=>v&&/^\d{4}-\d{2}-\d{2}$/.test(v.trim())?v.trim():null
+    for(const line of lines.slice(1).slice(0,500)){
+      const cols=parseCSVLine(line);if(!cols[0])continue
+      parsed.push({name:cols[0]||'Unnamed',type:cols[1]||'Other',serial:cols[2]||'',brand:cols[3]||'',status:cols[4]||'Available',assignee:cols[5]||'',dept:cols[6]||'',loc:cols[7]||'',date:toDate(cols[8]),warranty:toDate(cols[9]),value:parseFloat(cols[10])||0,notes:cols[11]||''})
+    }
+    if(!parsed.length){showImportErr('No valid rows found.');return}
+    pendingImport=parsed
+    document.getElementById('import-count').textContent=`Found ${parsed.length} assets ready to import`
+    document.getElementById('import-preview-text').textContent=parsed.slice(0,5).map(a=>`${a.name} · ${a.type} · ${a.serial||'—'}`).join('\n')+(parsed.length>5?`\n…and ${parsed.length-5} more`:'')
+    document.getElementById('import-preview-area').style.display='block'
+    document.getElementById('import-err-msg').style.display='none'
+    document.getElementById('import-confirm-btn').style.display='inline-block'
   }
   reader.readAsText(file)
 }
-function showImportError(msg) { document.getElementById('import-error').textContent = msg; document.getElementById('import-error').style.display = 'block'; document.getElementById('import-confirm-btn').style.display = 'none' }
-async function confirmImport() {
-  const btn = document.getElementById('import-confirm-btn')
-  btn.textContent = 'Importing…'; btn.disabled = true
-  try {
-    const { error } = await sb.from('assets').insert(pendingImport)
-    if (error) throw error
-    await dbLog(`Bulk imported ${pendingImport.length} assets`, 'CSV import')
-    toast(`✓ Imported ${pendingImport.length} assets`)
-    closeModal('modal-import')
-    await loadAssets()
-  } catch (e) { showImportError('Import failed: ' + e.message) }
-  finally { btn.textContent = 'Import assets'; btn.disabled = false }
+function showImportErr(msg){document.getElementById('import-err-msg').innerHTML=`<div class="import-err">${msg}</div>`;document.getElementById('import-err-msg').style.display='block';document.getElementById('import-confirm-btn').style.display='none'}
+async function confirmImport(){
+  const btn=document.getElementById('import-confirm-btn')
+  btn.textContent='Importing…';btn.disabled=true
+  try{
+    const{error}=await sb.from('assets').insert(pendingImport)
+    if(error)throw error
+    await dbLog(`Bulk imported ${pendingImport.length} assets`,'CSV Import')
+    toast(`✓ Imported ${pendingImport.length} assets`,'success')
+    document.getElementById('import-preview-area').style.display='none'
+    document.getElementById('import-confirm-btn').style.display='none'
+    pendingImport=[]
+    await loadAll()
+  }catch(e){showImportErr('Import failed: '+e.message)}
+  finally{btn.textContent='Import assets';btn.disabled=false}
 }
-function downloadTemplate() {
-  const hdr = 'name,type,serial,brand,status,assignee,department,location,purchaseDate,warrantyExpiry,value,notes'
-  const ex = '"MacBook Pro 14",Laptop,SN123456,Apple,Assigned,"John Doe",Engineering,"Floor 2 Desk 5",2024-01-15,2027-01-15,12000,"Team lead device"'
-  const blob = new Blob([hdr + '\n' + ex], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a'); a.href = url; a.download = 'asset-import-template.csv'; a.click()
-  URL.revokeObjectURL(url)
+function downloadTemplate(){
+  const csv='name,type,serial,brand,status,assignee,department,location,purchaseDate,warrantyExpiry,value,notes\n"MacBook Pro 14",Laptop,SN123456,Apple,Assigned,"John Doe",ECP,"Floor 2 Desk 5",2024-01-15,2027-01-15,12000,"Team lead device"'
+  dlCSV(csv,'asset-import-template.csv')
 }
-
-// ── Tab switching ──────────────────────────────────────────────────────
-function switchTab(tab, el) {
-  currentTab = tab
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
-  if (el) el.classList.add('active')
-  ;['assets', 'warranty', 'activity', 'reports'].forEach(t => document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none')
-  if (tab === 'warranty') renderWarranty()
-  if (tab === 'activity') renderActivity()
-  if (tab === 'reports') renderReports()
+function exportCSV(){
+  const rows=assets.map(a=>[a.id,a.name,a.type,a.serial||'',a.brand||'',a.status,a.assignee||'',a.dept||'',a.loc||'',a.date||'',a.warranty||'',a.value||0,a.notes||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))
+  const csv=['ID,Name,Type,Serial,Brand,Status,Assignee,Branch,Location,PurchaseDate,WarrantyExpiry,Value(AED),Notes',...rows].join('\n')
+  dlCSV(csv,`it-assets-${new Date().toISOString().slice(0,10)}.csv`)
+  dbLog('Exported','All assets (CSV)')
+  toast(`✓ Exported ${assets.length} assets`,'success')
 }
-
-// ── Boot ───────────────────────────────────────────────────────────────
-loadAssets()
+function dlCSV(csv,name){const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 </script>
 </body>
 </html>
