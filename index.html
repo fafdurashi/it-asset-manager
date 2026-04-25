@@ -267,11 +267,11 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
       <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M20 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 3h2v2h-2V6zm-4 0h2v2H7V6zm9 12H8v-2h8v2zm3-4H5v-2h14v2zm0-4h-2V8h2v2z"/></svg></div>
       <h2>IT Asset Manager</h2>
       <p>Sign in to your account</p>
-      <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="admin@company.com" value="admin@company.com"></div>
-      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" value="password123" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:1rem;line-height:1.6"><b>Demo accounts:</b><br>admin@company.com / password123 (Admin)<br>manager@company.com / password123 (Manager)<br>staff@company.com / password123 (Staff)</div>
+      <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="Enter your email"></div>
+      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn-full" onclick="doLogin()">Sign in</button>
       <div class="login-err" id="login-err"></div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:.75rem">Default password: <b>password123</b> — change after first login via User Management</div>
     </div>
   </div>
 </div>
@@ -681,9 +681,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // Demo users (in production use Supabase Auth)
 const DEMO_USERS = {
-  'admin@company.com':   { name:'Admin User',   role:'admin',   branch:'', pass:'password123' },
-  'manager@company.com': { name:'Manager User', role:'manager', branch:'ECP', pass:'password123' },
-  'staff@company.com':   { name:'Staff User',   role:'staff',   branch:'DCP', pass:'password123' },
+  'rashick2012@gmail.com': { name:'Admin', role:'admin', branch:'', pass:'password123' },
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1502,7 +1500,7 @@ function saveUser() {
   const existing=users.find(u=>u.email===email)
   if(existing){Object.assign(existing,{name,role,branch})}
   else{users.push({id:Date.now(),name,email,role,branch,pass:document.getElementById('u-pass').value})}
-  DEMO_USERS[email]={name,role,branch,pass:document.getElementById('u-pass').value||'password123'}
+  DEMO_USERS[email]={name,role,branch,pass:document.getElementById('u-pass').value||'changeme'}
   toast('✓ User saved','success')
   closeModal('modal-user')
   renderUsers()
