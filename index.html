@@ -735,14 +735,14 @@ function nav(el) {
   document.getElementById('page-' + pg).classList.add('active')
   document.getElementById('page-title').textContent = PAGE_TITLES[pg] || pg
   setTopbarActions(pg)
-  if (pg === 'warranty')       renderWarranty()
-  if (pg === 'assign')         renderHistory(); renderPending()
-  if (pg === 'disposal')       renderDisposal()
-  if (pg === 'dashboard-adv')  renderAnalytics()
-  if (pg === 'depreciation')   renderDepreciation()
-  if (pg === 'audit')          renderAudit()
-  if (pg === 'dashboard')      renderDashboard()
-  if (pg === 'users')          renderUsers()
+  if (pg === 'warranty')      { renderWarranty() }
+  if (pg === 'assign')        { renderHistory(); renderPending() }
+  if (pg === 'disposal')      { renderDisposal() }
+  if (pg === 'dashboard-adv') { renderAnalytics() }
+  if (pg === 'depreciation')  { renderDepreciation() }
+  if (pg === 'audit')         { renderAudit() }
+  if (pg === 'dashboard')     { renderDashboard() }
+  if (pg === 'users')         { renderUsers() }
 }
 function setTopbarActions(pg) {
   const el = document.getElementById('topbar-actions')
@@ -759,12 +759,14 @@ function setTopbarActions(pg) {
 // LOAD DATA
 // ════════════════════════════════════════════════════════════════
 async function loadAll() {
-  await Promise.all([loadAssets(), loadHistory(), loadAudit()])
+  await loadAssets()
+  await loadAudit()
   renderDashboard()
   updateBadges()
 }
 async function loadAssets() {
-  const { data } = await sb.from('assets').select('*').order('created_at', { ascending: false })
+  const { data, error } = await sb.from('assets').select('*').order('created_at', { ascending: false })
+  if (error) { console.error('loadAssets:', error); return }
   assets = data || []
   renderAssets()
   populateHandoverDropdown()
@@ -773,8 +775,6 @@ async function loadHistory() {
   const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(500)
   assignHistory = (data || []).filter(l => ['Assigned','Returned','Handover'].some(k => l.action.includes(k)))
   auditLog = data || []
-  renderHistory()
-  renderPending()
 }
 async function loadAudit() {
   const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(300)
