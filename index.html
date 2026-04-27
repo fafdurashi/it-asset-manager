@@ -755,6 +755,11 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 // ════════════════════════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════════════════════════
+// NOTE: Run this SQL in Supabase if columns are missing:
+// alter table assets add column if not exists assigned_date date;
+// alter table assets add column if not exists returned_date date;
+// alter table assets add column if not exists attachments jsonb default '[]';
+// ────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://htivgesylecdicfkpyio.supabase.co'
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0aXZnZXN5bGVjZGljZmtweWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwOTk3NDYsImV4cCI6MjA5MjY3NTc0Nn0.g8TmKAi8ltUEO19tl80cn-8pYCmbVKL1LisgVNb4V0w'
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -1099,35 +1104,52 @@ function openEditAssetModal(id) {
 async function saveAsset() {
   const name = document.getElementById('fa-name').value.trim()
   if (!name) { toast('Please enter an asset name','error'); return }
-  const toDate = v => (v&&/^\d{4}-\d{2}-\d{2}$/.test(v))?v:null
+  const toDate = v => (v && /^\d{4}-\d{2}-\d{2}$/.test(v.trim())) ? v.trim() : null
+  const newStatus   = document.getElementById('fa-status').value
+  const newAssignee = document.getElementById('fa-assignee').value.trim()
+  const old = editingAssetId ? assets.find(a=>a.id===editingAssetId) : null
+
+  // Core payload — only columns guaranteed to exist in Supabase
   const payload = {
-    name, type:document.getElementById('fa-type').value,
-    serial:document.getElementById('fa-serial').value.trim(),
-    brand:document.getElementById('fa-brand').value.trim(),
-    status:document.getElementById('fa-status').value,
-    assignee:document.getElementById('fa-assignee').value.trim(),
-    dept:document.getElementById('fa-dept').value,
-    loc:document.getElementById('fa-loc').value.trim(),
-    date:toDate(document.getElementById('fa-date').value),
-    warranty:toDate(document.getElementById('fa-warranty').value),
-    value:parseFloat(document.getElementById('fa-value').value)||0,
-    notes:document.getElementById('fa-notes').value.trim(),
-    attachments: attachments,
-    // Auto-set assigned_date if status changed to Assigned and no date exists
-    assigned_date: (document.getElementById('fa-status').value==='Assigned' && editingAssetId && !assets.find(a=>a.id===editingAssetId)?.assigned_date) ? new Date().toISOString().slice(0,10) : (editingAssetId ? assets.find(a=>a.id===editingAssetId)?.assigned_date||null : null),
-    returned_date: document.getElementById('fa-status').value!=='Assigned' ? null : (editingAssetId ? assets.find(a=>a.id===editingAssetId)?.returned_date||null : null)
+    name,
+    type:     document.getElementById('fa-type').value,
+    serial:   document.getElementById('fa-serial').value.trim(),
+    brand:    document.getElementById('fa-brand').value.trim(),
+    status:   newStatus,
+    assignee: newAssignee,
+    dept:     document.getElementById('fa-dept').value,
+    loc:      document.getElementById('fa-loc').value.trim(),
+    date:     toDate(document.getElementById('fa-date').value),
+    warranty: toDate(document.getElementById('fa-warranty').value),
+    value:    parseFloat(document.getElementById('fa-value').value) || 0,
+    notes:    document.getElementById('fa-notes').value.trim(),
   }
+
+  // Attachments — only include if any uploaded
+  if (attachments && attachments.length > 0) payload.attachments = attachments
+
+  // assigned_date / returned_date — safe optional columns
+  try {
+    if (newStatus === 'Assigned' && newAssignee) {
+      payload.assigned_date = (old && old.assigned_date) ? old.assigned_date : new Date().toISOString().slice(0,10)
+      payload.returned_date = null
+    } else if (newStatus !== 'Assigned') {
+      if (old && old.returned_date) payload.returned_date = old.returned_date
+    }
+  } catch(e) { /* date columns may not exist yet — ignore */ }
+
   const btn = document.getElementById('save-asset-btn')
-  btn.textContent='Saving…'; btn.disabled=true
+  btn.textContent = 'Saving…'; btn.disabled = true
   try {
     if (editingAssetId) {
-      const old = assets.find(a=>a.id===editingAssetId)
       const changes = buildDiff(old, payload)
-      await sb.from('assets').update(payload).eq('id',editingAssetId)
+      const { error } = await sb.from('assets').update(payload).eq('id', editingAssetId)
+      if (error) throw error
       await dbLog('Updated', name, changes)
-      toast('✓ Asset updated','success')
+      toast('✓ Asset updated — ' + newStatus + (newAssignee ? ' → ' + newAssignee : ''), 'success')
     } else {
-      await sb.from('assets').insert(payload)
+      const { error } = await sb.from('assets').insert(payload)
+      if (error) throw error
       await dbLog('Created', name)
       toast('✓ Asset added','success')
     }
@@ -1135,8 +1157,11 @@ async function saveAsset() {
     await loadAssets()
     renderDashboard()
     updateBadges()
-  } catch(e) { toast('Error: '+e.message,'error') }
-  finally { btn.textContent='Save asset'; btn.disabled=false }
+  } catch(e) {
+    console.error('saveAsset error:', e)
+    toast('Save failed: ' + (e.message || e.details || JSON.stringify(e)), 'error', 7000)
+  }
+  finally { btn.textContent = 'Save asset'; btn.disabled = false }
 }
 
 function buildDiff(old, nw) {
@@ -1259,11 +1284,13 @@ async function saveHandover() {
   const sig = getSigDataUrl()
   const asset = assets.find(a=>a.id===assetId)
   // Update asset
-  await sb.from('assets').update({
-    status:'Assigned', assignee:employee, dept:branch||asset.dept,
-    assigned_date: date,
-    returned_date: null
-  }).eq('id',assetId)
+  // Update asset status, assignee, dates
+  const updatePayload = { status:'Assigned', assignee:employee }
+  if (branch) updatePayload.dept = branch
+  // Try to add date columns — may not exist yet in older DBs
+  try { updatePayload.assigned_date = date; updatePayload.returned_date = null } catch(e){}
+  const { error: updErr } = await sb.from('assets').update(updatePayload).eq('id',assetId)
+  if (updErr) { toast('Update failed: '+updErr.message,'error'); return }
   // Log handover
   await sb.from('activity_log').insert({
     action:'Assigned', asset:asset.name, user_label:currentUser.name,
@@ -1337,11 +1364,10 @@ async function saveReturn() {
     const days = Math.ceil((new Date(retDate) - new Date(assignedDate)) / 86400000)
     durationLabel = days >= 30 ? `${Math.floor(days/30)}m ${days%30}d` : `${days} day${days!==1?'s':''}`
   }
-  await sb.from('assets').update({
-    status:'Available', assignee:'',
-    returned_date: retDate,
-    assigned_date: assignedDate || null
-  }).eq('id',assetId)
+  const retPayload = { status:'Available', assignee:'' }
+  try { retPayload.returned_date = retDate; retPayload.assigned_date = assignedDate || null } catch(e){}
+  const { error: retErr } = await sb.from('assets').update(retPayload).eq('id',assetId)
+  if (retErr) { toast('Return failed: '+retErr.message,'error'); return }
   await sb.from('activity_log').insert({
     action:'Returned', asset:asset.name, user_label:currentUser.name,
     changes:JSON.stringify({ employee:prevAssignee, assigned_date:assignedDate, returned_date:retDate, duration:durationLabel, condition, reason, notes, assetId })
