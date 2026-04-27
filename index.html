@@ -896,37 +896,74 @@ let charts = {}
 let currentBranchFilter = ''
 
 // ════════════════════════════════════════════════════════════════
-// AUTH
+// AUTH  — auto-login for admin, session persisted in localStorage
 // ════════════════════════════════════════════════════════════════
+const SESSION_KEY = 'itam_session'
+const ADMIN_EMAIL = 'rashick2012@gmail.com'
+
+// Called once on page load — restores session if saved
+function checkAutoLogin() {
+  try {
+    const saved = localStorage.getItem(SESSION_KEY)
+    if (saved) {
+      const session = JSON.parse(saved)
+      // Validate the saved email still exists in DEMO_USERS
+      const u = DEMO_USERS[session.email]
+      if (u) {
+        applyLogin({ email: session.email, ...u })
+        return true
+      }
+    }
+  } catch(e) {}
+  // Admin gets auto-login without needing to click anything
+  const adminUser = DEMO_USERS[ADMIN_EMAIL]
+  if (adminUser) {
+    applyLogin({ email: ADMIN_EMAIL, ...adminUser })
+    return true
+  }
+  return false
+}
+
 function doLogin() {
   const email = document.getElementById('login-email').value.trim().toLowerCase()
   const pass  = document.getElementById('login-pass').value
   const u = DEMO_USERS[email]
-  if (!u || u.pass !== pass) { document.getElementById('login-err').textContent = 'Invalid email or password.'; return }
-  currentUser = { email, ...u }
+  if (!u || u.pass !== pass) {
+    document.getElementById('login-err').textContent = 'Invalid email or password.'
+    return
+  }
+  // Save session to localStorage
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ email })) } catch(e) {}
+  applyLogin({ email, ...u })
+}
+
+function applyLogin(user) {
+  currentUser = user
   document.getElementById('login-screen').style.display = 'none'
   document.getElementById('app').style.display = 'block'
-  document.getElementById('sb-name').textContent = u.name
-  document.getElementById('sb-role').textContent = u.role.charAt(0).toUpperCase() + u.role.slice(1)
-  document.getElementById('sb-branch').textContent = u.branch ? `Branch: ${u.branch}` : 'All branches'
+  document.getElementById('sb-name').textContent = user.name
+  document.getElementById('sb-role').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1)
+  document.getElementById('sb-branch').textContent = user.branch ? `Branch: ${user.branch}` : 'All branches'
   // Role-based UI
-  if (u.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = '')
-  if (u.role === 'accounts') {
-    // Accounts: can add assets + upload invoices, cannot assign/return, dispose, or access admin
+  if (user.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = '')
+  if (user.role === 'accounts') {
     document.getElementById('nav-disposal').style.display = 'none'
     document.getElementById('nav-assign').style.display = 'none'
   }
-  if (u.role === 'staff') {
+  if (user.role === 'staff') {
     document.getElementById('nav-disposal').style.display = 'none'
     document.getElementById('nav-invoices').style.display = 'none'
   }
-  if (u.role === 'manager') {
+  if (user.role === 'manager') {
     document.getElementById('nav-invoices').style.display = 'none'
   }
   initSignaturePad()
   loadAll()
 }
+
 function doLogout() {
+  // Clear saved session — next visit will show login screen
+  try { localStorage.removeItem(SESSION_KEY) } catch(e) {}
   currentUser = null
   document.getElementById('app').style.display = 'none'
   document.getElementById('login-screen').style.display = 'block'
@@ -2490,6 +2527,9 @@ function renderScanHistory() {
   }).join('')
 }
 
+
+// ── Boot: attempt auto-login on page load ──────────────────────
+checkAutoLogin()
 </script>
 </body>
 </html>
