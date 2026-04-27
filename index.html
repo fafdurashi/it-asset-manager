@@ -290,7 +290,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 <body>
 
 <!-- ══ LOGIN SCREEN ══════════════════════════════════════════════ -->
-<div id="login-screen">
+<div id="login-screen" style="display:none">
   <div class="login-wrap">
     <div class="login-card">
       <div style="width:56px;height:56px;background:linear-gradient(135deg,#5B4FCF,#7B6FEF);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 4px 16px rgba(91,79,207,.4)"><span style="font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">RS</span></div>
@@ -1207,7 +1207,6 @@ function applyLogin(user) {
     document.getElementById('nav-assign').style.display = 'none'
     document.getElementById('nav-disposal').style.display = 'none'
   }
-  } catch(e) { console.warn('Role UI error:', e) }
   initSignaturePad()
   loadAll()
 }
@@ -3456,9 +3455,31 @@ function downloadStaffTemplate() {
   dlCSV(csv, 'staff-import-template.csv')
 }
 
-// ── Boot: attempt auto-login on page load ──────────────────────
-try { loadSettings() } catch(e) { console.warn('loadSettings error:', e) }
-try { checkAutoLogin() } catch(e) { console.error('checkAutoLogin error:', e) }
+// ── Boot on DOM ready ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  try { loadSettings() } catch(e) { console.warn('loadSettings:', e) }
+
+  // Step 1: Restore saved session (manager/accounts stay logged in)
+  try {
+    const saved = localStorage.getItem(SESSION_KEY)
+    if (saved) {
+      const session = JSON.parse(saved)
+      const u = DEMO_USERS[session.email]
+      if (u) { applyLogin({ email: session.email, ...u }); return }
+    }
+  } catch(e) {
+    try { localStorage.removeItem(SESSION_KEY) } catch(e2) {}
+  }
+
+  // Step 2: No saved session — auto-login as admin
+  try {
+    const adminUser = DEMO_USERS[ADMIN_EMAIL]
+    if (adminUser) { applyLogin({ email: ADMIN_EMAIL, ...adminUser }); return }
+  } catch(e) { console.error('Admin auto-login failed:', e) }
+
+  // Step 3: Last resort — show login screen
+  document.getElementById('login-screen').style.display = 'block'
+})
 </script>
 </body>
 </html>
