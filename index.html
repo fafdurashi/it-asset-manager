@@ -556,7 +556,28 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem">
           <div class="card" style="padding:1.25rem">
             <div class="section-title" style="margin-bottom:1rem">Upload new document</div>
-            <div class="fg"><label>Asset *</label><select id="inv-asset-sel"><option value="">— Select asset —</option></select></div>
+            <!-- Toggle: existing vs new asset -->
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <button id="inv-mode-existing" class="btn btn-primary btn-sm" onclick="setInvMode('existing')" style="flex:1">Existing asset</button>
+              <button id="inv-mode-new" class="btn btn-sm" onclick="setInvMode('new')" style="flex:1">+ New asset</button>
+            </div>
+
+            <!-- Existing asset selector -->
+            <div id="inv-existing-fields" class="fg"><label>Asset *</label><select id="inv-asset-sel"><option value="">— Select asset —</option></select></div>
+
+            <!-- New asset fields -->
+            <div id="inv-new-fields" style="display:none">
+              <div class="fg"><label>Asset name *</label><input id="inv-new-name" placeholder="e.g. HP Laptop 15s"></div>
+              <div class="frow">
+                <div class="fg"><label>Type</label><select id="inv-new-type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Camera</option><option>SIM</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select></div>
+                <div class="fg"><label>Branch</label><select id="inv-new-dept"><option value="">— None —</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div>
+              </div>
+              <div class="frow">
+                <div class="fg"><label>Serial</label><input id="inv-new-serial" placeholder="Serial number"></div>
+                <div class="fg"><label>Brand</label><input id="inv-new-brand" placeholder="Brand"></div>
+              </div>
+              <div class="fg"><label>Assigned to</label><input id="inv-new-assignee" placeholder="Leave blank if unassigned"></div>
+            </div>
             <div class="fg"><label>Document type</label><select id="inv-doc-type"><option>Invoice</option><option>Warranty certificate</option><option>Contract</option><option>Other</option></select></div>
             <div class="fg"><label>Vendor / Supplier</label><input id="inv-vendor" placeholder="e.g. Jumbo Electronics"></div>
             <div class="fg"><label>Invoice number</label><input id="inv-number" placeholder="e.g. INV-2024-0012"></div>
@@ -2392,9 +2413,20 @@ function clearInvoiceFile() {
   document.getElementById('inv-drop-zone').style.borderColor = ''
 }
 
+let invMode = 'existing'  // 'existing' or 'new'
+
+function setInvMode(mode) {
+  invMode = mode
+  document.getElementById('inv-existing-fields').style.display = mode === 'existing' ? '' : 'none'
+  document.getElementById('inv-new-fields').style.display      = mode === 'new'      ? '' : 'none'
+  document.getElementById('inv-mode-existing').className = mode === 'existing' ? 'btn btn-primary btn-sm' : 'btn btn-sm'
+  document.getElementById('inv-mode-new').className      = mode === 'new'      ? 'btn btn-primary btn-sm' : 'btn btn-sm'
+  // Update flex styles
+  document.getElementById('inv-mode-existing').style.flex = '1'
+  document.getElementById('inv-mode-new').style.flex = '1'
+}
+
 async function saveInvoice() {
-  const assetId = parseInt(document.getElementById('inv-asset-sel').value)
-  if (!assetId) { toast('Please select an asset', 'error'); return }
   const docType  = document.getElementById('inv-doc-type').value
   const vendor   = document.getElementById('inv-vendor').value.trim()
   const invNum   = document.getElementById('inv-number').value.trim()
@@ -2402,31 +2434,67 @@ async function saveInvoice() {
   const invDate  = document.getElementById('inv-date').value
   const notes    = document.getElementById('inv-notes').value.trim()
 
-  const asset = assets.find(a => a.id === assetId)
-  const existing = asset.attachments || []
-
-  const newAtt = {
-    name: invoiceFileData ? invoiceFileData.name : `${docType} - ${invNum || 'doc'}.pdf`,
-    dataUrl: invoiceFileData ? invoiceFileData.dataUrl : '',
-    type: invoiceFileData ? invoiceFileData.type : 'application/pdf',
-    invMeta: { docType, vendor, invNum, amount, invDate, notes, uploadedBy: currentUser.name, uploadedAt: new Date().toISOString() }
-  }
-
-  const updated = [...existing, newAtt]
   const btn = document.querySelector('#page-invoices .btn-primary')
   btn.textContent = 'Saving…'; btn.disabled = true
+
   try {
-    await sb.from('assets').update({ attachments: updated }).eq('id', assetId)
-    await dbLog('Invoice uploaded', asset.name, `${docType} · ${vendor} · AED ${amount}`)
-    toast(`✓ Document saved for ${asset.name}`, 'success')
+    let assetId, assetName
+
+    if (invMode === 'new') {
+      // ── Create new asset first ──
+      const newName = document.getElementById('inv-new-name').value.trim()
+      if (!newName) { toast('Please enter an asset name', 'error'); btn.textContent='Save document';btn.disabled=false; return }
+      const toDate = v => (v && /^\d{4}-\d{2}-\d{2}$/.test(v.trim())) ? v.trim() : null
+      const newPayload = {
+        name:     newName,
+        type:     document.getElementById('inv-new-type').value,
+        serial:   document.getElementById('inv-new-serial').value.trim(),
+        brand:    document.getElementById('inv-new-brand').value.trim(),
+        dept:     document.getElementById('inv-new-dept').value,
+        assignee: document.getElementById('inv-new-assignee').value.trim(),
+        status:   document.getElementById('inv-new-assignee').value.trim() ? 'Assigned' : 'Available',
+        date:     invDate ? toDate(invDate) : null,
+        value:    amount || 0,
+        notes:    '',
+      }
+      const { data: newAsset, error: newErr } = await sb.from('assets').insert(newPayload).select().single()
+      if (newErr) throw newErr
+      assetId   = newAsset.id
+      assetName = newAsset.name
+      await dbLog('Created', assetName, 'Via invoice upload')
+      toast(`✓ New asset "${assetName}" created`, 'success')
+      // Reload so the new asset appears
+      await loadAssets()
+    } else {
+      // ── Use existing asset ──
+      assetId = parseInt(document.getElementById('inv-asset-sel').value)
+      if (!assetId) { toast('Please select an asset', 'error'); btn.textContent='Save document';btn.disabled=false; return }
+      const asset = assets.find(a => a.id === assetId)
+      assetName = asset.name
+    }
+
+    // ── Attach document to asset ──
+    const asset = assets.find(a => a.id === assetId) || { attachments: [] }
+    const existing = asset.attachments || []
+    const newAtt = {
+      name: invoiceFileData ? invoiceFileData.name : `${docType} - ${invNum || 'doc'}.pdf`,
+      dataUrl: invoiceFileData ? invoiceFileData.dataUrl : '',
+      type: invoiceFileData ? invoiceFileData.type : 'application/pdf',
+      invMeta: { docType, vendor, invNum, amount, invDate, notes, uploadedBy: currentUser.name, uploadedAt: new Date().toISOString() }
+    }
+    await sb.from('assets').update({ attachments: [...existing, newAtt] }).eq('id', assetId)
+    await dbLog('Invoice uploaded', assetName, `${docType} · ${vendor} · AED ${amount}`)
+    toast(`✓ Document saved for ${assetName}`, 'success')
+
     // Reset form
     document.getElementById('inv-asset-sel').value = ''
-    document.getElementById('inv-vendor').value = ''
-    document.getElementById('inv-number').value = ''
-    document.getElementById('inv-amount').value = ''
-    document.getElementById('inv-notes').value = ''
+    ;['inv-vendor','inv-number','inv-amount','inv-notes','inv-new-name','inv-new-serial','inv-new-brand','inv-new-assignee'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = ''
+    })
     document.getElementById('inv-doc-type').value = 'Invoice'
+    document.getElementById('inv-new-dept').value = ''
     clearInvoiceFile()
+    setInvMode('existing')
     await loadAssets()
     await loadInvoices()
     renderInvoices()
