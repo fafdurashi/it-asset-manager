@@ -372,6 +372,9 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
           <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg> Audit Log
         </div>
         <div class="sb-section admin-only" style="display:none">Admin</div>
+        <div class="sb-item admin-only" data-page="settings" onclick="nav(this)" style="display:none">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> Settings
+        </div>
         <div class="sb-item admin-only" data-page="users" onclick="nav(this)" style="display:none">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg> User Management
         </div>
@@ -748,6 +751,57 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         </div>
       </div>
 
+
+      <!-- SETTINGS (admin only) -->
+      <div class="page" id="page-settings">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+          <!-- Asset Types -->
+          <div class="card">
+            <div class="card-head">
+              <h3>Asset types</h3>
+              <button class="btn btn-primary btn-sm" onclick="openAddTypeModal()">+ Add type</button>
+            </div>
+            <div style="padding:1.25rem">
+              <div id="type-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            </div>
+          </div>
+
+          <!-- Branches -->
+          <div class="card">
+            <div class="card-head">
+              <h3>Branches</h3>
+              <button class="btn btn-primary btn-sm" onclick="openAddBranchModal()">+ Add branch</button>
+            </div>
+            <div style="padding:1.25rem">
+              <div id="branch-list" style="display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Staff Management -->
+        <div class="card">
+          <div class="card-head">
+            <h3>Staff / Assignees</h3>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm" onclick="openBulkStaffModal()">⬆ Bulk upload staff</button>
+              <button class="btn btn-primary btn-sm" onclick="openAddStaffModal()">+ Add staff</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr>
+              <th style="width:28%">Name</th>
+              <th style="width:20%">Branch</th>
+              <th style="width:20%">Department</th>
+              <th style="width:18%">Assets assigned</th>
+              <th style="width:14%">Actions</th>
+            </tr></thead>
+            <tbody id="staff-tbody"></tbody>
+          </table>
+          <div id="staff-empty" class="empty-msg" style="display:none">No staff added yet.</div>
+        </div>
+      </div>
+
     </div><!-- /main -->
   </div><!-- /shell -->
 </div><!-- /app -->
@@ -812,6 +866,76 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 </div>
 
 <!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- ADD TYPE MODAL -->
+<div class="mbg" id="modal-add-type">
+  <div class="modal">
+    <div class="mhead"><h3>Add asset type</h3><button class="mclose" onclick="closeModal('modal-add-type')">×</button></div>
+    <div class="mbody">
+      <div class="fg"><label>Type name *</label><input id="new-type-name" placeholder="e.g. Server, Drone, TV"></div>
+      <div class="fg"><label>Icon (emoji)</label><input id="new-type-icon" placeholder="e.g. 🖥️ 🚁 📺" maxlength="4"></div>
+    </div>
+    <div class="mfoot"><button class="btn" onclick="closeModal('modal-add-type')">Cancel</button><button class="btn btn-primary" onclick="saveNewType()">Add type</button></div>
+  </div>
+</div>
+
+<!-- ADD BRANCH MODAL -->
+<div class="mbg" id="modal-add-branch">
+  <div class="modal">
+    <div class="mhead"><h3>Add branch</h3><button class="mclose" onclick="closeModal('modal-add-branch')">×</button></div>
+    <div class="mbody">
+      <div class="fg"><label>Branch code * (short, e.g. ECP)</label><input id="new-branch-code" placeholder="e.g. HO" maxlength="10" style="text-transform:uppercase"></div>
+      <div class="fg"><label>Full name *</label><input id="new-branch-name" placeholder="e.g. Head Office Dubai"></div>
+      <div class="fg"><label>Location</label><input id="new-branch-loc" placeholder="e.g. Dubai, UAE"></div>
+    </div>
+    <div class="mfoot"><button class="btn" onclick="closeModal('modal-add-branch')">Cancel</button><button class="btn btn-primary" onclick="saveNewBranch()">Add branch</button></div>
+  </div>
+</div>
+
+<!-- ADD STAFF MODAL -->
+<div class="mbg" id="modal-add-staff">
+  <div class="modal">
+    <div class="mhead"><h3 id="staff-modal-title">Add staff</h3><button class="mclose" onclick="closeModal('modal-add-staff')">×</button></div>
+    <div class="mbody">
+      <div class="fg"><label>Full name *</label><input id="st-name" placeholder="e.g. Ahmed Mohammed"></div>
+      <div class="fg"><label>Branch *</label><select id="st-branch"><option value="">— Select branch —</option></select></div>
+      <div class="fg"><label>Department / Role</label><input id="st-dept" placeholder="e.g. Engineering, Sales, IT"></div>
+      <div class="fg"><label>Employee ID</label><input id="st-empid" placeholder="e.g. EMP-001"></div>
+      <div class="fg"><label>Contact (email / phone)</label><input id="st-contact" placeholder="e.g. ahmed@company.com"></div>
+    </div>
+    <div class="mfoot"><button class="btn" onclick="closeModal('modal-add-staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Save</button></div>
+  </div>
+</div>
+
+<!-- BULK STAFF UPLOAD MODAL -->
+<div class="mbg" id="modal-bulk-staff">
+  <div class="modal wide">
+    <div class="mhead"><h3>Bulk upload staff</h3><button class="mclose" onclick="closeModal('modal-bulk-staff')">×</button></div>
+    <div class="mbody">
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:1rem">
+        Upload a CSV with columns:<br>
+        <code style="background:var(--bg2);padding:3px 8px;border-radius:4px;font-size:11px">name, branch, department, employeeId, contact</code>
+      </div>
+      <div class="drop-zone" id="staff-drop-zone" onclick="document.getElementById('staff-csv-file').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleStaffDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px">👥</div>
+        <div style="font-weight:600">Click or drag & drop staff CSV</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">Max 500 staff members</div>
+      </div>
+      <input type="file" id="staff-csv-file" accept=".csv" style="display:none" onchange="handleStaffFileSelect(event)">
+      <div id="staff-import-preview" style="display:none">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px" id="staff-import-count"></div>
+        <div class="import-preview-box" id="staff-import-preview-text"></div>
+      </div>
+      <div id="staff-import-err" style="display:none;font-size:13px;color:var(--red);padding:8px 12px;background:var(--red-lt);border-radius:8px;margin-top:8px"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-bulk-staff')">Cancel</button>
+      <button class="btn btn-sm" onclick="downloadStaffTemplate()">Download template</button>
+      <button class="btn btn-primary" id="staff-import-btn" style="display:none" onclick="confirmStaffImport()">Import staff</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- SCANNER MODAL -->
 <div class="mbg" id="modal-scanner">
@@ -985,6 +1109,7 @@ const DEMO_USERS = {
 // STATE
 // ════════════════════════════════════════════════════════════════
 let currentUser = null, assets = [], assignHistory = [], auditLog = [], users = Object.entries(DEMO_USERS).map(([email,u],i)=>({id:i+1,email,...u}))
+let assetTypes = [], branches = [], staffList = []
 let selectedIds = new Set(), pendingImport = [], editingAssetId = null, viewingAssetId = null, disposalAssetId = null
 let attachments = [] // [{name, dataUrl, type}]
 let sigCanvas, sigCtx, sigDrawing = false
@@ -1089,7 +1214,7 @@ function doLogout() {
 // ════════════════════════════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════════════════════════════
-const PAGE_TITLES = { scanner:'Scan Device', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
+const PAGE_TITLES = { scanner:'Scan Device', settings:'Settings', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
 function nav(el) {
   document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'))
   el.classList.add('active')
@@ -1106,6 +1231,7 @@ function nav(el) {
   if (pg === 'audit')         { renderAudit() }
   if (pg === 'dashboard')     { renderDashboard() }
   if (pg === 'users')         { renderUsers() }
+  if (pg === 'settings')       { renderSettings() }
   if (pg === 'scanner')        { initPageScanner() }
   if (pg === 'invoices')      { renderInvoices(); renderInvoiceSummary() }
 }
@@ -1137,6 +1263,8 @@ async function loadAll() {
   loadInvoices()
   populateInvoiceAssetDropdown()
   populateReturnDropdown()
+  syncDropdowns()
+  updateAssigneeDropdowns()
   renderDashboard()
   updateBadges()
 }
@@ -2929,7 +3057,396 @@ document.addEventListener('keydown', function(e) {
   }
 })
 
+// ════════════════════════════════════════════════════════════════
+// SETTINGS — Asset Types, Branches, Staff
+// ════════════════════════════════════════════════════════════════
+
+// ── Default data (loaded from localStorage so they persist) ────
+const DEFAULT_TYPES = [
+  { name:'Laptop', icon:'💻' }, { name:'Desktop', icon:'🖥️' },
+  { name:'Monitor', icon:'🖥' }, { name:'Phone', icon:'📱' },
+  { name:'Tablet', icon:'⬛' }, { name:'Camera', icon:'📷' },
+  { name:'SIM', icon:'📶' }, { name:'Printer', icon:'🖨️' },
+  { name:'Keyboard', icon:'⌨️' }, { name:'Mouse', icon:'🖱️' },
+  { name:'Headset', icon:'🎧' }, { name:'Other', icon:'📦' }
+]
+
+const DEFAULT_BRANCHES = [
+  { code:'ECP', name:'Etisalat Channel Partnership', loc:'Dubai, UAE' },
+  { code:'DCP', name:'DU Channel Partnership',        loc:'Dubai, UAE' },
+  { code:'SNP', name:'Snaptel Trading',               loc:'Dubai, UAE' },
+  { code:'TEL', name:'Telvio Trading LLC',            loc:'Dubai, UAE' },
+]
+
+function loadSettings() {
+  try {
+    const t = localStorage.getItem('itam_types')
+    const b = localStorage.getItem('itam_branches')
+    const s = localStorage.getItem('itam_staff')
+    assetTypes  = t ? JSON.parse(t) : JSON.parse(JSON.stringify(DEFAULT_TYPES))
+    branches    = b ? JSON.parse(b) : JSON.parse(JSON.stringify(DEFAULT_BRANCHES))
+    staffList   = s ? JSON.parse(s) : []
+  } catch(e) {
+    assetTypes = JSON.parse(JSON.stringify(DEFAULT_TYPES))
+    branches   = JSON.parse(JSON.stringify(DEFAULT_BRANCHES))
+    staffList  = []
+  }
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem('itam_types',    JSON.stringify(assetTypes))
+    localStorage.setItem('itam_branches', JSON.stringify(branches))
+    localStorage.setItem('itam_staff',    JSON.stringify(staffList))
+  } catch(e) {}
+}
+
+function renderSettings() {
+  renderTypeList()
+  renderBranchList()
+  renderStaffList()
+  syncDropdowns()
+}
+
+// ── ASSET TYPES ────────────────────────────────────────────────
+function renderTypeList() {
+  document.getElementById('type-list').innerHTML = assetTypes.map((t,i) => `
+    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:13px">
+      <span>${t.icon||'📦'}</span>
+      <span style="font-weight:500">${t.name}</span>
+      ${DEFAULT_TYPES.find(d=>d.name===t.name)?'':
+        `<button onclick="deleteType(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0 0 0 2px" title="Remove">×</button>`
+      }
+    </div>`
+  ).join('')
+}
+
+function openAddTypeModal() {
+  document.getElementById('new-type-name').value = ''
+  document.getElementById('new-type-icon').value = ''
+  openModal('modal-add-type')
+  setTimeout(() => document.getElementById('new-type-name').focus(), 150)
+}
+
+function saveNewType() {
+  const name = document.getElementById('new-type-name').value.trim()
+  const icon = document.getElementById('new-type-icon').value.trim() || '📦'
+  if (!name) { toast('Please enter a type name', 'error'); return }
+  if (assetTypes.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+    toast('Type already exists', 'error'); return
+  }
+  assetTypes.push({ name, icon })
+  saveSettings()
+  syncDropdowns()
+  renderTypeList()
+  closeModal('modal-add-type')
+  toast(`✓ Asset type "${name}" added`, 'success')
+}
+
+function deleteType(idx) {
+  const t = assetTypes[idx]
+  if (!confirm(`Remove type "${t.name}"?`)) return
+  assetTypes.splice(idx, 1)
+  saveSettings()
+  syncDropdowns()
+  renderTypeList()
+  toast(`Type "${t.name}" removed`)
+}
+
+// ── BRANCHES ───────────────────────────────────────────────────
+function renderBranchList() {
+  document.getElementById('branch-list').innerHTML = branches.map((b,i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px">
+      <div>
+        <span style="font-weight:700;font-size:13px;color:var(--blue)">${b.code}</span>
+        <span style="font-size:13px;color:var(--text);margin-left:8px">${b.name}</span>
+        ${b.loc?`<span style="font-size:11px;color:var(--text2);margin-left:6px">· ${b.loc}</span>`:''}
+      </div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-sm" onclick="editBranch(${i})">Edit</button>
+        ${DEFAULT_BRANCHES.find(d=>d.code===b.code)?'':
+          `<button class="btn btn-sm btn-danger" onclick="deleteBranch(${i})">Remove</button>`
+        }
+      </div>
+    </div>`
+  ).join('')
+}
+
+let editingBranchIdx = null
+function openAddBranchModal() {
+  editingBranchIdx = null
+  document.getElementById('new-branch-code').value = ''
+  document.getElementById('new-branch-name').value = ''
+  document.getElementById('new-branch-loc').value  = ''
+  document.querySelector('#modal-add-branch .mhead h3').textContent = 'Add branch'
+  openModal('modal-add-branch')
+  setTimeout(() => document.getElementById('new-branch-code').focus(), 150)
+}
+
+function editBranch(idx) {
+  editingBranchIdx = idx
+  const b = branches[idx]
+  document.getElementById('new-branch-code').value = b.code
+  document.getElementById('new-branch-name').value = b.name
+  document.getElementById('new-branch-loc').value  = b.loc || ''
+  document.querySelector('#modal-add-branch .mhead h3').textContent = 'Edit branch'
+  openModal('modal-add-branch')
+}
+
+function saveNewBranch() {
+  const code = document.getElementById('new-branch-code').value.trim().toUpperCase()
+  const name = document.getElementById('new-branch-name').value.trim()
+  const loc  = document.getElementById('new-branch-loc').value.trim()
+  if (!code || !name) { toast('Code and name are required', 'error'); return }
+
+  if (editingBranchIdx !== null) {
+    branches[editingBranchIdx] = { code, name, loc }
+    toast(`✓ Branch "${code}" updated`, 'success')
+  } else {
+    if (branches.find(b => b.code === code)) { toast('Branch code already exists', 'error'); return }
+    branches.push({ code, name, loc })
+    toast(`✓ Branch "${code}" added`, 'success')
+  }
+  saveSettings()
+  syncDropdowns()
+  renderBranchList()
+  closeModal('modal-add-branch')
+}
+
+function deleteBranch(idx) {
+  const b = branches[idx]
+  if (!confirm(`Remove branch "${b.code} — ${b.name}"?`)) return
+  branches.splice(idx, 1)
+  saveSettings()
+  syncDropdowns()
+  renderBranchList()
+  toast(`Branch "${b.code}" removed`)
+}
+
+// ── SYNC ALL DROPDOWNS in the app dynamically ──────────────────
+function syncDropdowns() {
+  // Type options
+  const typeOpts = assetTypes.map(t => `<option>${t.name}</option>`).join('')
+  const typeOptsFilter = `<option value="">All types</option>` + typeOpts
+
+  // Selectors to update with types
+  const typeSelectors = ['fa-type', 'f-type', 'dl-type']
+  typeSelectors.forEach(id => {
+    const el = document.getElementById(id)
+    if (!el) return
+    const current = el.value
+    if (id === 'f-type' || id === 'dl-type') el.innerHTML = typeOptsFilter
+    else el.innerHTML = typeOpts
+    if (current && [...el.options].some(o => o.value === current)) el.value = current
+    else if (id === 'fa-type') el.value = 'Laptop'
+  })
+
+  // Branch options
+  const branchOpts = branches.map(b => `<option value="${b.code}">${b.code} — ${b.name}</option>`).join('')
+  const branchOptsSimple = branches.map(b => `<option value="${b.code}">${b.code}</option>`).join('')
+  const branchFilter = `<option value="">All branches</option>` + branchOptsSimple
+  const branchNone   = `<option value="">— None —</option>` + branchOptsSimple
+
+  const branchSelectors = {
+    'fa-dept':    branchNone,
+    'f-dept':     branchFilter,
+    'dl-dept':    `<option value="">All branches</option>` + branchOpts,
+    'f-history-branch': branchFilter,
+    'f-inv-dept': branchFilter,
+    'ho-branch':  `<option value="">— Select —</option>` + branchOptsSimple,
+    'st-branch':  `<option value="">— Select branch —</option>` + branchOpts,
+    'u-branch':   `<option value="">All branches</option>` + branchOptsSimple,
+  }
+  Object.entries(branchSelectors).forEach(([id, html]) => {
+    const el = document.getElementById(id)
+    if (!el) return
+    const current = el.value
+    el.innerHTML = html
+    if (current) el.value = current
+  })
+
+  // Dashboard branch pills
+  renderDashboard()
+}
+
+// ── STAFF ──────────────────────────────────────────────────────
+let editingStaffIdx = null
+
+function renderStaffList() {
+  const tbody = document.getElementById('staff-tbody')
+  const empty = document.getElementById('staff-empty')
+  if (!staffList.length) { tbody.innerHTML=''; empty.style.display='block'; return }
+  empty.style.display = 'none'
+  tbody.innerHTML = staffList.map((s,i) => {
+    const assetCount = assets.filter(a => a.assignee && a.assignee.toLowerCase() === s.name.toLowerCase()).length
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px">${avatar(s.name)}<div><div style="font-weight:600;font-size:13px">${s.name}</div>${s.empId?`<div class="mono">${s.empId}</div>`:''}</div></div></td>
+      <td><span class="tag">${s.branch||'—'}</span></td>
+      <td style="font-size:13px">${s.dept||'—'}</td>
+      <td><span class="badge ${assetCount>0?'b-assigned':'b-tag'}">${assetCount} asset${assetCount!==1?'s':''}</span></td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-sm" onclick="editStaff(${i})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteStaff(${i})">Remove</button>
+      </div></td>
+    </tr>`
+  }).join('')
+}
+
+function openAddStaffModal() {
+  editingStaffIdx = null
+  document.getElementById('staff-modal-title').textContent = 'Add staff'
+  ;['st-name','st-dept','st-empid','st-contact'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('st-branch').value = ''
+  openModal('modal-add-staff')
+  setTimeout(() => document.getElementById('st-name').focus(), 150)
+}
+
+function editStaff(idx) {
+  editingStaffIdx = idx
+  const s = staffList[idx]
+  document.getElementById('staff-modal-title').textContent = 'Edit staff'
+  document.getElementById('st-name').value    = s.name
+  document.getElementById('st-branch').value  = s.branch || ''
+  document.getElementById('st-dept').value    = s.dept || ''
+  document.getElementById('st-empid').value   = s.empId || ''
+  document.getElementById('st-contact').value = s.contact || ''
+  openModal('modal-add-staff')
+}
+
+function saveStaff() {
+  const name   = document.getElementById('st-name').value.trim()
+  const branch = document.getElementById('st-branch').value
+  const dept   = document.getElementById('st-dept').value.trim()
+  const empId  = document.getElementById('st-empid').value.trim()
+  const contact= document.getElementById('st-contact').value.trim()
+  if (!name) { toast('Please enter staff name', 'error'); return }
+
+  const entry = { name, branch, dept, empId, contact }
+
+  if (editingStaffIdx !== null) {
+    staffList[editingStaffIdx] = entry
+    toast(`✓ ${name} updated`, 'success')
+  } else {
+    staffList.push(entry)
+    toast(`✓ ${name} added`, 'success')
+  }
+  saveSettings()
+  renderStaffList()
+  updateAssigneeDropdowns()
+  closeModal('modal-add-staff')
+}
+
+function deleteStaff(idx) {
+  const s = staffList[idx]
+  if (!confirm(`Remove "${s.name}" from staff list?`)) return
+  staffList.splice(idx, 1)
+  saveSettings()
+  renderStaffList()
+  updateAssigneeDropdowns()
+  toast(`${s.name} removed`)
+}
+
+// Update assignee fields with staff names (datalist for autocomplete)
+function updateAssigneeDropdowns() {
+  const names = staffList.map(s => s.name)
+  ;['fa-assignee','ho-employee','ret-asset'].forEach(id => {
+    const el = document.getElementById(id)
+    if (!el) return
+    // Attach datalist
+    const dlId = id + '-datalist'
+    let dl = document.getElementById(dlId)
+    if (!dl) {
+      dl = document.createElement('datalist')
+      dl.id = dlId
+      document.body.appendChild(dl)
+      el.setAttribute('list', dlId)
+    }
+    dl.innerHTML = names.map(n => `<option value="${n}">`).join('')
+  })
+}
+
+// ── BULK STAFF IMPORT ──────────────────────────────────────────
+let pendingStaffImport = []
+
+function openBulkStaffModal() {
+  pendingStaffImport = []
+  document.getElementById('staff-import-preview').style.display = 'none'
+  document.getElementById('staff-import-err').style.display = 'none'
+  document.getElementById('staff-import-btn').style.display = 'none'
+  document.getElementById('staff-csv-file').value = ''
+  openModal('modal-bulk-staff')
+}
+
+function handleStaffDrop(e) {
+  e.preventDefault()
+  document.getElementById('staff-drop-zone').classList.remove('drag')
+  const f = e.dataTransfer.files[0]
+  if (f) parseStaffCSV(f)
+}
+function handleStaffFileSelect(e) {
+  const f = e.target.files[0]
+  if (f) parseStaffCSV(f)
+}
+
+function parseStaffCSV(file) {
+  const reader = new FileReader()
+  reader.onload = e => {
+    const lines = e.target.result.split(/
+?
+/).filter(l => l.trim())
+    if (lines.length < 2) { showStaffErr('CSV has no data rows.'); return }
+    const parsed = []
+    for (const line of lines.slice(1).slice(0, 500)) {
+      const cols = parseCSVLine(line)
+      if (!cols[0]) continue
+      parsed.push({
+        name:    cols[0].trim(),
+        branch:  cols[1]?.trim() || '',
+        dept:    cols[2]?.trim() || '',
+        empId:   cols[3]?.trim() || '',
+        contact: cols[4]?.trim() || '',
+      })
+    }
+    if (!parsed.length) { showStaffErr('No valid rows found.'); return }
+    pendingStaffImport = parsed
+    document.getElementById('staff-import-count').textContent = `Found ${parsed.length} staff member${parsed.length > 1 ? 's' : ''} ready to import`
+    document.getElementById('staff-import-preview-text').textContent = parsed.slice(0, 6).map(s => `${s.name} · ${s.branch||'—'} · ${s.dept||'—'}`).join('
+') + (parsed.length > 6 ? `
+…and ${parsed.length - 6} more` : '')
+    document.getElementById('staff-import-preview').style.display = 'block'
+    document.getElementById('staff-import-err').style.display = 'none'
+    document.getElementById('staff-import-btn').style.display = 'inline-block'
+  }
+  reader.readAsText(file)
+}
+
+function showStaffErr(msg) {
+  document.getElementById('staff-import-err').textContent = msg
+  document.getElementById('staff-import-err').style.display = 'block'
+  document.getElementById('staff-import-btn').style.display = 'none'
+}
+
+function confirmStaffImport() {
+  // Avoid duplicates by name
+  const existing = new Set(staffList.map(s => s.name.toLowerCase()))
+  const toAdd = pendingStaffImport.filter(s => !existing.has(s.name.toLowerCase()))
+  const dupes = pendingStaffImport.length - toAdd.length
+  staffList.push(...toAdd)
+  saveSettings()
+  renderStaffList()
+  updateAssigneeDropdowns()
+  closeModal('modal-bulk-staff')
+  toast(`✓ Imported ${toAdd.length} staff${dupes ? ` (${dupes} duplicates skipped)` : ''}`, 'success', 4000)
+  pendingStaffImport = []
+}
+
+function downloadStaffTemplate() {
+  const csv = 'name,branch,department,employeeId,contact\nAhmed Mohammed,ECP,Engineering,EMP-001,ahmed@company.com\nSarah Ali,DCP,Design,EMP-002,sarah@company.com\nOmar Hassan,SNP,IT,EMP-003,'
+  dlCSV(csv, 'staff-import-template.csv')
+}
+
 // ── Boot: attempt auto-login on page load ──────────────────────
+loadSettings()
 checkAutoLogin()
 </script>
 </body>
