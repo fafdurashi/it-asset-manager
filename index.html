@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IT Asset Manager Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -21,6 +22,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   --text:#1a1a18;--text2:#666662;--text3:#999996;
   --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
 }
+
+
+/* ── SCANNER ── */
+.scanner-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;transition:background .12s}
+.scanner-btn:hover{background:var(--blue-dk)}
+.scanner-btn svg{width:14px;height:14px;fill:#fff}
+.scan-wrap{position:relative}
+#scanner-modal-video{width:100%;max-height:320px;border-radius:8px;background:#000;display:block}
+.scan-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:220px;border:3px solid var(--blue);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);pointer-events:none}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);animation:scanline 2s ease-in-out infinite}
+@keyframes scanline{0%{top:0}50%{top:100%}100%{top:0}}
+.scan-result-box{background:var(--green-lt);border:1px solid var(--green);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px;margin-top:10px}
+.scan-result-box.error{background:var(--amber-lt);border-color:var(--amber);color:var(--amber)}
+.scan-manual{border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin-top:10px;background:var(--bg2)}
+.scan-manual p{font-size:12px;color:var(--text2);margin-bottom:8px}
+.cam-select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:10px;background:var(--bg);color:var(--text);font-family:inherit}
 
 /* ── LOGIN ── */
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0C447C 0%,#185FA5 60%,#1D9E75 100%)}
@@ -299,6 +316,9 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="sb-section">Assets</div>
         <div class="sb-item" data-page="assets" onclick="nav(this)">
           <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.51 15.5 0 12.36 0c-1.73 0-3.24.86-4.22 2.14L7 3.5l-1.14-1.36C4.87.86 3.37 0 1.64 0 .74 0 0 .74 0 1.64c0 .9.74 1.64 1.64 1.64.56 0 1.06-.31 1.36-.74l1.16-1.4C4.53 1.51 5.04 2 5.63 2c.54 0 1-.46 1-1V.5h1.5c.73 0 1.36.56 1.44 1.27l.86 6.48c.08.74.7 1.25 1.44 1.25h6.63c.74 0 1.44-.56 1.55-1.29L20 6z"/><path d="M20 6H4l1 10h14z"/></svg> All Assets
+        </div>
+        <div class="sb-item" data-page="scanner" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg> Scan Device
         </div>
         <div class="sb-item" data-page="assign" onclick="nav(this)" id="nav-assign">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg> Assign / Return
@@ -640,11 +660,95 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
           </div>
         </div>
       </div>
+      <!-- SCANNER PAGE -->
+      <div class="page" id="page-scanner">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px">
+          <!-- Camera scanner -->
+          <div class="card">
+            <div class="card-head"><h3>📷 Camera scanner</h3>
+              <select class="cam-select" id="cam-select" onchange="switchCamera()" style="width:auto;font-size:12px;padding:4px 8px"></select>
+            </div>
+            <div style="padding:1.25rem">
+              <div class="scan-wrap" id="scan-wrap">
+                <video id="scanner-video" playsinline autoplay muted style="width:100%;border-radius:8px;background:#111;min-height:240px"></video>
+                <div class="scan-overlay"><div class="scan-line"></div></div>
+              </div>
+              <div id="scan-page-result" style="display:none"></div>
+              <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                <button class="btn btn-primary" id="scan-start-btn" onclick="startPageScanner()">
+                  <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.36.07-.74.07-1.08s-.03-.73-.07-1.08l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.35-.07.7-.07 1.08s.03.73.07 1.08L2.46 14.79c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.58z"/></svg>
+                  Start camera
+                </button>
+                <button class="btn" onclick="stopPageScanner()">Stop</button>
+              </div>
+              <div class="scan-manual" style="margin-top:16px">
+                <p>Or enter serial manually:</p>
+                <div style="display:flex;gap:6px">
+                  <input id="manual-serial-input" placeholder="Type serial number…" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit">
+                  <button class="btn btn-primary btn-sm" onclick="useManualSerial()">Use</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scanned result & action -->
+          <div class="card">
+            <div class="card-head"><h3>Scanned result</h3></div>
+            <div style="padding:1.25rem" id="scan-action-panel">
+              <div style="text-align:center;padding:2rem;color:var(--text3)">
+                <div style="font-size:48px;margin-bottom:12px">📱</div>
+                <div style="font-size:14px">Point camera at a barcode or QR code<br>to auto-detect the serial number</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent scans -->
+        <div class="card" style="max-width:900px;margin-top:16px">
+          <div class="card-head"><h3>Recent scans</h3><button class="btn btn-sm" onclick="clearScanHistory()">Clear</button></div>
+          <table>
+            <thead><tr>
+              <th style="width:20%">Scanned value</th>
+              <th style="width:22%">Matched asset</th>
+              <th style="width:12%">Status</th>
+              <th style="width:16%">Assignee</th>
+              <th style="width:14%">Scanned at</th>
+              <th style="width:16%">Action</th>
+            </tr></thead>
+            <tbody id="scan-history-tbody"></tbody>
+          </table>
+          <div id="scan-history-empty" class="empty-msg">No scans yet.</div>
+        </div>
+      </div>
+
     </div><!-- /main -->
   </div><!-- /shell -->
 </div><!-- /app -->
 
 <!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- SCANNER MODAL -->
+<div class="mbg" id="modal-scanner">
+  <div class="modal">
+    <div class="mhead"><h3>📷 Scan serial number</h3><button class="mclose" onclick="closeScanner()">×</button></div>
+    <div class="mbody">
+      <select class="cam-select" id="modal-cam-select" onchange="switchModalCamera()"></select>
+      <div class="scan-wrap">
+        <video id="modal-scanner-video" playsinline autoplay muted style="width:100%;border-radius:8px;background:#111;min-height:260px"></video>
+        <div class="scan-overlay"><div class="scan-line"></div></div>
+      </div>
+      <div id="modal-scan-result" style="margin-top:10px"></div>
+      <div class="scan-manual" style="margin-top:12px">
+        <p>Can't scan? Enter manually:</p>
+        <div style="display:flex;gap:6px">
+          <input id="modal-manual-input" placeholder="Type serial number…" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter')useModalManual()">
+          <button class="btn btn-primary btn-sm" onclick="useModalManual()">Use</button>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot"><button class="btn" onclick="closeScanner()">Cancel</button></div>
+  </div>
+</div>
 
 <!-- Add/Edit Asset -->
 <div class="mbg" id="modal-asset">
@@ -652,7 +756,19 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
     <div class="mhead"><h3 id="modal-asset-title">Add asset</h3><button class="mclose" onclick="closeModal('modal-asset')">×</button></div>
     <div class="mbody">
       <div class="frow"><div class="fg"><label>Asset name *</label><input id="fa-name" placeholder="e.g. MacBook Pro 14"></div><div class="fg"><label>Type</label><select id="fa-type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select></div></div>
-      <div class="frow"><div class="fg"><label>Serial number</label><input id="fa-serial" placeholder="e.g. C02XJ34JQ6LR"></div><div class="fg"><label>Brand</label><input id="fa-brand" placeholder="e.g. Apple"></div></div>
+      <div class="frow">
+        <div class="fg">
+          <label>Serial number</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="fa-serial" placeholder="e.g. C02XJ34JQ6LR" style="flex:1">
+            <button type="button" class="scanner-btn" onclick="openScanner('fa-serial')" title="Scan barcode or QR code">
+              <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM22 7h2v2h-2zm0 5h2v2h-2zm0 5h2v2h-2zM0 7h2v2H0zm0 5h2v2H0zm0 5h2v2H0zM7 0v2H5V0zm5 0v2h-2V0zm5 0v2h-2V0zM7 22v2H5v-2zm5 0v2h-2v-2zm5 0v2h-2v-2z"/></svg>
+              Scan
+            </button>
+          </div>
+        </div>
+        <div class="fg"><label>Brand</label><input id="fa-brand" placeholder="e.g. Apple"></div>
+      </div>
       <div class="frow"><div class="fg"><label>Status</label><select id="fa-status"><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select></div><div class="fg"><label>Branch</label><select id="fa-dept"><option value="">— None —</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div></div>
       <div class="frow"><div class="fg"><label>Purchase date</label><input type="date" id="fa-date"></div><div class="fg"><label>Warranty expiry</label><input type="date" id="fa-warranty"></div></div>
       <div class="frow"><div class="fg"><label>Purchase value (AED)</label><input type="number" id="fa-value" placeholder="e.g. 8500"></div><div class="fg"><label>Location</label><input id="fa-loc" placeholder="e.g. Floor 3 Desk 4"></div></div>
@@ -820,7 +936,7 @@ function doLogout() {
 // ════════════════════════════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════════════════════════════
-const PAGE_TITLES = { dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
+const PAGE_TITLES = { scanner:'Scan Device', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
 function nav(el) {
   document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'))
   el.classList.add('active')
@@ -837,6 +953,7 @@ function nav(el) {
   if (pg === 'audit')         { renderAudit() }
   if (pg === 'dashboard')     { renderDashboard() }
   if (pg === 'users')         { renderUsers() }
+  if (pg === 'scanner')        { initPageScanner() }
   if (pg === 'invoices')      { renderInvoices(); renderInvoiceSummary() }
 }
 function setTopbarActions(pg) {
@@ -2029,6 +2146,348 @@ function exportInvoicesCSV() {
   const csv = ['Asset,Serial,Branch,Type,Vendor,InvoiceNo,Amount(AED),Date,UploadedBy,Notes', ...rows].join('\n')
   dlCSV(csv, `invoices-${new Date().toISOString().slice(0,10)}.csv`)
   toast(`✓ Exported ${invoices.length} invoice records`, 'success')
+}
+
+// ════════════════════════════════════════════════════════════════
+// BARCODE / QR SCANNER  (uses native BarcodeDetector API + fallback)
+// ════════════════════════════════════════════════════════════════
+let scannerStream     = null   // active camera stream
+let scannerInterval   = null   // polling interval for BarcodeDetector
+let scannerTargetId   = null   // which input field to fill
+let scanHistory       = JSON.parse(localStorage.getItem('itam_scan_history') || '[]')
+let pageStream        = null
+let pageInterval      = null
+
+// ── Detect support ─────────────────────────────────────────────
+const hasBarcodeDetector = 'BarcodeDetector' in window
+
+// ── Get cameras ────────────────────────────────────────────────
+async function getCameras() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ video: true }) // request permission first
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    return devices.filter(d => d.kind === 'videoinput')
+  } catch(e) { return [] }
+}
+
+async function populateCameraSelect(selectId) {
+  const cams = await getCameras()
+  const sel  = document.getElementById(selectId)
+  if (!sel) return
+  sel.innerHTML = cams.length
+    ? cams.map((c,i) => `<option value="${c.deviceId}">${c.label || 'Camera ' + (i+1)}</option>`).join('')
+    : '<option value="">Default camera</option>'
+  // Prefer back camera on mobile
+  const backCam = cams.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('rear') || c.label.toLowerCase().includes('environment'))
+  if (backCam) sel.value = backCam.deviceId
+}
+
+// ── Start stream ───────────────────────────────────────────────
+async function startStream(videoId, selectId) {
+  const sel = document.getElementById(selectId)
+  const deviceId = sel?.value
+  const constraints = {
+    video: deviceId
+      ? { deviceId: { exact: deviceId }, facingMode: 'environment' }
+      : { facingMode: { ideal: 'environment' } }
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints)
+    const video  = document.getElementById(videoId)
+    video.srcObject = stream
+    await video.play()
+    return stream
+  } catch(e) {
+    toast('Camera error: ' + e.message, 'error')
+    return null
+  }
+}
+
+function stopStream(stream, intervalRef) {
+  if (stream) stream.getTracks().forEach(t => t.stop())
+  if (intervalRef) clearInterval(intervalRef)
+}
+
+// ── BarcodeDetector scanning ───────────────────────────────────
+async function startDetecting(videoId, onDetect) {
+  if (!hasBarcodeDetector) {
+    return startFallbackDetection(videoId, onDetect)
+  }
+  const formats = ['qr_code','code_128','code_39','ean_13','ean_8','upc_a','upc_e','data_matrix','pdf417','aztec','codabar','itf']
+  const detector = new BarcodeDetector({ formats })
+  const video    = document.getElementById(videoId)
+  const interval = setInterval(async () => {
+    if (!video || video.readyState < 2) return
+    try {
+      const codes = await detector.detect(video)
+      if (codes.length > 0) {
+        const val = codes[0].rawValue
+        clearInterval(interval)
+        onDetect(val)
+      }
+    } catch(e) {}
+  }, 400)
+  return interval
+}
+
+// ── Canvas-based fallback (simple frame grab for manual confirm) ─
+function startFallbackDetection(videoId, onDetect) {
+  // Without BarcodeDetector, we can't auto-detect
+  // Show a "Capture frame" button instead
+  const video = document.getElementById(videoId)
+  const wrap = video.parentElement
+  if (!document.getElementById('capture-btn-'+videoId)) {
+    const btn = document.createElement('button')
+    btn.id = 'capture-btn-'+videoId
+    btn.className = 'btn btn-primary'
+    btn.style.cssText = 'position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:10'
+    btn.textContent = '📸 Capture & read'
+    btn.onclick = () => captureAndRead(videoId, onDetect)
+    wrap.style.position = 'relative'
+    wrap.appendChild(btn)
+  }
+  return null
+}
+
+function captureAndRead(videoId, onDetect) {
+  const video = document.getElementById(videoId)
+  const canvas = document.createElement('canvas')
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(video, 0, 0)
+  // Try BarcodeDetector on canvas ImageData
+  if (hasBarcodeDetector) {
+    const detector = new BarcodeDetector()
+    detector.detect(canvas).then(codes => {
+      if (codes.length) onDetect(codes[0].rawValue)
+      else toast('No barcode detected — try again or enter manually', 'error')
+    })
+  } else {
+    toast('Your browser does not support barcode scanning. Please enter serial manually.', 'error', 6000)
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// MODAL SCANNER (opens from "Scan" button in Add Asset form)
+// ════════════════════════════════════════════════════════════════
+async function openScanner(targetInputId) {
+  scannerTargetId = targetInputId
+  openModal('modal-scanner')
+  await populateCameraSelect('modal-cam-select')
+  document.getElementById('modal-scan-result').innerHTML = ''
+  document.getElementById('modal-manual-input').value = ''
+  scannerStream   = await startStream('modal-scanner-video', 'modal-cam-select')
+  scannerInterval = await startDetecting('modal-scanner-video', onModalScan)
+}
+
+async function switchModalCamera() {
+  stopStream(scannerStream, scannerInterval)
+  scannerStream   = await startStream('modal-scanner-video', 'modal-cam-select')
+  scannerInterval = await startDetecting('modal-scanner-video', onModalScan)
+}
+
+function onModalScan(value) {
+  // Flash result
+  document.getElementById('modal-scan-result').innerHTML =
+    `<div class="scan-result-box">✓ Scanned: <strong>${value}</strong></div>`
+  // Fill the target input
+  const input = document.getElementById(scannerTargetId)
+  if (input) {
+    input.value = value
+    input.style.borderColor = 'var(--green)'
+    setTimeout(() => input.style.borderColor = '', 2000)
+  }
+  // Auto-detect brand from serial prefix
+  autoDetectBrand(value)
+  // Stop camera
+  stopStream(scannerStream, scannerInterval)
+  scannerStream = null
+  // Add to history
+  addScanHistory(value)
+  toast('✓ Serial number scanned: ' + value, 'success')
+  setTimeout(() => closeScanner(), 1800)
+}
+
+function useModalManual() {
+  const val = document.getElementById('modal-manual-input').value.trim()
+  if (!val) { toast('Please enter a serial number', 'error'); return }
+  onModalScan(val)
+}
+
+function closeScanner() {
+  stopStream(scannerStream, scannerInterval)
+  scannerStream = null; scannerInterval = null
+  closeModal('modal-scanner')
+}
+
+// ════════════════════════════════════════════════════════════════
+// PAGE SCANNER (standalone Scan Device page)
+// ════════════════════════════════════════════════════════════════
+async function initPageScanner() {
+  await populateCameraSelect('cam-select')
+  document.getElementById('scan-page-result').style.display = 'none'
+  renderScanHistory()
+}
+
+async function startPageScanner() {
+  document.getElementById('scan-start-btn').textContent = 'Scanning…'
+  if (pageStream) stopStream(pageStream, pageInterval)
+  pageStream   = await startStream('scanner-video', 'cam-select')
+  pageInterval = await startDetecting('scanner-video', onPageScan)
+}
+
+async function switchCamera() {
+  if (pageStream) {
+    stopStream(pageStream, pageInterval)
+    pageStream   = await startStream('scanner-video', 'cam-select')
+    pageInterval = await startDetecting('scanner-video', onPageScan)
+  }
+}
+
+function stopPageScanner() {
+  stopStream(pageStream, pageInterval)
+  pageStream = null; pageInterval = null
+  document.getElementById('scan-start-btn').textContent = 'Start camera'
+}
+
+function onPageScan(value) {
+  document.getElementById('scan-start-btn').textContent = 'Start camera'
+  stopStream(pageStream, pageInterval)
+  pageStream = null
+
+  // Show result
+  document.getElementById('scan-page-result').style.display = 'block'
+  document.getElementById('scan-page-result').innerHTML =
+    `<div class="scan-result-box">✓ Scanned: <strong>${value}</strong></div>`
+
+  // Match against existing assets
+  const matched = assets.find(a =>
+    (a.serial && a.serial.toLowerCase() === value.toLowerCase()) ||
+    (a.serial && a.serial.toLowerCase().includes(value.toLowerCase()))
+  )
+  addScanHistory(value, matched)
+  showScanAction(value, matched)
+}
+
+function useManualSerial() {
+  const val = document.getElementById('manual-serial-input').value.trim()
+  if (!val) { toast('Enter a serial number', 'error'); return }
+  const matched = assets.find(a => a.serial && a.serial.toLowerCase().includes(val.toLowerCase()))
+  addScanHistory(val, matched)
+  showScanAction(val, matched)
+  document.getElementById('scan-page-result').style.display = 'block'
+  document.getElementById('scan-page-result').innerHTML =
+    `<div class="scan-result-box ${matched?'':'error'}">${matched?'✓ Matched:':'⚠ No match:'} <strong>${val}</strong></div>`
+}
+
+function showScanAction(serial, asset) {
+  const panel = document.getElementById('scan-action-panel')
+  if (asset) {
+    const w = wStatus(asset.warranty)
+    const age = assetAge(asset.date)
+    const pastLife = age && age >= 4
+    panel.innerHTML = `
+      <div style="background:var(--green-lt);border:1px solid var(--green);border-radius:8px;padding:12px;margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">✓ Asset found</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">${asset.name}</div>
+        <div class="mono" style="margin-top:2px">${asset.serial}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:1rem">
+        <div class="detail-row"><span class="dk">Status</span><span class="dv">${badgeHtml(asset.status)}</span></div>
+        <div class="detail-row"><span class="dk">Assigned to</span><span class="dv">${asset.assignee||'—'}</span></div>
+        <div class="detail-row"><span class="dk">Branch</span><span class="dv">${asset.dept||'—'}</span></div>
+        <div class="detail-row"><span class="dk">Warranty</span><span class="dv"><span class="${w.cls}">${w.label}</span></span></div>
+        <div class="detail-row"><span class="dk">Age</span><span class="dv">${age?age.toFixed(1)+' yrs':'—'}${pastLife?' <span class="badge b-warn">4+ yrs</span>':''}</span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="viewAsset(${asset.id});nav(document.querySelector('[data-page=assets]'))">View full details</button>
+        ${canEdit()?`<button class="btn btn-sm" onclick="openEditAssetModal(${asset.id});nav(document.querySelector('[data-page=assets]'))">Edit asset</button>`:''}
+      </div>`
+  } else {
+    panel.innerHTML = `
+      <div style="background:var(--amber-lt);border:1px solid var(--amber);border-radius:8px;padding:12px;margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">⚠ No existing asset found</div>
+        <div style="font-size:13px;color:var(--text)">Serial: <strong>${serial}</strong></div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:1rem">This serial number is not registered. Would you like to add it as a new asset?</div>
+      ${canEdit()?`<button class="btn btn-primary" onclick="openAddFromScan('${serial}')">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Add as new asset
+      </button>`:'<div style="font-size:12px;color:var(--text3)">Contact IT Admin to register this device.</div>'}`
+  }
+}
+
+function openAddFromScan(serial) {
+  openAddAssetModal()
+  document.getElementById('fa-serial').value = serial
+  autoDetectBrand(serial)
+  nav(document.querySelector('[data-page=assets]'))
+  setTimeout(() => openModal('modal-asset'), 200)
+}
+
+// ── Auto-detect brand from serial prefix ───────────────────────
+function autoDetectBrand(serial) {
+  const s = serial.toUpperCase()
+  const brandInput = document.getElementById('fa-brand')
+  const typeInput  = document.getElementById('fa-type')
+  if (!brandInput) return
+  if (brandInput.value) return // don't overwrite if already filled
+  // Apple serials: C02, DX, F1, H9, etc.
+  if (/^(C02|C07|DX|F1[A-Z]|H9|G[A-Z]{2}|MN|MP|MY|QP|QT|X[0-9])/.test(s)) {
+    brandInput.value = 'Apple'
+    if (s.startsWith('DN') || s.startsWith('DLXP') || s.startsWith('DX')) {
+      typeInput && (typeInput.value = 'Phone')
+    }
+  // HP: 5CD, CNU, MXL
+  } else if (/^(5CD|CNU|MXL|CNF|TRF|SGH)/.test(s)) {
+    brandInput.value = 'HP'
+  // Dell: begins with numeric or service tag format
+  } else if (/^[A-Z0-9]{7}$/.test(s) && /[0-9]/.test(s[0])) {
+    brandInput.value = 'Dell'
+  // Lenovo: PC, LNV, R9, S0
+  } else if (/^(PC|LNV|R9|S0|PF)/.test(s)) {
+    brandInput.value = 'Lenovo'
+  // Samsung: R5, RF, SM
+  } else if (/^(R5|RF|SM|RF)/.test(s)) {
+    brandInput.value = 'Samsung'
+  }
+}
+
+// ── Scan history ───────────────────────────────────────────────
+function addScanHistory(serial, asset) {
+  scanHistory.unshift({ serial, assetName: asset?.name||'', assetId: asset?.id||null, status: asset?.status||'', assignee: asset?.assignee||'', time: new Date().toISOString() })
+  if (scanHistory.length > 50) scanHistory.pop()
+  try { localStorage.setItem('itam_scan_history', JSON.stringify(scanHistory)) } catch(e){}
+  renderScanHistory()
+}
+
+function clearScanHistory() {
+  scanHistory = []
+  try { localStorage.removeItem('itam_scan_history') } catch(e){}
+  renderScanHistory()
+}
+
+function renderScanHistory() {
+  const tbody = document.getElementById('scan-history-tbody')
+  const empty = document.getElementById('scan-history-empty')
+  if (!tbody) return
+  if (!scanHistory.length) { tbody.innerHTML=''; empty.style.display='block'; return }
+  empty.style.display='none'
+  tbody.innerHTML = scanHistory.map(s => {
+    const t = new Date(s.time).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+    return `<tr>
+      <td class="mono">${s.serial}</td>
+      <td style="font-size:13px">${s.assetName||'<span style="color:var(--text3)">Not registered</span>'}</td>
+      <td>${s.status?badgeHtml(s.status):'<span class="badge b-warn">Unknown</span>'}</td>
+      <td style="font-size:12px">${s.assignee||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${t}</td>
+      <td>${s.assetId
+        ? `<button class="btn btn-sm" onclick="viewAsset(${s.assetId})">View</button>`
+        : canEdit()?`<button class="btn btn-sm btn-primary" onclick="openAddFromScan('${s.serial}')">Add asset</button>`:'—'
+      }</td>
+    </tr>`
+  }).join('')
 }
 
 </script>
