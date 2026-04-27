@@ -33,6 +33,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .scan-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:220px;border:3px solid var(--blue);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);pointer-events:none}
 .scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);animation:scanline 2s ease-in-out infinite}
 @keyframes scanline{0%{top:0}50%{top:100%}100%{top:0}}
+@keyframes usb-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .scan-result-box{background:var(--green-lt);border:1px solid var(--green);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px;margin-top:10px}
 .scan-result-box.error{background:var(--amber-lt);border-color:var(--amber);color:var(--amber)}
 .scan-manual{border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin-top:10px;background:var(--bg2)}
@@ -841,16 +842,24 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
       <div class="frow"><div class="fg"><label>Asset name *</label><input id="fa-name" placeholder="e.g. MacBook Pro 14"></div><div class="fg"><label>Type</label><select id="fa-type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select></div></div>
       <div class="frow">
         <div class="fg">
-          <label>Serial number</label>
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>Serial number</span>
+            <span id="usb-scan-indicator" style="display:none;font-size:10px;font-weight:600;color:var(--green);background:var(--green-lt);padding:2px 8px;border-radius:10px;animation:usb-pulse 1.2s ease-in-out infinite">● USB READY</span>
+          </label>
           <div style="display:flex;gap:6px;align-items:center">
-            <input id="fa-serial" placeholder="e.g. C02XJ34JQ6LR" style="flex:1">
-            <button type="button" class="scanner-btn" onclick="openScanner('fa-serial')" title="Scan barcode or QR code">
-              <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM22 7h2v2h-2zm0 5h2v2h-2zm0 5h2v2h-2zM0 7h2v2H0zm0 5h2v2H0zm0 5h2v2H0zM7 0v2H5V0zm5 0v2h-2V0zm5 0v2h-2V0zM7 22v2H5v-2zm5 0v2h-2v-2zm5 0v2h-2v-2z"/></svg>
-              Scan
+            <input id="fa-serial" placeholder="Click here then scan barcode — or type manually" style="flex:1" 
+              onfocus="onSerialFocus()" onblur="onSerialBlur()"
+              oninput="onSerialInput(this)">
+            <button type="button" class="scanner-btn" onclick="openScanner('fa-serial')" title="Use camera to scan">
+              <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg>
+              📷 Camera
             </button>
           </div>
+          <div id="serial-scan-hint" style="font-size:11px;color:var(--text3);margin-top:4px;display:none">
+            🔌 USB scanner ready — point at barcode and pull trigger
+          </div>
         </div>
-        <div class="fg"><label>Brand</label><input id="fa-brand" placeholder="e.g. Apple"></div>
+        <div class="fg"><label>Brand</label><input id="fa-brand" placeholder="Auto-detected from serial"></div>
       </div>
       <div class="frow"><div class="fg"><label>Status</label><select id="fa-status"><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select></div><div class="fg"><label>Branch</label><select id="fa-dept"><option value="">— None —</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div></div>
       <div class="frow"><div class="fg"><label>Purchase date</label><input type="date" id="fa-date"></div><div class="fg"><label>Warranty expiry</label><input type="date" id="fa-warranty"></div></div>
@@ -1344,6 +1353,11 @@ function openAddAssetModal() {
   document.getElementById('fa-value').value=''
   document.getElementById('attach-list').innerHTML=''
   openModal('modal-asset')
+  // Auto-focus serial field after modal animation
+  setTimeout(() => {
+    const s = document.getElementById('fa-serial')
+    if (s) { s.focus(); s.select() }
+  }, 150)
 }
 function openEditAssetModal(id) {
   const a = assets.find(x=>x.id===id); if(!a) return
@@ -1364,6 +1378,10 @@ function openEditAssetModal(id) {
   renderAttachList()
   closeModal('modal-view')
   openModal('modal-asset')
+  setTimeout(() => {
+    const s = document.getElementById('fa-serial')
+    if (s) { s.focus(); s.select() }
+  }, 150)
 }
 async function saveAsset() {
   const name = document.getElementById('fa-name').value.trim()
@@ -2708,6 +2726,156 @@ function managerDownloadCSV() {
   closeModal('modal-manager-dl')
   dbLog('Report downloaded', `${filtered.length} assets · Dept:${dept} Type:${type} Status:${status}`)
 }
+
+// ════════════════════════════════════════════════════════════════
+// USB BARCODE SCANNER — keyboard wedge auto-detect
+// USB scanners act like a keyboard: they type fast then press Enter
+// We detect that speed to distinguish scanner from human typing
+// ════════════════════════════════════════════════════════════════
+let usbScanBuffer = ''
+let usbScanTimer  = null
+let usbLastKeyTime = 0
+let usbScanActive = false
+const USB_SPEED_THRESHOLD = 50   // ms between chars — scanners type < 30ms apart
+const USB_MIN_LENGTH = 4         // minimum serial length to accept
+
+function onSerialFocus() {
+  usbScanBuffer  = ''
+  usbScanActive  = true
+  document.getElementById('usb-scan-indicator').style.display = 'inline'
+  document.getElementById('serial-scan-hint').style.display   = 'block'
+  const input = document.getElementById('fa-serial')
+  if (input) input.style.borderColor = 'var(--blue)'
+}
+
+function onSerialBlur() {
+  usbScanActive = false
+  document.getElementById('usb-scan-indicator').style.display = 'none'
+  document.getElementById('serial-scan-hint').style.display   = 'none'
+  const input = document.getElementById('fa-serial')
+  if (input) input.style.borderColor = ''
+}
+
+function onSerialInput(input) {
+  // Called on every keystroke in the serial field
+  const now = Date.now()
+  const gap  = now - usbLastKeyTime
+  usbLastKeyTime = now
+
+  if (gap < USB_SPEED_THRESHOLD) {
+    // Fast typing = likely a USB scanner
+    usbScanBuffer = input.value
+    clearTimeout(usbScanTimer)
+    usbScanTimer = setTimeout(() => {
+      // Scanner finished — process the value
+      const val = usbScanBuffer.trim()
+      if (val.length >= USB_MIN_LENGTH) {
+        onUsbScanComplete(val)
+      }
+    }, 120)  // wait 120ms for scanner to finish its burst
+  }
+  // Slow typing = human — do nothing, just let them type
+}
+
+function onUsbScanComplete(serial) {
+  const input = document.getElementById('fa-serial')
+  if (!input) return
+
+  // Flash green to confirm scan received
+  input.style.borderColor = 'var(--green)'
+  input.style.background  = 'var(--green-lt)'
+  setTimeout(() => {
+    input.style.borderColor = ''
+    input.style.background  = ''
+  }, 1200)
+
+  // Auto-detect brand from serial
+  autoDetectBrand(serial)
+
+  // Show confirmation toast
+  toast('✓ Serial scanned: ' + serial, 'success')
+
+  // Update indicator
+  const indicator = document.getElementById('usb-scan-indicator')
+  if (indicator) {
+    indicator.textContent = '✓ SCANNED'
+    indicator.style.background = 'var(--green-lt)'
+    indicator.style.color = 'var(--green)'
+    setTimeout(() => {
+      indicator.textContent = '● USB READY'
+      indicator.style.background = ''
+      indicator.style.color = ''
+    }, 2000)
+  }
+
+  // Check if this serial already exists
+  const existing = assets.find(a =>
+    a.serial && a.serial.toLowerCase() === serial.toLowerCase()
+  )
+  if (existing) {
+    toast(`⚠ Serial already registered: ${existing.name} (${existing.status})`, 'error', 5000)
+  }
+
+  // Move focus to asset name if it's empty (so user can continue filling form)
+  setTimeout(() => {
+    const nameInput = document.getElementById('fa-name')
+    if (nameInput && !nameInput.value) nameInput.focus()
+  }, 300)
+}
+
+// ── Global keyboard listener — works even when modal is open ──
+// Detects USB scanner input anywhere on the page (not just the serial field)
+let globalScanBuffer  = ''
+let globalScanTimer   = null
+let globalLastKeyTime = 0
+
+document.addEventListener('keydown', function(e) {
+  // Only intercept if the asset modal is open AND focus is NOT already on the serial field
+  const modalOpen  = document.getElementById('modal-asset')?.classList.contains('open')
+  const serialFocused = document.activeElement?.id === 'fa-serial'
+  if (!modalOpen || serialFocused) return
+
+  // Ignore special keys
+  if (e.key.length > 1) {
+    if (e.key === 'Enter' && globalScanBuffer.length >= USB_MIN_LENGTH) {
+      // Enter key = scanner finished — route to serial field
+      const val = globalScanBuffer.trim()
+      globalScanBuffer = ''
+      clearTimeout(globalScanTimer)
+      const input = document.getElementById('fa-serial')
+      if (input) {
+        input.value = val
+        onUsbScanComplete(val)
+      }
+    }
+    return
+  }
+
+  const now = Date.now()
+  const gap  = now - globalLastKeyTime
+  globalLastKeyTime = now
+
+  if (gap < USB_SPEED_THRESHOLD || globalScanBuffer.length > 0) {
+    // Fast sequential keys = scanner
+    globalScanBuffer += e.key
+    clearTimeout(globalScanTimer)
+    globalScanTimer = setTimeout(() => {
+      const val = globalScanBuffer.trim()
+      globalScanBuffer = ''
+      if (val.length >= USB_MIN_LENGTH) {
+        const input = document.getElementById('fa-serial')
+        if (input) {
+          input.value = val
+          onUsbScanComplete(val)
+          // Route focus to serial field so user sees what was scanned
+          input.focus()
+        }
+      }
+    }, 120)
+    // Prevent the key from being typed elsewhere on the page
+    if (globalScanBuffer.length > 1) e.preventDefault()
+  }
+})
 
 // ── Boot: attempt auto-login on page load ──────────────────────
 checkAutoLogin()
