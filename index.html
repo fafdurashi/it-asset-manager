@@ -340,6 +340,9 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="sb-item active" data-page="dashboard" onclick="nav(this)">
           <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg> Dashboard
         </div>
+        <div class="sb-item" data-page="staff-view" onclick="nav(this)" id="nav-staff">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg> Staffs
+        </div>
         <div class="sb-section">Assets</div>
         <div class="sb-item" data-page="assets" onclick="nav(this)">
           <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.51 15.5 0 12.36 0c-1.73 0-3.24.86-4.22 2.14L7 3.5l-1.14-1.36C4.87.86 3.37 0 1.64 0 .74 0 0 .74 0 1.64c0 .9.74 1.64 1.64 1.64.56 0 1.06-.31 1.36-.74l1.16-1.4C4.53 1.51 5.04 2 5.63 2c.54 0 1-.46 1-1V.5h1.5c.73 0 1.36.56 1.44 1.27l.86 6.48c.08.74.7 1.25 1.44 1.25h6.63c.74 0 1.44-.56 1.55-1.29L20 6z"/><path d="M20 6H4l1 10h14z"/></svg> All Assets
@@ -823,6 +826,17 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         </div>
       </div>
 
+
+      <!-- STAFF VIEW PAGE -->
+      <div class="page" id="page-staff-view">
+        <div class="toolbar">
+          <div class="search-w"><span class="si">⌕</span><input type="text" id="q-staff" placeholder="Search staff name, branch, department…" oninput="renderStaffView()"></div>
+          <select id="f-staff-branch" onchange="renderStaffView()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
+        </div>
+        <div id="staff-view-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
+        <div id="staff-view-empty" class="empty-msg" style="display:none">No staff found. Add staff in Settings → Staff / Assignees.</div>
+      </div>
+
     </div><!-- /main -->
   </div><!-- /shell -->
 </div><!-- /app -->
@@ -887,6 +901,39 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 </div>
 
 <!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- STAFF ASSET MODAL -->
+<div class="mbg" id="modal-staff-assets">
+  <div class="modal wide">
+    <div class="mhead">
+      <div>
+        <h3 id="staff-modal-name">Staff assets</h3>
+        <div id="staff-modal-meta" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-staff-assets')">×</button>
+    </div>
+    <div class="mbody">
+      <div id="staff-assets-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem"></div>
+      <table>
+        <thead><tr>
+          <th style="width:28%">Asset</th>
+          <th style="width:12%">Type</th>
+          <th style="width:12%">Status</th>
+          <th style="width:14%">Branch</th>
+          <th style="width:14%">Assigned date</th>
+          <th style="width:12%">Warranty</th>
+          <th style="width:8%">Action</th>
+        </tr></thead>
+        <tbody id="staff-assets-tbody"></tbody>
+      </table>
+      <div id="staff-assets-empty" class="empty-msg" style="display:none">No assets assigned to this staff member.</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-staff-assets')">Close</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ADD TYPE MODAL -->
 <div class="mbg" id="modal-add-type">
@@ -1219,7 +1266,7 @@ function doLogout() {
 // ════════════════════════════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════════════════════════════
-const PAGE_TITLES = { scanner:'Scan Device', settings:'Settings', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
+const PAGE_TITLES = { scanner:'Scan Device', settings:'Settings', 'staff-view':'Staffs', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
 function nav(el) {
   document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'))
   el.classList.add('active')
@@ -1237,6 +1284,7 @@ function nav(el) {
   if (pg === 'dashboard')     { renderDashboard() }
   if (pg === 'users')         { renderUsers() }
   if (pg === 'settings')       { renderSettings() }
+  if (pg === 'staff-view')     { renderStaffView() }
   if (pg === 'scanner')        { initPageScanner() }
   if (pg === 'invoices')      { renderInvoices(); renderInvoiceSummary() }
 }
@@ -3530,6 +3578,120 @@ function confirmStaffImport() {
 function downloadStaffTemplate() {
   const csv = 'name,branch,department,employeeId,contact\nAhmed Mohammed,ECP,Engineering,EMP-001,ahmed@company.com\nSarah Ali,DCP,Design,EMP-002,sarah@company.com\nOmar Hassan,SNP,IT,EMP-003,'
   dlCSV(csv, 'staff-import-template.csv')
+}
+
+// ════════════════════════════════════════════════════════════════
+// STAFF VIEW PAGE
+// ════════════════════════════════════════════════════════════════
+function renderStaffView() {
+  const q  = (document.getElementById('q-staff')?.value || '').toLowerCase()
+  const fb = document.getElementById('f-staff-branch')?.value || ''
+
+  // Merge staff from Settings + unique assignees from assets
+  const staffFromSettings = staffList || []
+  const assigneeNames = [...new Set(assets.filter(a=>a.assignee).map(a=>a.assignee))]
+
+  // Build unified staff list
+  const allStaff = [...staffFromSettings]
+  assigneeNames.forEach(name => {
+    if (!allStaff.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+      // Found in assets but not in settings — add as unregistered staff
+      const assetBranch = assets.find(a=>a.assignee===name)?.dept || ''
+      allStaff.push({ name, branch: assetBranch, dept: '', empId: '', contact: '', unregistered: true })
+    }
+  })
+
+  // Filter
+  const filtered = allStaff.filter(s => {
+    const mq = !q || [s.name, s.branch, s.dept, s.empId].some(x=>(x||'').toLowerCase().includes(q))
+    const mb = !fb || s.branch === fb
+    return mq && mb
+  })
+
+  const grid = document.getElementById('staff-view-grid')
+  const empty = document.getElementById('staff-view-empty')
+
+  if (!filtered.length) { grid.innerHTML=''; empty.style.display='block'; return }
+  empty.style.display = 'none'
+
+  grid.innerHTML = filtered.map(s => {
+    const staffAssets = assets.filter(a => a.assignee && a.assignee.toLowerCase() === s.name.toLowerCase())
+    const assigned    = staffAssets.filter(a => a.status === 'Assigned')
+    const totalVal    = staffAssets.reduce((sum,a)=>sum+(a.value||0),0)
+    const expiring    = staffAssets.filter(a => { if(!a.warranty)return false; const d=Math.ceil((new Date(a.warranty)-new Date())/86400000); return d<=90 })
+
+    return `<div class="card" style="padding:0;cursor:pointer;transition:box-shadow .15s" onclick="openStaffAssets('${s.name.replace(/'/g,"\'")}')">
+      <div style="padding:1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+        ${avatar(s.name)}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:1px">
+            ${s.branch ? `<span class="tag">${s.branch}</span>` : ''}
+            ${s.dept ? `<span style="margin-left:4px">${s.dept}</span>` : ''}
+            ${s.unregistered ? `<span style="color:var(--amber);font-size:10px;margin-left:4px">● From assets</span>` : ''}
+          </div>
+        </div>
+        ${s.empId ? `<div class="mono" style="font-size:10px;color:var(--text3)">${s.empId}</div>` : ''}
+      </div>
+      <div style="padding:.9rem 1rem;display:flex;gap:0">
+        <div style="flex:1;text-align:center;border-right:1px solid var(--border)">
+          <div style="font-size:20px;font-weight:700;color:var(--blue)">${assigned.length}</div>
+          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Assigned</div>
+        </div>
+        <div style="flex:1;text-align:center;border-right:1px solid var(--border)">
+          <div style="font-size:20px;font-weight:700;color:${expiring.length?'var(--red)':'var(--green)'}">${expiring.length}</div>
+          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Expiring</div>
+        </div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${totalVal?'AED '+totalVal.toLocaleString():'—'}</div>
+          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Value</div>
+        </div>
+      </div>
+    </div>`
+  }).join('')
+}
+
+function openStaffAssets(name) {
+  const staffAssets = assets.filter(a => a.assignee && a.assignee.toLowerCase() === name.toLowerCase())
+  const staffInfo   = (staffList || []).find(s => s.name.toLowerCase() === name.toLowerCase())
+
+  document.getElementById('staff-modal-name').textContent = name
+  document.getElementById('staff-modal-meta').innerHTML = [
+    staffInfo?.branch ? `<span class="tag">${staffInfo.branch}</span>` : '',
+    staffInfo?.dept   ? staffInfo.dept : '',
+    staffInfo?.empId  ? `<span class="mono">${staffInfo.empId}</span>` : '',
+    staffInfo?.contact? staffInfo.contact : '',
+  ].filter(Boolean).join(' · ')
+
+  // Stats
+  const totalVal  = staffAssets.reduce((s,a)=>s+(a.value||0),0)
+  const expiring  = staffAssets.filter(a=>{ if(!a.warranty)return false; const d=Math.ceil((new Date(a.warranty)-new Date())/86400000); return d<=90 })
+  document.getElementById('staff-assets-stats').innerHTML = [
+    ['Assets assigned', staffAssets.length, 'color:var(--blue)'],
+    ['Total value', totalVal ? 'AED '+totalVal.toLocaleString() : '—', 'color:var(--green)'],
+    ['Warranty alerts', expiring.length, expiring.length ? 'color:var(--red)' : 'color:var(--text2)'],
+  ].map(([l,v,col])=>`<div class="stat-card" style="padding:.75rem 1rem"><div class="stat-lbl">${l}</div><div class="stat-val" style="font-size:20px;${col}">${v}</div></div>`).join('')
+
+  // Assets table
+  const tbody = document.getElementById('staff-assets-tbody')
+  const empty = document.getElementById('staff-assets-empty')
+  if (!staffAssets.length) { tbody.innerHTML=''; empty.style.display='block'; }
+  else {
+    empty.style.display = 'none'
+    tbody.innerHTML = staffAssets.map(a => {
+      const w = wStatus(a.warranty)
+      return `<tr>
+        <td><div style="font-weight:600;font-size:13px">${a.name}</div><div class="mono">${a.serial||'—'}</div></td>
+        <td><span class="badge b-tag">${a.type}</span></td>
+        <td>${badgeHtml(a.status)}</td>
+        <td><span class="tag">${a.dept||'—'}</span></td>
+        <td style="font-size:12px;color:var(--blue)">${a.assigned_date ? fmtDate(a.assigned_date) : '—'}</td>
+        <td><span class="${w.cls}">${w.label}</span></td>
+        <td><button class="btn btn-sm" onclick="closeModal('modal-staff-assets');viewAsset(${a.id})">View</button></td>
+      </tr>`
+    }).join('')
+  }
+  openModal('modal-staff-assets')
 }
 
 // ── Boot on DOM ready ─────────────────────────────────────────
