@@ -1115,6 +1115,7 @@ let attachments = [] // [{name, dataUrl, type}]
 let sigCanvas, sigCtx, sigDrawing = false
 let charts = {}
 let currentBranchFilter = ''
+let currentStatFilter = ''  // 'Available','Assigned','Maintenance','warranty'
 
 // ════════════════════════════════════════════════════════════════
 // AUTH  — auto-login for admin, session persisted in localStorage
@@ -1343,10 +1344,22 @@ function updateBadges() {
 // ════════════════════════════════════════════════════════════════
 // DASHBOARD
 // ════════════════════════════════════════════════════════════════
+function setStatFilter(f) {
+  currentStatFilter = (currentStatFilter === f) ? '' : f  // toggle off if same
+  renderDashboard()
+}
+
 function renderDashboard() {
-  const filtered = currentBranchFilter ? assets.filter(a=>a.dept===currentBranchFilter) : assets
+  const branchFiltered = currentBranchFilter ? assets.filter(a=>a.dept===currentBranchFilter) : assets
   const exp = expiringAssets()
-  const totalVal = assets.reduce((s,a)=>s+(a.value||0),0)
+  const totalVal = branchFiltered.reduce((s,a)=>s+(a.value||0),0)
+
+  // Apply stat filter on top of branch filter
+  let filtered = branchFiltered
+  if (currentStatFilter === 'Available')   filtered = branchFiltered.filter(a=>a.status==='Available')
+  if (currentStatFilter === 'Assigned')    filtered = branchFiltered.filter(a=>a.status==='Assigned')
+  if (currentStatFilter === 'Maintenance') filtered = branchFiltered.filter(a=>a.status==='Maintenance')
+  if (currentStatFilter === 'warranty')    filtered = exp.filter(a=>!currentBranchFilter||a.dept===currentBranchFilter)
 
   // Warn banner
   const banner = document.getElementById('warn-banner')
@@ -1354,34 +1367,62 @@ function renderDashboard() {
     banner.innerHTML = `<div class="alert-banner">⚠ ${exp.length} asset${exp.length>1?'s':''} with warranty expiring within 90 days — <a onclick="nav(document.querySelector('[data-page=warranty]'))">View →</a></div>`
   } else banner.innerHTML = ''
 
-  // Stats
+  // Clickable stat cards — highlight active filter
+  const statStyle = (key) => currentStatFilter === key
+    ? 'cursor:pointer;border:2px solid var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.12);'
+    : 'cursor:pointer;border:1px solid var(--border);'
+
   document.getElementById('dash-stats').innerHTML = [
-    ['Total assets', filtered.length, 'all branches'],
-    ['Available', filtered.filter(a=>a.status==='Available').length, 'ready to assign', 'color:var(--green)'],
-    ['Assigned', filtered.filter(a=>a.status==='Assigned').length, 'in use', 'color:var(--blue)'],
-    ['Maintenance', filtered.filter(a=>a.status==='Maintenance').length, 'under service', 'color:var(--amber)'],
-    ['Total value', `AED ${totalVal.toLocaleString()}`, 'purchase price', ''],
-    ['Warranty alerts', exp.length, 'expiring ≤90 days', 'color:var(--red)'],
-  ].map(([l,v,s,c])=>`<div class="stat-card"><div class="stat-lbl">${l}</div><div class="stat-val" style="${c||''}">${v}</div><div class="stat-sub">${s}</div></div>`).join('')
+    ['Total assets',     branchFiltered.length,                                        'click to reset',          '',                      ''],
+    ['Available',        branchFiltered.filter(a=>a.status==='Available').length,       'ready to assign',         'color:var(--green)',     'Available'],
+    ['Assigned',         branchFiltered.filter(a=>a.status==='Assigned').length,        'in use',                  'color:var(--blue)',      'Assigned'],
+    ['Maintenance',      branchFiltered.filter(a=>a.status==='Maintenance').length,     'under service',           'color:var(--amber)',     'Maintenance'],
+    ['Total value',      `AED ${totalVal.toLocaleString()}`,                            'purchase price',          '',                      ''],
+    ['Warranty alerts',  exp.filter(a=>!currentBranchFilter||a.dept===currentBranchFilter).length, 'expiring ≤90 days', 'color:var(--red)', 'warranty'],
+  ].map(([l,v,s,color,key]) => {
+    const isActive = key && currentStatFilter === key
+    const cardStyle = key
+      ? (isActive
+          ? 'cursor:pointer;border:2px solid var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.12);background:var(--blue-lt);'
+          : 'cursor:pointer;border:1px solid var(--border);transition:all .15s;')
+      : 'border:1px solid var(--border);'
+    const onclick = key ? `onclick="setStatFilter('${key}')"` : `onclick="setStatFilter('')"`
+    const activeDot = isActive ? `<div style="font-size:9px;color:var(--blue);font-weight:700;margin-top:2px">● FILTERED</div>` : ''
+    return `<div class="stat-card" style="${cardStyle}" ${onclick}>
+      <div class="stat-lbl">${l}</div>
+      <div class="stat-val" style="${color||''}">${v}</div>
+      <div class="stat-sub">${s}</div>
+      ${activeDot}
+    </div>`
+  }).join('')
 
   // Branch filters
-  const branches = ['ECP','DCP','SNP','TEL']
+  const brs = ['ECP','DCP','SNP','TEL']
   document.getElementById('branch-filters').innerHTML =
     `<button class="branch-pill ${!currentBranchFilter?'active':''}" onclick="setBranchFilter('')">All branches</button>` +
-    branches.map(b=>`<button class="branch-pill ${currentBranchFilter===b?'active':''}" onclick="setBranchFilter('${b}')">${b} (${assets.filter(a=>a.dept===b).length})</button>`).join('')
+    brs.map(b=>`<button class="branch-pill ${currentBranchFilter===b?'active':''}" onclick="setBranchFilter('${b}')">${b} (${assets.filter(a=>a.dept===b).length})</button>`).join('')
 
-  // Recent table
-  document.getElementById('dash-recent').innerHTML = filtered.slice(0,8).map(a=>{
+  // Filtered table title
+  const tableTitle = currentStatFilter
+    ? `${currentStatFilter === 'warranty' ? 'Warranty expiring' : currentStatFilter} assets`
+    : 'Recent assets'
+  const tableCount = filtered.length
+  document.querySelector('#page-dashboard .card-head h3').textContent =
+    `${tableTitle} (${tableCount})`
+
+  // Show filtered or recent assets
+  const displayList = currentStatFilter ? filtered : filtered.slice(0, 8)
+  document.getElementById('dash-recent').innerHTML = displayList.map(a=>{
     const w=wStatus(a.warranty)
     return `<tr><td><div style="font-weight:600;font-size:13px">${a.name}</div><div class="mono">${a.serial||''}</div></td><td>${badgeHtml(a.status)}</td><td>${a.assignee?`<div style="display:flex;align-items:center;gap:5px">${avatar(a.assignee)}<span style="font-size:12px">${a.assignee}</span></div>`:'—'}</td><td><span class="tag">${a.dept||'—'}</span></td><td><span class="${w.cls}">${w.label}</span></td></tr>`
-  }).join('') || `<tr><td colspan="5" class="empty-msg">No assets</td></tr>`
+  }).join('') || `<tr><td colspan="5" class="empty-msg">No assets match.</td></tr>`
 
-  // Breakdown
-  const types = assets.reduce((m,a)=>{m[a.type]=(m[a.type]||0)+1;return m},{})
+  // Breakdown (always based on branch filter only)
+  const types = branchFiltered.reduce((m,a)=>{m[a.type]=(m[a.type]||0)+1;return m},{})
   const colors = ['#185FA5','#3B6D11','#854F0B','#534AB7','#0F6E56','#A32D2D','#888']
-  document.getElementById('dash-breakdown').innerHTML = Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<div class="rbar-wrap"><div class="rbar-label"><span>${k}</span><span style="color:var(--text2)">${v}</span></div><div class="rbar-track"><div class="rbar-fill" style="background:${colors[i%colors.length]};width:${Math.round(v/assets.length*100)}%"></div></div></div>`).join('')
+  document.getElementById('dash-breakdown').innerHTML = Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<div class="rbar-wrap"><div class="rbar-label"><span>${k}</span><span style="color:var(--text2)">${v}</span></div><div class="rbar-track"><div class="rbar-fill" style="background:${colors[i%colors.length]};width:${Math.round(v/branchFiltered.length*100)}%"></div></div></div>`).join('')
 }
-function setBranchFilter(b) { currentBranchFilter = b; renderDashboard() }
+function setBranchFilter(b) { currentBranchFilter = b; currentStatFilter = ''; renderDashboard() }
 
 // ════════════════════════════════════════════════════════════════
 // ASSETS TABLE
