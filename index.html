@@ -3423,7 +3423,7 @@ function downloadStaffTemplate() {
 document.addEventListener('DOMContentLoaded', function() {
   try { loadSettings() } catch(e) { console.warn('loadSettings:', e) }
 
-  // Step 1: Restore saved session (manager/accounts stay logged in)
+  // Step 1: Restore saved session (stays logged in across page refreshes)
   try {
     const saved = localStorage.getItem(SESSION_KEY)
     if (saved) {
@@ -3435,13 +3435,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try { localStorage.removeItem(SESSION_KEY) } catch(e2) {}
   }
 
-  // Step 2: No saved session — auto-login as admin
-  try {
-    const adminUser = DEMO_USERS[ADMIN_EMAIL]
-    if (adminUser) { applyLogin({ email: ADMIN_EMAIL, ...adminUser }); return }
-  } catch(e) { console.error('Admin auto-login failed:', e) }
-
-  // Step 3: Last resort — show login screen
+  // Step 2: No saved session — show login screen (everyone must sign in)
   document.getElementById('login-screen').style.display = 'block'
 })
 </script>
