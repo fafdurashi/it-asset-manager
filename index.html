@@ -420,7 +420,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div id="bulk-bar" style="display:none"></div>
         <div class="toolbar">
           <div class="search-w"><span class="si">⌕</span><input type="text" id="q-assets" placeholder="Search name, serial, assignee…" oninput="renderAssets()"></div>
-          <select id="f-type" onchange="renderAssets()"><option value="">All types</option><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select>
+          <select id="f-type" onchange="renderAssets()"><option value="">All types</option><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Camera</option><option>SIM</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select>
           <select id="f-status" onchange="renderAssets()"><option value="">All statuses</option><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select>
           <select id="f-dept" onchange="renderAssets()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
           <select id="f-life" onchange="renderAssets()"><option value="">All ages</option><option value="past">Past useful life (4+ yrs)</option><option value="ok">Within useful life</option></select>
@@ -780,6 +780,8 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
           <option>Monitor</option>
           <option>Phone</option>
           <option>Tablet</option>
+          <option>Camera</option>
+          <option>SIM</option>
           <option>Printer</option>
           <option>Keyboard</option>
           <option>Mouse</option>
@@ -839,7 +841,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
   <div class="modal wide">
     <div class="mhead"><h3 id="modal-asset-title">Add asset</h3><button class="mclose" onclick="closeModal('modal-asset')">×</button></div>
     <div class="mbody">
-      <div class="frow"><div class="fg"><label>Asset name *</label><input id="fa-name" placeholder="e.g. MacBook Pro 14"></div><div class="fg"><label>Type</label><select id="fa-type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select></div></div>
+      <div class="frow"><div class="fg"><label>Asset name *</label><input id="fa-name" placeholder="e.g. MacBook Pro 14"></div><div class="fg"><label>Type</label><select id="fa-type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Camera</option><option>SIM</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option></select></div></div>
       <div class="frow">
         <div class="fg">
           <label style="display:flex;align-items:center;justify-content:space-between">
@@ -2137,7 +2139,9 @@ async function confirmImport(){
   finally{btn.textContent='Import assets';btn.disabled=false}
 }
 function downloadTemplate(){
-  const csv='name,type,serial,brand,status,assignee,department,location,purchaseDate,warrantyExpiry,value,notes\n"MacBook Pro 14",Laptop,SN123456,Apple,Assigned,"John Doe",ECP,"Floor 2 Desk 5",2024-01-15,2027-01-15,12000,"Team lead device"'
+  const csv='name,type,serial,brand,status,assignee,department,location,purchaseDate,warrantyExpiry,value,notes\n"MacBook Pro 14",Laptop,SN123456,Apple,Assigned,"John Doe",ECP,"Floor 2 Desk 5",2024-01-15,2027-01-15,12000,"Team lead device"
+"Sony a7iii",Camera,,Sony,Available,,SNP,"Digtel Studio",,,,
+"SIM 0501234567",SIM,0501234567,Etisalat,Assigned,"John Doe",ECP,,,,,""'
   dlCSV(csv,'asset-import-template.csv')
 }
 function exportCSV(){
@@ -2642,6 +2646,12 @@ function autoDetectBrand(serial) {
   const typeInput  = document.getElementById('fa-type')
   if (!brandInput) return
   if (brandInput.value) return // don't overwrite if already filled
+  // Camera brands — set type hint
+  const cameraKeywords = ['canon','nikon','sony','fujifilm','olympus','panasonic','leica','hasselblad','dji','gopro']
+  const nameLower = (document.getElementById('fa-name')?.value || '').toLowerCase()
+  if (cameraKeywords.some(k => nameLower.includes(k)) && typeInput && !typeInput.value) {
+    typeInput.value = 'Camera'
+  }
   // Apple serials: C02, DX, F1, H9, etc.
   if (/^(C02|C07|DX|F1[A-Z]|H9|G[A-Z]{2}|MN|MP|MY|QP|QT|X[0-9])/.test(s)) {
     brandInput.value = 'Apple'
