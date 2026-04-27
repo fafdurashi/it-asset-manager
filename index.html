@@ -120,6 +120,7 @@ tr:hover td{background:#fafaf8}
 .b-admin{background:var(--red-lt);color:var(--red)}
 .b-manager{background:var(--purple-lt);color:var(--purple)}
 .b-staff{background:var(--blue-lt);color:var(--blue)}
+.b-accounts{background:var(--teal-lt);color:var(--teal)}
 
 /* ── AVATAR ── */
 .av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
@@ -307,6 +308,9 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
           <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.53-2.37 6.86-5 7.93-2.63-1.07-5-4.4-5-7.93V7.18L12 5z"/></svg> Warranty
           <span class="sb-badge" id="nav-warranty-badge" style="display:none"></span>
         </div>
+        <div class="sb-item" data-page="invoices" onclick="nav(this)" id="nav-invoices">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2 7v-1H8v-2h3v-1l3 2-3 2zm-1-5h5v1H10v-1z"/></svg> Invoices
+        </div>
         <div class="sb-item" data-page="disposal" onclick="nav(this)" id="nav-disposal">
           <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> Disposal
         </div>
@@ -394,7 +398,8 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="steps">
           <div class="step active" data-step="pending" onclick="assignStep(this)">Pending requests</div>
           <div class="step" data-step="handover" onclick="assignStep(this)">New handover</div>
-          <div class="step" data-step="history" onclick="assignStep(this)">Assignment history</div>
+          <div class="step" data-step="return" onclick="assignStep(this)">Return asset</div>
+        <div class="step" data-step="history" onclick="assignStep(this)">Assignment history</div>
         </div>
         <div class="step-body active" id="step-pending">
           <div class="card">
@@ -435,12 +440,30 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
             </div>
           </div>
         </div>
+        <div class="step-body" id="step-return" style="display:none">
+          <div class="card" style="max-width:600px">
+            <div class="card-head"><h3>Return asset</h3></div>
+            <div style="padding:1.25rem">
+              <div class="fg"><label>Asset to return *</label><select id="ret-asset"><option value="">— Select assigned asset —</option></select></div>
+              <div class="fg"><label>Return date *</label><input type="date" id="ret-date"></div>
+              <div class="fg"><label>Condition at return</label><select id="ret-condition"><option>Excellent</option><option>Good</option><option>Fair</option><option>Damaged</option></select></div>
+              <div class="fg"><label>Reason for return</label><select id="ret-reason"><option>Employee resigned</option><option>Employee transferred</option><option>Device upgrade</option><option>End of project</option><option>Temporary return</option><option>Other</option></select></div>
+              <div class="fg"><label>Notes</label><input id="ret-notes" placeholder="Any notes about the return"></div>
+              <button class="btn btn-primary" onclick="saveReturn()">
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Process return
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="step-body" id="step-history">
           <div class="toolbar">
             <div class="search-w"><span class="si">⌕</span><input type="text" id="q-history" placeholder="Search employee or asset…" oninput="renderHistory()"></div>
+            <select id="f-history-action" onchange="renderHistory()"><option value="">All actions</option><option>Assigned</option><option>Returned</option></select>
+            <select id="f-history-branch" onchange="renderHistory()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
+            <button class="btn btn-success btn-sm" onclick="exportHistoryCSV()">⬇ Export</button>
           </div>
           <div class="card">
-            <table><thead><tr><th style="width:22%">Asset</th><th style="width:20%">Employee</th><th style="width:14%">Branch</th><th style="width:12%">Action</th><th style="width:14%">Date</th><th style="width:10%">Condition</th><th style="width:8%">Sig</th></tr></thead>
+            <table><thead><tr><th style="width:18%">Asset</th><th style="width:14%">Employee</th><th style="width:9%">Branch</th><th style="width:9%">Action</th><th style="width:11%">Assigned date</th><th style="width:11%">Returned date</th><th style="width:10%">Duration</th><th style="width:10%">Condition</th><th style="width:8%">Sig</th></tr></thead>
             <tbody id="history-tbody"><tr><td colspan="7" class="loading-bar"><span class="spinner"></span>Loading…</td></tr></tbody></table>
           </div>
         </div>
@@ -470,6 +493,63 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
           <table><thead><tr><th style="width:24%">Asset</th><th style="width:12%">Serial</th><th style="width:12%">Branch</th><th style="width:12%">Status</th><th style="width:15%">Disposal reason</th><th style="width:13%">Date</th><th style="width:12%">Actions</th></tr></thead>
           <tbody id="disposal-tbody"></tbody></table>
           <div id="disposal-empty" class="empty-msg" style="display:none">No disposal records.</div>
+        </div>
+      </div>
+
+      <!-- INVOICES (Accounts dept) -->
+      <div class="page" id="page-invoices">
+        <div class="toolbar">
+          <div class="search-w"><span class="si">⌕</span><input type="text" id="q-invoices" placeholder="Search by asset name, serial, vendor…" oninput="renderInvoices()"></div>
+          <select id="f-inv-dept" onchange="renderInvoices()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
+          <select id="f-inv-type" onchange="renderInvoices()"><option value="">All types</option><option>Invoice</option><option>Warranty certificate</option><option>Contract</option><option>Other</option></select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem">
+          <div class="card" style="padding:1.25rem">
+            <div class="section-title" style="margin-bottom:1rem">Upload new document</div>
+            <div class="fg"><label>Asset *</label><select id="inv-asset-sel"><option value="">— Select asset —</option></select></div>
+            <div class="fg"><label>Document type</label><select id="inv-doc-type"><option>Invoice</option><option>Warranty certificate</option><option>Contract</option><option>Other</option></select></div>
+            <div class="fg"><label>Vendor / Supplier</label><input id="inv-vendor" placeholder="e.g. Jumbo Electronics"></div>
+            <div class="fg"><label>Invoice number</label><input id="inv-number" placeholder="e.g. INV-2024-0012"></div>
+            <div class="fg"><label>Amount (AED)</label><input type="number" id="inv-amount" placeholder="e.g. 8500"></div>
+            <div class="fg"><label>Invoice date</label><input type="date" id="inv-date"></div>
+            <div class="fg"><label>Notes</label><input id="inv-notes" placeholder="Optional notes"></div>
+            <div class="attach-zone" onclick="document.getElementById('inv-file-input').click()" id="inv-drop-zone">
+              <div style="font-size:24px;margin-bottom:6px">📎</div>
+              <div style="font-weight:600">Click to upload PDF or image</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px">PDF, JPG, PNG accepted</div>
+            </div>
+            <input type="file" id="inv-file-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleInvoiceFile(event)">
+            <div id="inv-file-preview" style="display:none;margin-top:8px">
+              <div class="attach-item">
+                <div class="attach-item-left"><span>📄</span><span id="inv-file-name" style="font-size:12px"></span></div>
+                <button class="btn btn-sm btn-ghost" onclick="clearInvoiceFile()">×</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="saveInvoice()">
+              <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Save document
+            </button>
+          </div>
+          <div class="card" style="padding:1.25rem">
+            <div class="section-title" style="margin-bottom:1rem">Summary</div>
+            <div id="inv-summary"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>All documents</h3><span id="inv-total-badge" style="font-size:12px;color:var(--text2)"></span></div>
+          <table>
+            <thead><tr>
+              <th style="width:22%">Asset</th>
+              <th style="width:13%">Type</th>
+              <th style="width:15%">Vendor</th>
+              <th style="width:12%">Invoice #</th>
+              <th style="width:10%">Amount</th>
+              <th style="width:10%">Date</th>
+              <th style="width:10%">Branch</th>
+              <th style="width:8%">File</th>
+            </tr></thead>
+            <tbody id="invoices-tbody"></tbody>
+          </table>
+          <div id="invoices-empty" class="empty-msg" style="display:none">No documents uploaded yet.</div>
         </div>
       </div>
 
@@ -657,7 +737,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
       <div class="fg"><label>Email *</label><input type="email" id="u-email" placeholder="user@company.com"></div>
       <div class="fg"><label>Password</label><input type="password" id="u-pass" placeholder="Min 8 characters"></div>
       <div class="frow">
-        <div class="fg"><label>Role</label><select id="u-role"><option value="admin">Admin</option><option value="manager">Manager</option><option value="staff">Staff</option></select></div>
+        <div class="fg"><label>Role</label><select id="u-role"><option value="admin">Admin</option><option value="manager">Manager</option><option value="accounts">Accounts</option><option value="staff">Staff</option></select></div>
         <div class="fg"><label>Branch</label><select id="u-branch"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div>
       </div>
     </div>
@@ -710,8 +790,17 @@ function doLogin() {
   document.getElementById('sb-branch').textContent = u.branch ? `Branch: ${u.branch}` : 'All branches'
   // Role-based UI
   if (u.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = '')
+  if (u.role === 'accounts') {
+    // Accounts: can add assets + upload invoices, cannot assign/return, dispose, or access admin
+    document.getElementById('nav-disposal').style.display = 'none'
+    document.getElementById('nav-assign').style.display = 'none'
+  }
   if (u.role === 'staff') {
     document.getElementById('nav-disposal').style.display = 'none'
+    document.getElementById('nav-invoices').style.display = 'none'
+  }
+  if (u.role === 'manager') {
+    document.getElementById('nav-invoices').style.display = 'none'
   }
   initSignaturePad()
   loadAll()
@@ -726,7 +815,7 @@ function doLogout() {
 // ════════════════════════════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════════════════════════════
-const PAGE_TITLES = { dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
+const PAGE_TITLES = { dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
 function nav(el) {
   document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'))
   el.classList.add('active')
@@ -743,12 +832,17 @@ function nav(el) {
   if (pg === 'audit')         { renderAudit() }
   if (pg === 'dashboard')     { renderDashboard() }
   if (pg === 'users')         { renderUsers() }
+  if (pg === 'invoices')      { renderInvoices(); renderInvoiceSummary() }
 }
 function setTopbarActions(pg) {
   const el = document.getElementById('topbar-actions')
-  if (pg === 'assets' && currentUser.role !== 'staff') {
+  if (pg === 'assets' && currentUser.role === 'accounts') {
+    el.innerHTML = `<button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
+  } else if (pg === 'assets' && canEdit()) {
     el.innerHTML = `<button class="btn" onclick="exportCSV()">⬇ Export CSV</button><button class="btn" onclick="nav(document.querySelector('[data-page=import]'))">⬆ Import CSV</button><button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
-  } else if (pg === 'assign' && currentUser.role !== 'staff') {
+  } else if (pg === 'invoices') {
+    el.innerHTML = `<button class="btn btn-success" onclick="exportInvoicesCSV()">⬇ Export invoices CSV</button>`
+  } else if (pg === 'assign' && canAssign()) {
     el.innerHTML = `<button class="btn btn-primary" onclick="assignStep(document.querySelector('[data-step=handover]'))">+ New handover</button>`
   } else {
     el.innerHTML = ''
@@ -761,6 +855,9 @@ function setTopbarActions(pg) {
 async function loadAll() {
   await loadAssets()
   await loadAudit()
+  loadInvoices()
+  populateInvoiceAssetDropdown()
+  populateReturnDropdown()
   renderDashboard()
   updateBadges()
 }
@@ -770,6 +867,9 @@ async function loadAssets() {
   assets = data || []
   renderAssets()
   populateHandoverDropdown()
+  populateReturnDropdown()
+  populateInvoiceAssetDropdown()
+  loadInvoices()
 }
 async function loadHistory() {
   const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(500)
@@ -832,7 +932,10 @@ function toast(msg, type='', dur=3000) {
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open') }
 function openModal(id) { document.getElementById(id).classList.add('open') }
-function canEdit() { return currentUser && currentUser.role !== 'staff' }
+function canEdit() { return currentUser && ['admin','manager','accounts'].includes(currentUser.role) }
+function canAssign() { return currentUser && ['admin','manager'].includes(currentUser.role) }
+function canDispose() { return currentUser && ['admin','manager'].includes(currentUser.role) }
+function canViewInvoices() { return currentUser && ['admin','accounts'].includes(currentUser.role) }
 
 function updateBadges() {
   const exp = expiringAssets().length
@@ -1009,7 +1112,10 @@ async function saveAsset() {
     warranty:toDate(document.getElementById('fa-warranty').value),
     value:parseFloat(document.getElementById('fa-value').value)||0,
     notes:document.getElementById('fa-notes').value.trim(),
-    attachments: attachments
+    attachments: attachments,
+    // Auto-set assigned_date if status changed to Assigned and no date exists
+    assigned_date: (document.getElementById('fa-status').value==='Assigned' && editingAssetId && !assets.find(a=>a.id===editingAssetId)?.assigned_date) ? new Date().toISOString().slice(0,10) : (editingAssetId ? assets.find(a=>a.id===editingAssetId)?.assigned_date||null : null),
+    returned_date: document.getElementById('fa-status').value!=='Assigned' ? null : (editingAssetId ? assets.find(a=>a.id===editingAssetId)?.returned_date||null : null)
   }
   const btn = document.getElementById('save-asset-btn')
   btn.textContent='Saving…'; btn.disabled=true
@@ -1053,6 +1159,8 @@ function viewAsset(id) {
     ['Status',badgeHtml(a.status)],['Assigned to',a.assignee||'—'],
     ['Branch',a.dept||'—'],['Location',a.loc||'—'],
     ['Purchase date',fmtDate(a.date)],
+    ['Assigned date', a.assigned_date ? `<span style="color:var(--blue);font-weight:600">${fmtDate(a.assigned_date)}</span>` : '—'],
+    ['Returned date', a.returned_date ? `<span style="color:var(--green);font-weight:600">${fmtDate(a.returned_date)}</span>` : (a.status==='Assigned'?'<span style="color:var(--text3);font-size:12px">Currently assigned</span>':'—')],
     ['Age',age?`${age.toFixed(1)} years${age>=4?' <span class="badge b-warn">Past useful life</span>':''}`:'—'],
     ['Purchase value',a.value?`AED ${Number(a.value).toLocaleString()}`:'—'],
     ['Current value (est.)',depr!==null?`AED ${depr.toLocaleString()}`:'—'],
@@ -1071,9 +1179,11 @@ function viewAsset(id) {
 
   let footBtns = `<button class="btn btn-sm" onclick="openQR(${id})">QR code</button>`
   if (canEdit()) {
+    footBtns += `<button class="btn btn-primary btn-sm" onclick="openEditAssetModal(${id})">Edit</button>`
+  }
+  if (canDispose()) {
     footBtns += `<button class="btn btn-danger btn-sm" onclick="deleteAsset(${id})">Delete</button>`
     footBtns += `<button class="btn btn-sm" onclick="openDisposalModal(${id})">Dispose</button>`
-    footBtns += `<button class="btn btn-primary btn-sm" onclick="openEditAssetModal(${id})">Edit</button>`
   }
   footBtns += `<button class="btn" onclick="closeModal('modal-view')">Close</button>`
   document.getElementById('view-foot').innerHTML = footBtns
@@ -1128,6 +1238,7 @@ function assignStep(el) {
   document.getElementById('step-'+el.dataset.step).classList.add('active')
   if (el.dataset.step==='history') renderHistory()
   if (el.dataset.step==='pending') renderPending()
+  if (el.dataset.step==='return') populateReturnDropdown()
 }
 function populateHandoverDropdown() {
   const sel = document.getElementById('ho-asset')
@@ -1148,11 +1259,15 @@ async function saveHandover() {
   const sig = getSigDataUrl()
   const asset = assets.find(a=>a.id===assetId)
   // Update asset
-  await sb.from('assets').update({ status:'Assigned', assignee:employee, dept:branch||asset.dept }).eq('id',assetId)
+  await sb.from('assets').update({
+    status:'Assigned', assignee:employee, dept:branch||asset.dept,
+    assigned_date: date,
+    returned_date: null
+  }).eq('id',assetId)
   // Log handover
   await sb.from('activity_log').insert({
     action:'Assigned', asset:asset.name, user_label:currentUser.name,
-    changes:JSON.stringify({ employee, branch, date, condition, notes, signature:sig })
+    changes:JSON.stringify({ employee, branch, assigned_date:date, condition, notes, signature:sig, assetId })
   })
   toast(`✓ Handover complete — ${asset.name} assigned to ${employee}`,'success')
   clearSig()
@@ -1200,27 +1315,122 @@ function previewHandoverPDF() {
   window.print()
   setTimeout(()=>document.getElementById('print-area').style.display='none',1000)
 }
+async function saveReturn() {
+  const assetId = parseInt(document.getElementById('ret-asset').value)
+  if (!assetId) { toast('Please select an asset to return','error'); return }
+  const retDate    = document.getElementById('ret-date').value
+  const condition  = document.getElementById('ret-condition').value
+  const reason     = document.getElementById('ret-reason').value
+  const notes      = document.getElementById('ret-notes').value.trim()
+  if (!retDate) { toast('Please enter a return date','error'); return }
+  const asset = assets.find(a=>a.id===assetId)
+  const prevAssignee = asset.assignee || ''
+  // Find the original assigned date from audit log
+  const assignLog = auditLog.find(l => l.action==='Assigned' && l.asset===asset.name)
+  let assignedDate = asset.assigned_date || ''
+  if (!assignedDate && assignLog) {
+    try { assignedDate = JSON.parse(assignLog.changes||'{}').assigned_date||'' } catch(e){}
+  }
+  // Calculate duration
+  let durationLabel = '—'
+  if (assignedDate && retDate) {
+    const days = Math.ceil((new Date(retDate) - new Date(assignedDate)) / 86400000)
+    durationLabel = days >= 30 ? `${Math.floor(days/30)}m ${days%30}d` : `${days} day${days!==1?'s':''}`
+  }
+  await sb.from('assets').update({
+    status:'Available', assignee:'',
+    returned_date: retDate,
+    assigned_date: assignedDate || null
+  }).eq('id',assetId)
+  await sb.from('activity_log').insert({
+    action:'Returned', asset:asset.name, user_label:currentUser.name,
+    changes:JSON.stringify({ employee:prevAssignee, assigned_date:assignedDate, returned_date:retDate, duration:durationLabel, condition, reason, notes, assetId })
+  })
+  toast(`✓ ${asset.name} returned — duration: ${durationLabel}`,'success')
+  document.getElementById('ret-asset').value=''
+  document.getElementById('ret-notes').value=''
+  await loadAll()
+  populateReturnDropdown()
+  assignStep(document.querySelector('[data-step=history]'))
+}
+
+function populateReturnDropdown() {
+  const sel = document.getElementById('ret-asset')
+  if (!sel) return
+  sel.innerHTML = '<option value="">— Select assigned asset —</option>' +
+    assets.filter(a=>a.status==='Assigned').map(a=>`<option value="${a.id}">${a.name} — ${a.assignee} (${a.serial||'no serial'})</option>`).join('')
+  const d = document.getElementById('ret-date')
+  if (d) d.value = new Date().toISOString().slice(0,10)
+}
+
 function renderPending() {
   // Simulated pending — assets assigned via requests (none in demo, shows empty gracefully)
   document.getElementById('pending-tbody').innerHTML = '<tr><td colspan="5" class="empty-msg">No pending requests.</td></tr>'
 }
 function renderHistory() {
-  const q = (document.getElementById('q-history')?.value||'').toLowerCase()
-  const rows = auditLog.filter(l=>['Assigned','Returned','Handover','Disposed'].some(k=>l.action.includes(k)))
-    .filter(l=>!q||[l.asset,l.user_label].some(x=>(x||'').toLowerCase().includes(q)))
+  const q  = (document.getElementById('q-history')?.value||'').toLowerCase()
+  const fa = document.getElementById('f-history-action')?.value||''
+  const fb = document.getElementById('f-history-branch')?.value||''
+
+  const rows = auditLog
+    .filter(l=>['Assigned','Returned','Handover'].some(k=>l.action.includes(k)))
+    .filter(l=>{
+      const mq = !q || [l.asset,l.user_label,(()=>{try{return JSON.stringify(JSON.parse(l.changes||'{}'))}catch(e){return''}})()].some(x=>(x||'').toLowerCase().includes(q))
+      const ma = !fa || l.action.includes(fa)
+      let ch={}; try{ch=JSON.parse(l.changes||'{}')}catch(e){}
+      const mb = !fb || (ch.branch||'')=== fb
+      return mq && ma && mb
+    })
+
   document.getElementById('history-tbody').innerHTML = rows.map(l=>{
-    let changes={}; try{changes=JSON.parse(l.changes||'{}')}catch(e){}
-    const hasSig = changes.signature
+    let ch={}; try{ch=JSON.parse(l.changes||'{}')}catch(e){}
+    const isReturn = l.action.includes('Return')
+    const assignedDate  = ch.assigned_date  || (isReturn ? '—' : fmtDate(l.created_at?.slice(0,10)))
+    const returnedDate  = ch.returned_date  || (isReturn ? fmtDate(l.created_at?.slice(0,10)) : '<span style="color:var(--text3);font-size:11px">Not returned</span>')
+    // Calculate duration if both dates exist
+    let duration = ch.duration || '—'
+    if (!ch.duration && ch.assigned_date && ch.returned_date) {
+      const days = Math.ceil((new Date(ch.returned_date) - new Date(ch.assigned_date)) / 86400000)
+      duration = days >= 30 ? `${Math.floor(days/30)}m ${days%30}d` : `${days}d`
+    }
+    const hasSig = ch.signature
     return `<tr>
-      <td><div style="font-weight:600;font-size:13px">${l.asset}</div></td>
-      <td>${changes.employee||l.user_label}</td>
-      <td><span class="tag">${changes.branch||'—'}</span></td>
-      <td><span class="badge ${l.action.includes('Return')?'b-available':'b-assigned'}">${l.action}</span></td>
-      <td style="font-size:12px">${fmtDate(l.created_at?.slice(0,10))}</td>
-      <td style="font-size:12px">${changes.condition||'—'}</td>
-      <td>${hasSig?`<img src="${changes.signature}" style="height:30px;border:1px solid var(--border);border-radius:4px">`:''}</td>
+      <td><div style="font-weight:600;font-size:13px">${l.asset}</div><div class="mono">${ch.assetId?'#'+ch.assetId:''}</div></td>
+      <td><div style="display:flex;align-items:center;gap:5px">${avatar(ch.employee||l.user_label)}<span style="font-size:12px">${ch.employee||l.user_label}</span></div></td>
+      <td><span class="tag">${ch.branch||'—'}</span></td>
+      <td><span class="badge ${isReturn?'b-available':'b-assigned'}">${l.action}</span></td>
+      <td style="font-size:12px;color:var(--blue);font-weight:500">${typeof assignedDate==='string'&&assignedDate.includes('-')?fmtDate(assignedDate):assignedDate}</td>
+      <td style="font-size:12px;color:var(--green);font-weight:500">${typeof returnedDate==='string'&&returnedDate.includes('-')?fmtDate(returnedDate):returnedDate}</td>
+      <td style="font-size:12px;color:var(--text2)">${duration}</td>
+      <td style="font-size:12px">${ch.condition||'—'}</td>
+      <td>${hasSig?`<img src="${ch.signature}" style="height:28px;border:1px solid var(--border);border-radius:4px">`:''}</td>
     </tr>`
-  }).join('') || '<tr><td colspan="7" class="empty-msg">No handover history.</td></tr>'
+  }).join('') || '<tr><td colspan="9" class="empty-msg">No handover history found.</td></tr>'
+}
+
+function exportHistoryCSV() {
+  const rows = auditLog
+    .filter(l=>['Assigned','Returned','Handover'].some(k=>l.action.includes(k)))
+    .map(l=>{
+      let ch={}; try{ch=JSON.parse(l.changes||'{}')}catch(e){}
+      const isReturn = l.action.includes('Return')
+      const assignedDate = ch.assigned_date || (!isReturn ? l.created_at?.slice(0,10) : '')
+      const returnedDate = ch.returned_date || (isReturn  ? l.created_at?.slice(0,10) : '')
+      let duration = ch.duration||''
+      if (!duration && assignedDate && returnedDate) {
+        const days = Math.ceil((new Date(returnedDate)-new Date(assignedDate))/86400000)
+        duration = days+'d'
+      }
+      return [
+        l.asset, ch.employee||l.user_label, ch.branch||'',
+        l.action, assignedDate, returnedDate, duration,
+        ch.condition||'', ch.reason||'', ch.notes||'', l.user_label,
+        new Date(l.created_at).toLocaleString('en-GB')
+      ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')
+    })
+  const csv = ['Asset,Employee,Branch,Action,AssignedDate,ReturnedDate,Duration,Condition,Reason,Notes,ProcessedBy,Timestamp', ...rows].join('\n')
+  dlCSV(csv, `assignment-history-${new Date().toISOString().slice(0,10)}.csv`)
+  toast(`✓ Exported ${rows.length} records`, 'success')
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1465,7 +1675,7 @@ async function applyBulkAction() {
 // USERS
 // ════════════════════════════════════════════════════════════════
 function renderUsers() {
-  const roleBadge={admin:'b-admin',manager:'b-manager',staff:'b-staff'}
+  const roleBadge={admin:'b-admin',manager:'b-manager',accounts:'b-accounts',staff:'b-staff'}
   document.getElementById('users-tbody').innerHTML=users.map(u=>`<tr>
     <td><div style="display:flex;align-items:center;gap:8px">${avatar(u.name)}<span style="font-weight:600">${u.name}</span></div></td>
     <td style="font-size:13px">${u.email}</td>
@@ -1628,6 +1838,173 @@ function exportCSV(){
   toast(`✓ Exported ${assets.length} assets`,'success')
 }
 function dlCSV(csv,name){const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
+
+// ════════════════════════════════════════════════════════════════
+// INVOICES (Accounts department)
+// ════════════════════════════════════════════════════════════════
+let invoices = []   // persisted in Supabase assets.attachments or local array
+let invoiceFileData = null  // { name, dataUrl, type }
+
+async function loadInvoices() {
+  // Pull all invoice attachments across all assets
+  invoices = []
+  assets.forEach(a => {
+    if (a.attachments && a.attachments.length) {
+      a.attachments.forEach(att => {
+        if (att.invMeta) {
+          invoices.push({ ...att.invMeta, assetId: a.id, assetName: a.name, assetSerial: a.serial||'', assetDept: a.dept||'', dataUrl: att.dataUrl, fileName: att.name })
+        }
+      })
+    }
+  })
+}
+
+function populateInvoiceAssetDropdown() {
+  const sel = document.getElementById('inv-asset-sel')
+  if (!sel) return
+  sel.innerHTML = '<option value="">— Select asset —</option>' +
+    assets.map(a => `<option value="${a.id}">${a.name}${a.serial?' ('+a.serial+')':''}</option>`).join('')
+  const d = document.getElementById('inv-date')
+  if (d) d.value = new Date().toISOString().slice(0, 10)
+}
+
+function handleInvoiceFile(e) {
+  const file = e.target.files[0]; if (!file) return
+  const reader = new FileReader()
+  reader.onload = ev => {
+    invoiceFileData = { name: file.name, dataUrl: ev.target.result, type: file.type }
+    document.getElementById('inv-file-name').textContent = file.name
+    document.getElementById('inv-file-preview').style.display = 'block'
+    document.getElementById('inv-drop-zone').style.borderColor = 'var(--green)'
+  }
+  reader.readAsDataURL(file)
+}
+function clearInvoiceFile() {
+  invoiceFileData = null
+  document.getElementById('inv-file-input').value = ''
+  document.getElementById('inv-file-preview').style.display = 'none'
+  document.getElementById('inv-drop-zone').style.borderColor = ''
+}
+
+async function saveInvoice() {
+  const assetId = parseInt(document.getElementById('inv-asset-sel').value)
+  if (!assetId) { toast('Please select an asset', 'error'); return }
+  const docType  = document.getElementById('inv-doc-type').value
+  const vendor   = document.getElementById('inv-vendor').value.trim()
+  const invNum   = document.getElementById('inv-number').value.trim()
+  const amount   = parseFloat(document.getElementById('inv-amount').value) || 0
+  const invDate  = document.getElementById('inv-date').value
+  const notes    = document.getElementById('inv-notes').value.trim()
+
+  const asset = assets.find(a => a.id === assetId)
+  const existing = asset.attachments || []
+
+  const newAtt = {
+    name: invoiceFileData ? invoiceFileData.name : `${docType} - ${invNum || 'doc'}.pdf`,
+    dataUrl: invoiceFileData ? invoiceFileData.dataUrl : '',
+    type: invoiceFileData ? invoiceFileData.type : 'application/pdf',
+    invMeta: { docType, vendor, invNum, amount, invDate, notes, uploadedBy: currentUser.name, uploadedAt: new Date().toISOString() }
+  }
+
+  const updated = [...existing, newAtt]
+  const btn = document.querySelector('#page-invoices .btn-primary')
+  btn.textContent = 'Saving…'; btn.disabled = true
+  try {
+    await sb.from('assets').update({ attachments: updated }).eq('id', assetId)
+    await dbLog('Invoice uploaded', asset.name, `${docType} · ${vendor} · AED ${amount}`)
+    toast(`✓ Document saved for ${asset.name}`, 'success')
+    // Reset form
+    document.getElementById('inv-asset-sel').value = ''
+    document.getElementById('inv-vendor').value = ''
+    document.getElementById('inv-number').value = ''
+    document.getElementById('inv-amount').value = ''
+    document.getElementById('inv-notes').value = ''
+    document.getElementById('inv-doc-type').value = 'Invoice'
+    clearInvoiceFile()
+    await loadAssets()
+    await loadInvoices()
+    renderInvoices()
+    renderInvoiceSummary()
+  } catch(e) { toast('Error: ' + e.message, 'error') }
+  finally { btn.textContent = 'Save document'; btn.disabled = false }
+}
+
+function renderInvoices() {
+  loadInvoices()
+  populateInvoiceAssetDropdown()
+  const q   = (document.getElementById('q-invoices')?.value || '').toLowerCase()
+  const fd  = document.getElementById('f-inv-dept')?.value || ''
+  const ft  = document.getElementById('f-inv-type')?.value || ''
+
+  const filtered = invoices.filter(inv => {
+    const mq = !q || [inv.assetName, inv.assetSerial, inv.vendor, inv.invNum, inv.docType].some(x => (x||'').toLowerCase().includes(q))
+    const md = !fd || inv.assetDept === fd
+    const mt = !ft || inv.docType === ft
+    return mq && md && mt
+  })
+
+  document.getElementById('inv-total-badge').textContent = `${filtered.length} document${filtered.length !== 1 ? 's' : ''}`
+  document.getElementById('invoices-empty').style.display = filtered.length ? 'none' : 'block'
+
+  const typeColors = { Invoice:'b-assigned', 'Warranty certificate':'b-available', Contract:'b-expiring', Other:'b-tag' }
+  document.getElementById('invoices-tbody').innerHTML = filtered.map(inv => `<tr>
+    <td><div style="font-weight:600;font-size:13px">${inv.assetName}</div><div class="mono">${inv.assetSerial}</div></td>
+    <td><span class="badge ${typeColors[inv.docType]||'b-tag'}">${inv.docType}</span></td>
+    <td style="font-size:12px">${inv.vendor || '—'}</td>
+    <td class="mono">${inv.invNum || '—'}</td>
+    <td style="font-size:13px;font-weight:500">${inv.amount ? 'AED ' + Number(inv.amount).toLocaleString() : '—'}</td>
+    <td style="font-size:12px">${inv.invDate ? fmtDate(inv.invDate) : '—'}</td>
+    <td><span class="tag">${inv.assetDept || '—'}</span></td>
+    <td>${inv.dataUrl
+      ? `<a href="${inv.dataUrl}" download="${inv.fileName}" class="btn btn-sm btn-ghost" style="color:var(--blue)">⬇ View</a>`
+      : '<span style="color:var(--text3);font-size:11px">No file</span>'
+    }</td>
+  </tr>`).join('') || ''
+}
+
+function renderInvoiceSummary() {
+  loadInvoices()
+  const totalAmt = invoices.reduce((s, inv) => s + (inv.amount || 0), 0)
+  const byType   = invoices.reduce((m, inv) => { m[inv.docType] = (m[inv.docType]||0)+1; return m }, {})
+  const byBranch = invoices.reduce((m, inv) => { m[inv.assetDept||'—'] = (m[inv.assetDept||'—']||0)+1; return m }, {})
+  const colors   = { Invoice:'#185FA5', 'Warranty certificate':'#3B6D11', Contract:'#854F0B', Other:'#888' }
+
+  document.getElementById('inv-summary').innerHTML = `
+    <div class="stat-card" style="margin-bottom:12px">
+      <div class="stat-lbl">Total documents</div>
+      <div class="stat-val">${invoices.length}</div>
+    </div>
+    <div class="stat-card" style="margin-bottom:16px">
+      <div class="stat-lbl">Total invoiced value</div>
+      <div class="stat-val" style="font-size:20px">AED ${totalAmt.toLocaleString()}</div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">By document type</div>
+    ${Object.entries(byType).map(([k,v]) => `
+      <div class="rbar-wrap">
+        <div class="rbar-label"><span>${k}</span><span style="color:var(--text2)">${v}</span></div>
+        <div class="rbar-track"><div class="rbar-fill" style="background:${colors[k]||'#888'};width:${Math.round(v/invoices.length*100)}%"></div></div>
+      </div>`).join('')}
+    <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 8px">By branch</div>
+    ${Object.entries(byBranch).map(([k,v]) => `
+      <div class="rbar-wrap">
+        <div class="rbar-label"><span>${k}</span><span style="color:var(--text2)">${v}</span></div>
+        <div class="rbar-track"><div class="rbar-fill" style="background:var(--purple);width:${Math.round(v/invoices.length*100)}%"></div></div>
+      </div>`).join('')}
+  `
+}
+
+function exportInvoicesCSV() {
+  loadInvoices()
+  const rows = invoices.map(inv => [
+    inv.assetName, inv.assetSerial, inv.assetDept, inv.docType,
+    inv.vendor||'', inv.invNum||'', inv.amount||0,
+    inv.invDate||'', inv.uploadedBy||'', inv.notes||''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+  const csv = ['Asset,Serial,Branch,Type,Vendor,InvoiceNo,Amount(AED),Date,UploadedBy,Notes', ...rows].join('\n')
+  dlCSV(csv, `invoices-${new Date().toISOString().slice(0,10)}.csv`)
+  toast(`✓ Exported ${invoices.length} invoice records`, 'success')
+}
+
 </script>
 </body>
 </html>
