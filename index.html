@@ -53,6 +53,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .login-card .btn-full{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
 .login-card .btn-full:hover{background:var(--blue-dk)}
 .login-err{color:var(--red);font-size:12px;text-align:center;margin-top:.5rem;min-height:18px}
+.quick-login-btn{width:100%;display:flex;align-items:center;gap:12px;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;transition:all .15s;font-family:inherit;text-align:left}
+.quick-login-btn:hover{border-color:var(--blue);background:var(--blue-lt);transform:translateX(2px)}
+.ql-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.ql-manager{background:#CECBF6;color:#3C3489}
+.ql-accounts{background:#9FE1CB;color:#085041}
+.ql-info{flex:1}
+.ql-name{font-size:14px;font-weight:600;color:#1a1a18}
+.ql-role{font-size:11px;color:#666662;margin-top:2px}
+.ql-arrow{font-size:18px;color:#999;transition:transform .15s}
+.quick-login-btn:hover .ql-arrow{transform:translateX(4px);color:var(--blue)}
 .role-pills{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
 .role-pill{flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;background:var(--bg2)}
 .role-pill.active{border-color:var(--blue);background:var(--blue-lt);color:var(--blue)}
@@ -284,12 +294,28 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
     <div class="login-card">
       <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M20 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 3h2v2h-2V6zm-4 0h2v2H7V6zm9 12H8v-2h8v2zm3-4H5v-2h14v2zm0-4h-2V8h2v2z"/></svg></div>
       <h2>IT Asset Manager</h2>
-      <p>Sign in to your account</p>
-      <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="Enter your email"></div>
-      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <p>Select your account to sign in</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem">
+        <button class="quick-login-btn" onclick="quickLogin('manager')">
+          <div class="ql-avatar ql-manager">M</div>
+          <div class="ql-info"><div class="ql-name">Manager</div><div class="ql-role">Manager · All branches</div></div>
+          <div class="ql-arrow">→</div>
+        </button>
+        <button class="quick-login-btn" onclick="quickLogin('accounts')">
+          <div class="ql-avatar ql-accounts">A</div>
+          <div class="ql-info"><div class="ql-name">Accounts</div><div class="ql-role">Accounts dept · All branches</div></div>
+          <div class="ql-arrow">→</div>
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:11px;color:var(--text3)">or sign in with username</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <div class="fg"><label>Username / Email</label><input type="text" id="login-email" placeholder="username or email" autocomplete="username"></div>
+      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password"></div>
       <button class="btn-full" onclick="doLogin()">Sign in</button>
       <div class="login-err" id="login-err"></div>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:.75rem">Default password: <b>password123</b> — change after first login via User Management</div>
     </div>
   </div>
 </div>
@@ -401,7 +427,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="card">
           <table>
             <thead><tr>
-              <th style="width:3%"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+              <th style="width:3%" id="th-checkbox"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
               <th style="width:20%">Asset</th><th style="width:10%">Serial</th>
               <th style="width:9%">Type</th><th style="width:10%">Status</th>
               <th style="width:14%">Assignee</th><th style="width:11%">Branch</th>
@@ -725,6 +751,63 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
   </div><!-- /shell -->
 </div><!-- /app -->
 
+
+<!-- MANAGER DOWNLOAD MODAL -->
+<div class="mbg" id="modal-manager-dl">
+  <div class="modal">
+    <div class="mhead"><h3>⬇ Download asset report</h3><button class="mclose" onclick="closeModal('modal-manager-dl')">×</button></div>
+    <div class="mbody">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+        Select filters and download a CSV report of assets.
+      </div>
+      <div class="fg">
+        <label>Branch / Department</label>
+        <select id="dl-dept">
+          <option value="">All branches</option>
+          <option value="ECP">ECP — Etisalat Channel Partnership</option>
+          <option value="DCP">DCP — DU Channel Partnership</option>
+          <option value="SNP">SNP — Snaptel Trading</option>
+          <option value="TEL">TEL — Telvio Trading LLC</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Asset type</label>
+        <select id="dl-type">
+          <option value="">All types</option>
+          <option>Laptop</option>
+          <option>Desktop</option>
+          <option>Monitor</option>
+          <option>Phone</option>
+          <option>Tablet</option>
+          <option>Printer</option>
+          <option>Keyboard</option>
+          <option>Mouse</option>
+          <option>Headset</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Status</label>
+        <select id="dl-status">
+          <option value="">All statuses</option>
+          <option>Available</option>
+          <option>Assigned</option>
+          <option>Maintenance</option>
+          <option>Retired</option>
+        </select>
+      </div>
+      <div id="dl-preview" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;margin-top:4px">
+        <span id="dl-count" style="font-weight:600;color:var(--text)"></span>
+        <span style="color:var(--text2)"> assets will be included in the report</span>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-manager-dl')">Cancel</button>
+      <button class="btn btn-success" onclick="managerDownloadCSV()">⬇ Download CSV</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODALS ══════════════════════════════════════════════════ -->
 
 <!-- SCANNER MODAL -->
@@ -882,7 +965,9 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // Demo users (in production use Supabase Auth)
 const DEMO_USERS = {
-  'rashick2012@gmail.com': { name:'Admin', role:'admin', branch:'', pass:'password123' },
+  'rashick2012@gmail.com': { name:'Admin',   role:'admin',    branch:'', pass:'password123' },
+  'manager':               { name:'Manager', role:'manager',  branch:'', pass:'manager123' },
+  'accounts':              { name:'Accounts',role:'accounts', branch:'', pass:'accounts123' },
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -925,16 +1010,23 @@ function checkAutoLogin() {
 }
 
 function doLogin() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase()
+  const input = document.getElementById('login-email').value.trim().toLowerCase()
   const pass  = document.getElementById('login-pass').value
-  const u = DEMO_USERS[email]
+  // Accept both username (e.g. "manager") and full email
+  const u = DEMO_USERS[input]
   if (!u || u.pass !== pass) {
-    document.getElementById('login-err').textContent = 'Invalid email or password.'
+    document.getElementById('login-err').textContent = 'Invalid username or password.'
     return
   }
-  // Save session to localStorage
-  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ email })) } catch(e) {}
-  applyLogin({ email, ...u })
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ email: input })) } catch(e) {}
+  applyLogin({ email: input, ...u })
+}
+
+function quickLogin(username) {
+  const u = DEMO_USERS[username]
+  if (!u) { return }
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ email: username })) } catch(e) {}
+  applyLogin({ email: username, ...u })
 }
 
 function applyLogin(user) {
@@ -944,8 +1036,19 @@ function applyLogin(user) {
   document.getElementById('sb-name').textContent = user.name
   document.getElementById('sb-role').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1)
   document.getElementById('sb-branch').textContent = user.branch ? `Branch: ${user.branch}` : 'All branches'
-  // Role-based UI
-  if (user.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = '')
+  // Show friendly identifier in sidebar — hide raw email for non-admin users
+  const displayId = user.email === 'rashick2012@gmail.com' ? user.email : user.email
+  document.getElementById('sb-name').textContent = user.name
+  // Role-based UI — reset all first so re-login works cleanly
+  const allNavIds = ['nav-assign','nav-disposal','nav-invoices']
+  allNavIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = '' })
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none')
+
+  if (user.role === 'admin') {
+    // Admin gets everything — all nav items + admin-only sections
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = '')
+    allNavIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = '' })
+  }
   if (user.role === 'accounts') {
     document.getElementById('nav-disposal').style.display = 'none'
     document.getElementById('nav-assign').style.display = 'none'
@@ -956,6 +1059,8 @@ function applyLogin(user) {
   }
   if (user.role === 'manager') {
     document.getElementById('nav-invoices').style.display = 'none'
+    document.getElementById('nav-assign').style.display = 'none'
+    document.getElementById('nav-disposal').style.display = 'none'
   }
   initSignaturePad()
   loadAll()
@@ -995,13 +1100,17 @@ function nav(el) {
 }
 function setTopbarActions(pg) {
   const el = document.getElementById('topbar-actions')
-  if (pg === 'assets' && currentUser.role === 'accounts') {
-    el.innerHTML = `<button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
-  } else if (pg === 'assets' && canEdit()) {
+  if (pg === 'assets' && currentUser.role === 'admin') {
     el.innerHTML = `<button class="btn" onclick="exportCSV()">⬇ Export CSV</button><button class="btn" onclick="nav(document.querySelector('[data-page=import]'))">⬆ Import CSV</button><button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
+  } else if (pg === 'assets' && currentUser.role === 'accounts') {
+    el.innerHTML = `<button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
+  } else if (pg === 'assets' && isManager()) {
+    el.innerHTML = `<button class="btn btn-success" onclick="openManagerDownload()">⬇ Download report</button>`
+  } else if (pg === 'assets' && canEdit()) {
+    el.innerHTML = `<button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
   } else if (pg === 'invoices') {
     el.innerHTML = `<button class="btn btn-success" onclick="exportInvoicesCSV()">⬇ Export invoices CSV</button>`
-  } else if (pg === 'assign' && canAssign()) {
+  } else if (pg === 'assign' && (canAssign() || currentUser.role==='admin')) {
     el.innerHTML = `<button class="btn btn-primary" onclick="assignStep(document.querySelector('[data-step=handover]'))">+ New handover</button>`
   } else {
     el.innerHTML = ''
@@ -1091,9 +1200,10 @@ function toast(msg, type='', dur=3000) {
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open') }
 function openModal(id) { document.getElementById(id).classList.add('open') }
-function canEdit() { return currentUser && ['admin','manager','accounts'].includes(currentUser.role) }
-function canAssign() { return currentUser && ['admin','manager'].includes(currentUser.role) }
-function canDispose() { return currentUser && ['admin','manager'].includes(currentUser.role) }
+function canEdit() { return currentUser && (currentUser.role === 'admin' || ['accounts'].includes(currentUser.role)) }
+function isManager() { return currentUser && currentUser.role === 'manager' }
+function canAssign() { return currentUser && currentUser.role === 'admin' }
+function canDispose() { return currentUser && currentUser.role === 'admin' }
 function canViewInvoices() { return currentUser && ['admin','accounts'].includes(currentUser.role) }
 
 function updateBadges() {
@@ -1176,7 +1286,7 @@ function renderAssets() {
 
   // Bulk bar
   const bb = document.getElementById('bulk-bar')
-  if (selectedIds.size > 0 && canEdit()) {
+  if (selectedIds.size > 0 && (currentUser.role === 'admin' || (canEdit() && !isManager()))) {
     bb.style.display='flex'
     bb.innerHTML=`<span>${selectedIds.size} selected</span><button onclick="openBulkModal()">Bulk action</button><button onclick="clearSelection()">Clear</button>`
   } else bb.style.display='none'
@@ -1189,7 +1299,7 @@ function renderAssets() {
     const pastLife = age && age >= 4
     const checked = selectedIds.has(a.id) ? 'checked' : ''
     return `<tr ${pastLife?'style="background:#fffdf5"':''}>
-      <td><input type="checkbox" ${checked} onchange="toggleSelect(${a.id},this)"></td>
+      <td>${(isManager()&&currentUser.role!=='admin')?'':` <input type="checkbox" ${checked} onchange="toggleSelect(${a.id},this)">`}</td>
       <td><div style="font-weight:600">${a.name}${pastLife?` <span class="badge b-warn" style="font-size:9px">4+ yrs</span>`:''}</div><div class="mono">${a.brand||''}</div></td>
       <td class="mono">${a.serial||'—'}</td>
       <td><span class="badge b-tag">${a.type}</span></td>
@@ -1199,7 +1309,7 @@ function renderAssets() {
       <td><span class="${w.cls}">${w.label}</span></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap">
         <button class="btn btn-sm" onclick="viewAsset(${a.id})">View</button>
-        ${canEdit()?`<button class="btn btn-sm" onclick="openEditAssetModal(${a.id})">Edit</button>`:''}
+        ${(canEdit()||currentUser.role==='admin')&&!isManager()?`<button class="btn btn-sm" onclick="openEditAssetModal(${a.id})">Edit</button>`:''}
       </div></td>
     </tr>`
   }).join('')
@@ -1357,10 +1467,10 @@ function viewAsset(id) {
   document.getElementById('view-body').innerHTML = `<div>${rows.map(([k,v])=>`<div class="detail-row"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('')}${attHtml}${histHtml}</div>`
 
   let footBtns = `<button class="btn btn-sm" onclick="openQR(${id})">QR code</button>`
-  if (canEdit()) {
+  if ((canEdit() || currentUser.role==='admin') && !isManager()) {
     footBtns += `<button class="btn btn-primary btn-sm" onclick="openEditAssetModal(${id})">Edit</button>`
   }
-  if (canDispose()) {
+  if ((canDispose() || currentUser.role==='admin') && !isManager()) {
     footBtns += `<button class="btn btn-danger btn-sm" onclick="deleteAsset(${id})">Delete</button>`
     footBtns += `<button class="btn btn-sm" onclick="openDisposalModal(${id})">Dispose</button>`
   }
@@ -1856,6 +1966,8 @@ async function applyBulkAction() {
 // ════════════════════════════════════════════════════════════════
 function renderUsers() {
   const roleBadge={admin:'b-admin',manager:'b-manager',accounts:'b-accounts',staff:'b-staff'}
+  // Rebuild users list fresh from DEMO_USERS each render
+  users = Object.entries(DEMO_USERS).map(([email,u],i)=>({id:i+1,email,...u}))
   document.getElementById('users-tbody').innerHTML=users.map(u=>`<tr>
     <td><div style="display:flex;align-items:center;gap:8px">${avatar(u.name)}<span style="font-weight:600">${u.name}</span></div></td>
     <td style="font-size:13px">${u.email}</td>
@@ -2439,7 +2551,7 @@ function showScanAction(serial, asset) {
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="viewAsset(${asset.id});nav(document.querySelector('[data-page=assets]'))">View full details</button>
-        ${canEdit()?`<button class="btn btn-sm" onclick="openEditAssetModal(${asset.id});nav(document.querySelector('[data-page=assets]'))">Edit asset</button>`:''}
+        ${(canEdit()||currentUser.role==='admin')?`<button class="btn btn-sm" onclick="openEditAssetModal(${asset.id});nav(document.querySelector('[data-page=assets]'))">Edit asset</button>`:''}
       </div>`
   } else {
     panel.innerHTML = `
@@ -2448,7 +2560,7 @@ function showScanAction(serial, asset) {
         <div style="font-size:13px;color:var(--text)">Serial: <strong>${serial}</strong></div>
       </div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:1rem">This serial number is not registered. Would you like to add it as a new asset?</div>
-      ${canEdit()?`<button class="btn btn-primary" onclick="openAddFromScan('${serial}')">
+      ${(canEdit()||currentUser.role==='admin')?`<button class="btn btn-primary" onclick="openAddFromScan('${serial}')">
         <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         Add as new asset
       </button>`:'<div style="font-size:12px;color:var(--text3)">Contact IT Admin to register this device.</div>'}`
@@ -2521,12 +2633,81 @@ function renderScanHistory() {
       <td style="font-size:12px;color:var(--text2)">${t}</td>
       <td>${s.assetId
         ? `<button class="btn btn-sm" onclick="viewAsset(${s.assetId})">View</button>`
-        : canEdit()?`<button class="btn btn-sm btn-primary" onclick="openAddFromScan('${s.serial}')">Add asset</button>`:'—'
+        : (canEdit()||currentUser.role==='admin')?`<button class="btn btn-sm btn-primary" onclick="openAddFromScan('${s.serial}')">Add asset</button>`:'—'
       }</td>
     </tr>`
   }).join('')
 }
 
+
+// ════════════════════════════════════════════════════════════════
+// MANAGER DOWNLOAD (view-only filtered export)
+// ════════════════════════════════════════════════════════════════
+function openManagerDownload() {
+  // Reset filters
+  document.getElementById('dl-dept').value   = ''
+  document.getElementById('dl-type').value   = ''
+  document.getElementById('dl-status').value = ''
+  updateDlPreview()
+  openModal('modal-manager-dl')
+  // Live preview update on filter change
+  ;['dl-dept','dl-type','dl-status'].forEach(id => {
+    document.getElementById(id).onchange = updateDlPreview
+  })
+}
+
+function getManagerFiltered() {
+  const dept   = document.getElementById('dl-dept')?.value   || ''
+  const type   = document.getElementById('dl-type')?.value   || ''
+  const status = document.getElementById('dl-status')?.value || ''
+  return assets.filter(a =>
+    (!dept   || a.dept   === dept)   &&
+    (!type   || a.type   === type)   &&
+    (!status || a.status === status)
+  )
+}
+
+function updateDlPreview() {
+  const count = getManagerFiltered().length
+  document.getElementById('dl-count').textContent = count
+}
+
+function managerDownloadCSV() {
+  const filtered = getManagerFiltered()
+  if (!filtered.length) { toast('No assets match the selected filters', 'error'); return }
+
+  const dept   = document.getElementById('dl-dept').value   || 'All'
+  const type   = document.getElementById('dl-type').value   || 'All'
+  const status = document.getElementById('dl-status').value || 'All'
+
+  const headers = [
+    'Name','Type','Serial','Brand','Status',
+    'Assignee','Branch','Location',
+    'Purchase Date','Warranty Expiry',
+    'Value (AED)','Assigned Date','Returned Date','Notes'
+  ]
+  const rows = filtered.map(a => [
+    a.name, a.type, a.serial||'', a.brand||'',
+    a.status, a.assignee||'', a.dept||'', a.loc||'',
+    a.date||'', a.warranty||'',
+    a.value||0, a.assigned_date||'', a.returned_date||'',
+    (a.notes||'').replace(/\[DISPOSED\]/g,'').trim()
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+
+  const csv = [headers.join(','), ...rows].join('\n')
+  const filename = [
+    'asset-report',
+    dept !== 'All' ? dept : '',
+    type !== 'All' ? type : '',
+    status !== 'All' ? status : '',
+    new Date().toISOString().slice(0,10)
+  ].filter(Boolean).join('-') + '.csv'
+
+  dlCSV(csv, filename)
+  toast(`✓ Downloaded ${filtered.length} assets — ${filename}`, 'success')
+  closeModal('modal-manager-dl')
+  dbLog('Report downloaded', `${filtered.length} assets · Dept:${dept} Type:${type} Status:${status}`)
+}
 
 // ── Boot: attempt auto-login on page load ──────────────────────
 checkAutoLogin()
