@@ -680,7 +680,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
           <div class="card">
             <div class="card-head"><h3>Export</h3></div>
             <div style="padding:1.25rem;display:flex;flex-direction:column;gap:12px">
-              <button class="btn btn-success" onclick="exportCSV()">⬇ Export all assets (CSV)</button>
+              <button class="btn btn-success" onclick="exportCSV()">⬇ Export filtered assets (CSV)</button>
               <button class="btn" onclick="exportAudit()">⬇ Export audit log (CSV)</button>
               <button class="btn" onclick="exportDeprReport()">⬇ Export depreciation report (CSV)</button>
             </div>
@@ -1110,7 +1110,7 @@ function nav(el) {
 function setTopbarActions(pg) {
   const el = document.getElementById('topbar-actions')
   if (pg === 'assets' && currentUser.role === 'admin') {
-    el.innerHTML = `<button class="btn" onclick="exportCSV()">⬇ Export CSV</button><button class="btn" onclick="nav(document.querySelector('[data-page=import]'))">⬆ Import CSV</button><button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
+    el.innerHTML = `<button class="btn" onclick="exportCSV()">⬇ Export filtered</button><button class="btn" onclick="nav(document.querySelector('[data-page=import]'))">⬆ Import CSV</button><button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
   } else if (pg === 'assets' && currentUser.role === 'accounts') {
     el.innerHTML = `<button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
   } else if (pg === 'assets' && isManager()) {
@@ -2141,11 +2141,53 @@ function downloadTemplate(){
   dlCSV(csv,'asset-import-template.csv')
 }
 function exportCSV(){
-  const rows=assets.map(a=>[a.id,a.name,a.type,a.serial||'',a.brand||'',a.status,a.assignee||'',a.dept||'',a.loc||'',a.date||'',a.warranty||'',a.value||0,a.notes||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))
-  const csv=['ID,Name,Type,Serial,Brand,Status,Assignee,Branch,Location,PurchaseDate,WarrantyExpiry,Value(AED),Notes',...rows].join('\n')
-  dlCSV(csv,`it-assets-${new Date().toISOString().slice(0,10)}.csv`)
-  dbLog('Exported','All assets (CSV)')
-  toast(`✓ Exported ${assets.length} assets`,'success')
+  // Read active filters from the assets page
+  const q  = (document.getElementById('q-assets')?.value || '').toLowerCase()
+  const ft = document.getElementById('f-type')?.value   || ''
+  const fs = document.getElementById('f-status')?.value || ''
+  const fd = document.getElementById('f-dept')?.value   || ''
+  const fl = document.getElementById('f-life')?.value   || ''
+
+  // Same filter logic as renderAssets()
+  const filtered = assets.filter(a => {
+    const mq = !q || [a.name,a.serial,a.assignee,a.dept,a.brand].some(x=>(x||'').toLowerCase().includes(q))
+    const mt = !ft || a.type   === ft
+    const ms = !fs || a.status === fs
+    const md = !fd || a.dept   === fd
+    let ml = true
+    if (fl === 'past') ml = (assetAge(a.date)||0) >= 4
+    if (fl === 'ok')   ml = (assetAge(a.date)||0) <  4
+    return mq && mt && ms && md && ml
+  })
+
+  if (!filtered.length) { toast('No assets match current filters', 'error'); return }
+
+  const rows = filtered.map(a =>
+    [a.id,a.name,a.type,a.serial||'',a.brand||'',a.status,
+     a.assignee||'',a.dept||'',a.loc||'',a.date||'',
+     a.warranty||'',a.value||0,a.notes||'']
+    .map(v => `"${String(v).replace(/"/g,'""')}"`)
+    .join(',')
+  )
+  const csv = ['ID,Name,Type,Serial,Brand,Status,Assignee,Branch,Location,PurchaseDate,WarrantyExpiry,Value(AED),Notes', ...rows].join('\n')
+
+  // Build descriptive filename from active filters
+  const parts = ['assets']
+  if (fd) parts.push(fd)
+  if (ft) parts.push(ft)
+  if (fs) parts.push(fs)
+  if (fl === 'past') parts.push('past-life')
+  if (fl === 'ok')   parts.push('within-life')
+  if (q)  parts.push('q-' + q.replace(/[^a-z0-9]/g,'').slice(0,10))
+  parts.push(new Date().toISOString().slice(0,10))
+  const filename = parts.join('-') + '.csv'
+
+  dlCSV(csv, filename)
+
+  const isFiltered = ft || fs || fd || fl || q
+  const filterDesc = [fd,ft,fs].filter(Boolean).join(' · ') || 'All'
+  dbLog('Exported', `${filtered.length} assets (${filterDesc})`)
+  toast(`✓ Downloaded ${filtered.length} of ${assets.length} assets — ${filename}`, 'success', 4000)
 }
 function dlCSV(csv,name){const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 
