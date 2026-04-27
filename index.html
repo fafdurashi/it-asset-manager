@@ -2246,9 +2246,7 @@ async function confirmImport(){
   finally{btn.textContent='Import assets';btn.disabled=false}
 }
 function downloadTemplate(){
-  const csv='name,type,serial,brand,status,assignee,department,location,purchaseDate,warrantyExpiry,value,notes\n"MacBook Pro 14",Laptop,SN123456,Apple,Assigned,"John Doe",ECP,"Floor 2 Desk 5",2024-01-15,2027-01-15,12000,"Team lead device"
-"Sony a7iii",Camera,,Sony,Available,,SNP,"Digtel Studio",,,,
-"SIM 0501234567",SIM,0501234567,Etisalat,Assigned,"John Doe",ECP,,,,,""'
+  const csv='name,type,serial,brand,status,assignee,department,location,purchaseDate,warrantyExpiry,value,notes\n"MacBook Pro 14",Laptop,SN123456,Apple,Assigned,"John Doe",ECP,"Floor 2 Desk 5",2024-01-15,2027-01-15,12000,"Team lead device"\n"Sony a7iii",Camera,,Sony,Available,,SNP,"Digtel Studio",,,,\n"SIM 0501234567",SIM,0501234567,Etisalat,Assigned,"John Doe",ECP,,,,,'
   dlCSV(csv,'asset-import-template.csv')
 }
 function exportCSV(){
@@ -3371,9 +3369,7 @@ function handleStaffFileSelect(e) {
 function parseStaffCSV(file) {
   const reader = new FileReader()
   reader.onload = e => {
-    const lines = e.target.result.split(/
-?
-/).filter(l => l.trim())
+    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim())
     if (lines.length < 2) { showStaffErr('CSV has no data rows.'); return }
     const parsed = []
     for (const line of lines.slice(1).slice(0, 500)) {
@@ -3390,9 +3386,7 @@ function parseStaffCSV(file) {
     if (!parsed.length) { showStaffErr('No valid rows found.'); return }
     pendingStaffImport = parsed
     document.getElementById('staff-import-count').textContent = `Found ${parsed.length} staff member${parsed.length > 1 ? 's' : ''} ready to import`
-    document.getElementById('staff-import-preview-text').textContent = parsed.slice(0, 6).map(s => `${s.name} · ${s.branch||'—'} · ${s.dept||'—'}`).join('
-') + (parsed.length > 6 ? `
-…and ${parsed.length - 6} more` : '')
+    document.getElementById('staff-import-preview-text').textContent = parsed.slice(0, 6).map(s => `${s.name} · ${s.branch||'—'} · ${s.dept||'—'}`).join('\n') + (parsed.length > 6 ? `\n…and ${parsed.length - 6} more` : '')
     document.getElementById('staff-import-preview').style.display = 'block'
     document.getElementById('staff-import-err').style.display = 'none'
     document.getElementById('staff-import-btn').style.display = 'inline-block'
