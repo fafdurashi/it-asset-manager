@@ -1124,25 +1124,34 @@ const ADMIN_EMAIL = 'rashick2012@gmail.com'
 
 // Called once on page load — restores session if saved
 function checkAutoLogin() {
+  // Step 1: Try to restore a saved session
   try {
     const saved = localStorage.getItem(SESSION_KEY)
     if (saved) {
       const session = JSON.parse(saved)
-      // Validate the saved email still exists in DEMO_USERS
       const u = DEMO_USERS[session.email]
       if (u) {
         applyLogin({ email: session.email, ...u })
-        return true
+        return
       }
     }
-  } catch(e) {}
-  // Admin gets auto-login without needing to click anything
-  const adminUser = DEMO_USERS[ADMIN_EMAIL]
-  if (adminUser) {
-    applyLogin({ email: ADMIN_EMAIL, ...adminUser })
-    return true
+  } catch(e) {
+    console.warn('Session restore failed:', e)
+    try { localStorage.removeItem(SESSION_KEY) } catch(e2) {}
   }
-  return false
+  // Step 2: Always auto-login as admin (no session needed)
+  try {
+    const adminUser = DEMO_USERS[ADMIN_EMAIL]
+    if (adminUser) {
+      applyLogin({ email: ADMIN_EMAIL, ...adminUser })
+      return
+    }
+  } catch(e) {
+    console.error('Admin auto-login failed:', e)
+  }
+  // Step 3: Fallback — show login screen
+  document.getElementById('login-screen').style.display = 'flex'
+  document.getElementById('app').style.display = 'none'
 }
 
 function doLogin() {
@@ -1198,6 +1207,7 @@ function applyLogin(user) {
     document.getElementById('nav-assign').style.display = 'none'
     document.getElementById('nav-disposal').style.display = 'none'
   }
+  } catch(e) { console.warn('Role UI error:', e) }
   initSignaturePad()
   loadAll()
 }
@@ -1263,8 +1273,8 @@ async function loadAll() {
   loadInvoices()
   populateInvoiceAssetDropdown()
   populateReturnDropdown()
-  syncDropdowns()
-  updateAssigneeDropdowns()
+  try { syncDropdowns() } catch(e) { console.warn("syncDropdowns:", e) }
+  try { updateAssigneeDropdowns() } catch(e) {}
   renderDashboard()
   updateBadges()
 }
@@ -3225,6 +3235,7 @@ function deleteBranch(idx) {
 
 // ── SYNC ALL DROPDOWNS in the app dynamically ──────────────────
 function syncDropdowns() {
+  if (!assetTypes || !assetTypes.length) return   // guard — don't run if not loaded
   // Type options
   const typeOpts = assetTypes.map(t => `<option>${t.name}</option>`).join('')
   const typeOptsFilter = `<option value="">All types</option>` + typeOpts
@@ -3446,8 +3457,8 @@ function downloadStaffTemplate() {
 }
 
 // ── Boot: attempt auto-login on page load ──────────────────────
-loadSettings()
-checkAutoLogin()
+try { loadSettings() } catch(e) { console.warn('loadSettings error:', e) }
+try { checkAutoLogin() } catch(e) { console.error('checkAutoLogin error:', e) }
 </script>
 </body>
 </html>
