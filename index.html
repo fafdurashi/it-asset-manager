@@ -344,7 +344,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="sb-item" data-page="assets" onclick="nav(this)">
           <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.51 15.5 0 12.36 0c-1.73 0-3.24.86-4.22 2.14L7 3.5l-1.14-1.36C4.87.86 3.37 0 1.64 0 .74 0 0 .74 0 1.64c0 .9.74 1.64 1.64 1.64.56 0 1.06-.31 1.36-.74l1.16-1.4C4.53 1.51 5.04 2 5.63 2c.54 0 1-.46 1-1V.5h1.5c.73 0 1.36.56 1.44 1.27l.86 6.48c.08.74.7 1.25 1.44 1.25h6.63c.74 0 1.44-.56 1.55-1.29L20 6z"/><path d="M20 6H4l1 10h14z"/></svg> All Assets
         </div>
-        <div class="sb-item" data-page="scanner" onclick="nav(this)">
+        <div class="sb-item" data-page="scanner" onclick="nav(this)" id="nav-scanner">
           <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg> Scan Device
         </div>
         <div class="sb-item" data-page="assign" onclick="nav(this)" id="nav-assign">
@@ -368,7 +368,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="sb-item" data-page="depreciation" onclick="nav(this)">
           <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg> Depreciation
         </div>
-        <div class="sb-item" data-page="audit" onclick="nav(this)">
+        <div class="sb-item" data-page="audit" onclick="nav(this)" id="nav-audit">
           <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg> Audit Log
         </div>
         <div class="sb-section admin-only" style="display:none">Admin</div>
@@ -1155,7 +1155,7 @@ function applyLogin(user) {
   const displayId = user.email === 'rashick2012@gmail.com' ? user.email : user.email
   document.getElementById('sb-name').textContent = user.name
   // Role-based UI — reset all first so re-login works cleanly
-  const allNavIds = ['nav-assign','nav-disposal','nav-invoices']
+  const allNavIds = ['nav-assign','nav-disposal','nav-invoices','nav-audit','nav-scanner']
   allNavIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = '' })
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none')
 
@@ -1167,6 +1167,8 @@ function applyLogin(user) {
   if (user.role === 'accounts') {
     document.getElementById('nav-disposal').style.display = 'none'
     document.getElementById('nav-assign').style.display = 'none'
+    document.getElementById('nav-audit').style.display = 'none'
+    document.getElementById('nav-scanner').style.display = 'none'
   }
   if (user.role === 'staff') {
     document.getElementById('nav-disposal').style.display = 'none'
@@ -1176,6 +1178,8 @@ function applyLogin(user) {
     document.getElementById('nav-invoices').style.display = 'none'
     document.getElementById('nav-assign').style.display = 'none'
     document.getElementById('nav-disposal').style.display = 'none'
+    document.getElementById('nav-audit').style.display = 'none'
+    document.getElementById('nav-scanner').style.display = 'none'
   }
   initSignaturePad()
   loadAll()
