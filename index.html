@@ -1276,7 +1276,7 @@ function nav(el) {
   document.getElementById('page-title').textContent = PAGE_TITLES[pg] || pg
   setTopbarActions(pg)
   if (pg === 'warranty')      { renderWarranty() }
-  if (pg === 'assign')        { renderHistory(); renderPending() }
+  if (pg === 'assign')        { loadAudit().then(() => { renderHistory(); renderPending() }) }
   if (pg === 'disposal')      { renderDisposal() }
   if (pg === 'dashboard-adv') { renderAnalytics() }
   if (pg === 'depreciation')  { renderDepreciation() }
@@ -1652,6 +1652,34 @@ async function saveAsset() {
       const { error } = await sb.from('assets').update(payload).eq('id', editingAssetId)
       if (error) throw error
       await dbLog('Updated', name, changes)
+      // If newly assigned, log for history
+      if (newStatus === 'Assigned' && newAssignee && (!old || old.assignee !== newAssignee || old.status !== 'Assigned')) {
+        await sb.from('activity_log').insert({
+          action: 'Assigned', asset: name, user_label: currentUser.name,
+          changes: JSON.stringify({
+            employee: newAssignee,
+            branch:   document.getElementById('fa-dept').value,
+            assigned_date: payload.assigned_date || new Date().toISOString().slice(0,10),
+            returned_date: null,
+            assetId:  editingAssetId,
+            condition: 'Good',
+            signature: null,
+          })
+        })
+      }
+      if (old && old.status === 'Assigned' && newStatus !== 'Assigned' && old.assignee) {
+        await sb.from('activity_log').insert({
+          action: 'Returned', asset: name, user_label: currentUser.name,
+          changes: JSON.stringify({
+            employee:      old.assignee,
+            branch:        old.dept || '',
+            assigned_date: old.assigned_date || '',
+            returned_date: new Date().toISOString().slice(0,10),
+            assetId:       editingAssetId,
+            reason:        'Status changed via Edit',
+          })
+        })
+      }
       toast('✓ Asset updated — ' + newStatus + (newAssignee ? ' → ' + newAssignee : ''), 'success')
     } else {
       const { error } = await sb.from('assets').insert(payload)
@@ -1904,40 +1932,94 @@ function renderHistory() {
   const fa = document.getElementById('f-history-action')?.value||''
   const fb = document.getElementById('f-history-branch')?.value||''
 
-  const rows = auditLog
-    .filter(l=>['Assigned','Returned','Handover'].some(k=>l.action.includes(k)))
-    .filter(l=>{
-      const mq = !q || [l.asset,l.user_label,(()=>{try{return JSON.stringify(JSON.parse(l.changes||'{}'))}catch(e){return''}})()].some(x=>(x||'').toLowerCase().includes(q))
-      const ma = !fa || l.action.includes(fa)
-      let ch={}; try{ch=JSON.parse(l.changes||'{}')}catch(e){}
-      const mb = !fb || (ch.branch||'')=== fb
-      return mq && ma && mb
-    })
+  // ── Build history from TWO sources:
+  // 1. Audit log entries (Assigned / Returned actions)
+  // 2. Assets that are currently assigned (live data from Supabase)
 
-  document.getElementById('history-tbody').innerHTML = rows.map(l=>{
-    let ch={}; try{ch=JSON.parse(l.changes||'{}')}catch(e){}
-    const isReturn = l.action.includes('Return')
-    const assignedDate  = ch.assigned_date  || (isReturn ? '—' : fmtDate(l.created_at?.slice(0,10)))
-    const returnedDate  = ch.returned_date  || (isReturn ? fmtDate(l.created_at?.slice(0,10)) : '<span style="color:var(--text3);font-size:11px">Not returned</span>')
-    // Calculate duration if both dates exist
-    let duration = ch.duration || '—'
-    if (!ch.duration && ch.assigned_date && ch.returned_date) {
-      const days = Math.ceil((new Date(ch.returned_date) - new Date(ch.assigned_date)) / 86400000)
+  // Source 1: audit log
+  const logRows = auditLog.filter(l =>
+    ['Assigned','Returned','Handover'].some(k => l.action.includes(k))
+  )
+
+  // Source 2: currently assigned assets not already in audit log
+  // (covers cases where asset was assigned directly via Edit without using Handover form)
+  const assignedAssets = assets.filter(a => a.assignee && a.assignee.trim())
+  const assetRows = assignedAssets.map(a => ({
+    _fromAsset: true,
+    asset:       a.name,
+    user_label:  currentUser.name,
+    action:      'Assigned',
+    created_at:  a.assigned_date || a.date || '',
+    changes:     JSON.stringify({
+      employee:      a.assignee,
+      branch:        a.dept || '',
+      assigned_date: a.assigned_date || '',
+      returned_date: a.returned_date || '',
+      assetId:       a.id,
+      condition:     '',
+      signature:     null,
+    })
+  }))
+
+  // Merge: prefer audit log entries, supplement with asset data
+  const auditAssetIds = new Set()
+  logRows.forEach(l => {
+    try { const ch = JSON.parse(l.changes||'{}'); if (ch.assetId) auditAssetIds.add(ch.assetId) } catch(e){}
+  })
+  const extraAssetRows = assetRows.filter(r => {
+    try { const ch = JSON.parse(r.changes||'{}'); return !auditAssetIds.has(ch.assetId) } catch(e){ return true }
+  })
+  const allRows = [...logRows, ...extraAssetRows]
+
+  // Apply filters
+  const filtered = allRows.filter(l => {
+    let ch = {}; try { ch = JSON.parse(l.changes||'{}') } catch(e){}
+    const searchStr = [l.asset, ch.employee, l.user_label, ch.branch].filter(Boolean).join(' ').toLowerCase()
+    const mq = !q || searchStr.includes(q)
+    const ma = !fa || l.action.includes(fa)
+    const mb = !fb || (ch.branch||'') === fb
+    return mq && ma && mb
+  })
+
+  // Sort by date desc
+  filtered.sort((a,b) => {
+    const da = a.created_at || ''; const db = b.created_at || ''
+    return db.localeCompare(da)
+  })
+
+  document.getElementById('history-tbody').innerHTML = filtered.map(l => {
+    let ch = {}; try { ch = JSON.parse(l.changes||'{}') } catch(e){}
+    const isReturn    = l.action.includes('Return')
+    const employee    = ch.employee || (l._fromAsset ? assets.find(a=>a.id===ch.assetId)?.assignee : '') || l.user_label || '—'
+    const branch      = ch.branch  || (l._fromAsset ? assets.find(a=>a.id===ch.assetId)?.dept : '') || '—'
+
+    const assignedDate = ch.assigned_date || (!isReturn ? l.created_at?.slice(0,10) : '')
+    const returnedDate = ch.returned_date  || (isReturn  ? l.created_at?.slice(0,10) : '')
+
+    let duration = ch.duration || ''
+    if (!duration && assignedDate && returnedDate) {
+      const days = Math.ceil((new Date(returnedDate) - new Date(assignedDate)) / 86400000)
       duration = days >= 30 ? `${Math.floor(days/30)}m ${days%30}d` : `${days}d`
     }
+
     const hasSig = ch.signature
+    const logDate = l.created_at ? new Date(l.created_at).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'
+
     return `<tr>
-      <td><div style="font-weight:600;font-size:13px">${l.asset}</div><div class="mono">${ch.assetId?'#'+ch.assetId:''}</div></td>
-      <td><div style="display:flex;align-items:center;gap:5px">${avatar(ch.employee||l.user_label)}<span style="font-size:12px">${ch.employee||l.user_label}</span></div></td>
-      <td><span class="tag">${ch.branch||'—'}</span></td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${l.asset||'—'}</div>
+        <div style="font-size:10px;color:var(--text3)">${logDate}</div>
+      </td>
+      <td><div style="display:flex;align-items:center;gap:5px">${avatar(employee)}<span style="font-size:12px">${employee}</span></div></td>
+      <td><span class="tag">${branch}</span></td>
       <td><span class="badge ${isReturn?'b-available':'b-assigned'}">${l.action}</span></td>
-      <td style="font-size:12px;color:var(--blue);font-weight:500">${typeof assignedDate==='string'&&assignedDate.includes('-')?fmtDate(assignedDate):assignedDate}</td>
-      <td style="font-size:12px;color:var(--green);font-weight:500">${typeof returnedDate==='string'&&returnedDate.includes('-')?fmtDate(returnedDate):returnedDate}</td>
-      <td style="font-size:12px;color:var(--text2)">${duration}</td>
+      <td style="font-size:12px;color:var(--blue);font-weight:500">${assignedDate?fmtDate(assignedDate):'—'}</td>
+      <td style="font-size:12px;color:var(--green);font-weight:500">${returnedDate?fmtDate(returnedDate):'<span style="color:var(--text3);font-size:11px">Not returned</span>'}</td>
+      <td style="font-size:12px;color:var(--text2)">${duration||'—'}</td>
       <td style="font-size:12px">${ch.condition||'—'}</td>
-      <td>${hasSig?`<img src="${ch.signature}" style="height:28px;border:1px solid var(--border);border-radius:4px">`:''}</td>
+      <td>${hasSig?`<img src="${ch.signature}" style="height:28px;border:1px solid var(--border);border-radius:4px">`:'—'}</td>
     </tr>`
-  }).join('') || '<tr><td colspan="9" class="empty-msg">No handover history found.</td></tr>'
+  }).join('') || '<tr><td colspan="9" class="empty-msg">No assignment history found.</td></tr>'
 }
 
 function exportHistoryCSV() {
