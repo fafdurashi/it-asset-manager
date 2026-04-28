@@ -365,6 +365,9 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
           <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> Disposal
         </div>
         <div class="sb-section">Reports</div>
+        <div class="sb-item" data-page="branch-cost" onclick="nav(this)">
+          <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg> Branch Costs
+        </div>
         <div class="sb-item" data-page="dashboard-adv" onclick="nav(this)">
           <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg> Analytics
         </div>
@@ -846,6 +849,33 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         </div>
       </div>
 
+
+      <!-- BRANCH COST PAGE -->
+      <div class="page" id="page-branch-cost">
+        <div class="stats-grid" id="bc-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem">
+          <div class="card"><div class="card-head"><h3>Asset value by branch (AED)</h3></div><div style="padding:1.25rem" id="bc-bar-chart"></div></div>
+          <div class="card"><div class="card-head"><h3>Current vs depreciated value</h3></div><div style="padding:1.25rem" id="bc-depr-chart"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem">
+          <div class="card"><div class="card-head"><h3>Asset count by branch</h3></div><div style="padding:1.25rem" id="bc-count-chart"></div></div>
+          <div class="card"><div class="card-head"><h3>Fastest depreciating assets</h3></div>
+            <table><thead><tr><th style="width:35%">Asset</th><th style="width:18%">Branch</th><th style="width:18%">Original</th><th style="width:18%">Current</th><th style="width:11%">Lost</th></tr></thead>
+            <tbody id="bc-depr-tbody"></tbody></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Branch breakdown detail</h3></div>
+          <table><thead><tr>
+            <th style="width:12%">Branch</th><th style="width:12%">Assets</th>
+            <th style="width:14%">Total value</th><th style="width:14%">Current value</th>
+            <th style="width:12%">Depreciated</th><th style="width:12%">Assigned</th>
+            <th style="width:12%">Available</th><th style="width:12%">Maintenance</th>
+          </tr></thead>
+          <tbody id="bc-detail-tbody"></tbody>
+        </table></div>
+      </div>
+
     </div><!-- /main -->
   </div><!-- /shell -->
 </div><!-- /app -->
@@ -910,6 +940,51 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 </div>
 
 <!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- STAFF CLEARANCE MODAL -->
+<div class="mbg" id="modal-clearance">
+  <div class="modal wide">
+    <div class="mhead">
+      <div><h3 id="clearance-title">Staff Clearance</h3><div id="clearance-meta" style="font-size:12px;color:var(--text2);margin-top:2px"></div></div>
+      <button class="mclose" onclick="closeModal('modal-clearance')">×</button>
+    </div>
+    <div class="mbody">
+      <div id="clearance-alert" style="background:var(--red-lt);border:1px solid #F7C1C1;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:var(--red);display:none"></div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:1rem">Check the box next to each asset once the staff member has returned it. All assets must be returned before clearance is complete.</div>
+      <div id="clearance-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem"></div>
+      <div id="clearance-done" style="display:none;background:var(--green-lt);border:1px solid var(--green);border-radius:8px;padding:1rem;font-size:13px;color:var(--green);font-weight:600;text-align:center">✓ All assets returned — clearance complete</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-clearance')">Close</button>
+      <button class="btn btn-sm" onclick="printClearanceCert()" id="clearance-print-btn">🖨 Print certificate</button>
+      <button class="btn btn-primary" id="clearance-confirm-btn" onclick="completeClearance()" style="display:none">✓ Complete clearance</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSFER MODAL -->
+<div class="mbg" id="modal-transfer">
+  <div class="modal">
+    <div class="mhead"><h3>Transfer asset</h3><button class="mclose" onclick="closeModal('modal-transfer')">×</button></div>
+    <div class="mbody">
+      <div id="transfer-asset-info" style="background:var(--bg2);border-radius:8px;padding:.75rem 1rem;font-size:13px;margin-bottom:1rem"></div>
+      <div class="fg"><label>Transfer from</label><input id="tr-from" readonly style="background:var(--bg2);color:var(--text2)"></div>
+      <div class="fg">
+        <label>Transfer to *</label>
+        <input id="tr-to" placeholder="Type staff name…" oninput="filterTransferStaff(this.value)" autocomplete="off">
+        <div id="tr-suggestions" style="border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;display:none;margin-top:4px"></div>
+      </div>
+      <div class="fg"><label>Transfer date</label><input type="date" id="tr-date"></div>
+      <div class="fg"><label>Reason</label><select id="tr-reason"><option>Internal transfer</option><option>Project handover</option><option>Department change</option><option>Temporary loan</option><option>Other</option></select></div>
+      <div class="fg"><label>Notes</label><input id="tr-notes" placeholder="Optional notes about this transfer"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-transfer')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmTransfer()">Transfer asset</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- STAFF ASSET MODAL -->
 <div class="mbg" id="modal-staff-assets">
@@ -1277,7 +1352,7 @@ function doLogout() {
 // ════════════════════════════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════════════════════════════
-const PAGE_TITLES = { scanner:'Scan Device', settings:'Settings', 'staff-view':'Staffs', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
+const PAGE_TITLES = { scanner:'Scan Device', settings:'Settings', 'staff-view':'Staffs', 'branch-cost':'Branch Cost Analysis', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
 function nav(el) {
   document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'))
   el.classList.add('active')
@@ -1296,6 +1371,7 @@ function nav(el) {
   if (pg === 'users')         { renderUsers() }
   if (pg === 'settings')       { renderSettings() }
   if (pg === 'staff-view')     { renderStaffView() }
+  if (pg === 'branch-cost')    { renderBranchCost() }
   if (pg === 'scanner')        { initPageScanner() }
   if (pg === 'invoices')      { renderInvoices(); renderInvoiceSummary() }
 }
@@ -1752,6 +1828,9 @@ function viewAsset(id) {
   let footBtns = `<button class="btn btn-sm" onclick="openQR(${id})">QR code</button>`
   if ((canEdit() || currentUser.role==='admin') && !isManager()) {
     footBtns += `<button class="btn btn-primary btn-sm" onclick="openEditAssetModal(${id})">Edit</button>`
+  }
+  if (a.assignee && canAssign()) {
+    footBtns += `<button class="btn btn-sm" onclick="openTransferModal(${id})" style="background:var(--purple-lt);color:var(--purple);border-color:var(--purple)">⇄ Transfer</button>`
   }
   if ((canDispose() || currentUser.role==='admin') && !isManager()) {
     footBtns += `<button class="btn btn-danger btn-sm" onclick="deleteAsset(${id})">Delete</button>`
@@ -3891,7 +3970,8 @@ function renderStaffView() {
     const totalVal    = staffAssets.reduce((sum,a)=>sum+(a.value||0),0)
     const expiring    = staffAssets.filter(a => { if(!a.warranty)return false; const d=Math.ceil((new Date(a.warranty)-new Date())/86400000); return d<=90 })
 
-    return `<div class="card" style="padding:0;cursor:pointer;transition:box-shadow .15s" onclick="openStaffAssets('${s.name.replace(/'/g,"\'")}')">
+    return `<div class="card" style="padding:0;transition:box-shadow .15s">
+      <div style="cursor:pointer" onclick="openStaffAssets('${s.name.replace(/'/g,"\'")}')">
       <div style="padding:1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
         ${avatar(s.name)}
         <div style="flex:1;min-width:0">
@@ -3918,6 +3998,10 @@ function renderStaffView() {
           <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Value</div>
         </div>
       </div>
+      </div>
+      ${canAssign()?`<div style="padding:.6rem 1rem;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:flex-end">
+        <button class="btn btn-sm" onclick="event.stopPropagation();openClearanceModal('${s.name.replace(/'/g,"\'")}')">🚪 Exit clearance</button>
+      </div>`:''}
     </div>`
   }).join('')
 }
@@ -3964,6 +4048,287 @@ function openStaffAssets(name) {
     }).join('')
   }
   openModal('modal-staff-assets')
+}
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 7 — BRANCH COST ANALYSIS
+// ════════════════════════════════════════════════════════════════
+function renderBranchCost() {
+  const branchList = (window.branches||[]).length ? window.branches.map(b=>b.code) : ['ECP','DCP','SNP','TEL']
+  const colors = ['#185FA5','#3B6D11','#854F0B','#534AB7','#0F6E56','#A32D2D']
+
+  // Per-branch stats
+  const stats = branchList.map((code, i) => {
+    const ba = assets.filter(a => a.dept === code)
+    const totalVal   = ba.reduce((s,a)=>s+(a.value||0),0)
+    const currentVal = ba.reduce((s,a)=>s+(deprValue(a,'straight',4)||a.value||0),0)
+    const count      = ba.length
+    const assigned   = ba.filter(a=>a.status==='Assigned').length
+    const available  = ba.filter(a=>a.status==='Available').length
+    const maintenance= ba.filter(a=>a.status==='Maintenance').length
+    const deprPct    = totalVal ? Math.round((1 - currentVal/totalVal)*100) : 0
+    return { code, count, totalVal, currentVal, assigned, available, maintenance, deprPct, color: colors[i%colors.length] }
+  })
+
+  const grandTotal   = stats.reduce((s,b)=>s+b.totalVal,0)
+  const grandCurrent = stats.reduce((s,b)=>s+b.currentVal,0)
+  const grandDepr    = grandTotal - grandCurrent
+
+  // Top stats
+  document.getElementById('bc-stats').innerHTML = [
+    ['Total portfolio value', `AED ${grandTotal.toLocaleString()}`, 'all branches', ''],
+    ['Current value', `AED ${grandCurrent.toLocaleString()}`, 'after depreciation', 'color:var(--green)'],
+    ['Total depreciated', `AED ${grandDepr.toLocaleString()}`, 'value lost', 'color:var(--red)'],
+    ['Avg depreciation', `${grandTotal?Math.round((1-grandCurrent/grandTotal)*100):0}%`, 'across all assets', 'color:var(--amber)'],
+  ].map(([l,v,s,col])=>`<div class="stat-card"><div class="stat-lbl">${l}</div><div class="stat-val" style="font-size:22px;${col}">${v}</div><div class="stat-sub">${s}</div></div>`).join('')
+
+  // Bar chart — value by branch
+  const maxVal = Math.max(...stats.map(b=>b.totalVal), 1)
+  document.getElementById('bc-bar-chart').innerHTML = stats.map(b => `
+    <div class="rbar-wrap" style="margin-bottom:14px">
+      <div class="rbar-label">
+        <span style="font-weight:700;color:${b.color}">${b.code}</span>
+        <span style="color:var(--text2)">AED ${b.totalVal.toLocaleString()}</span>
+      </div>
+      <div class="rbar-track" style="height:12px">
+        <div class="rbar-fill" style="background:${b.color};width:${Math.round(b.totalVal/maxVal*100)}%;height:10px;margin:1px"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${b.count} assets · ${b.assigned} assigned</div>
+    </div>`).join('')
+
+  // Current vs depreciated
+  document.getElementById('bc-depr-chart').innerHTML = stats.map(b => `
+    <div class="rbar-wrap" style="margin-bottom:14px">
+      <div class="rbar-label">
+        <span style="font-weight:700">${b.code}</span>
+        <span style="color:var(--red);font-size:12px">−${b.deprPct}%</span>
+      </div>
+      <div style="position:relative;height:14px;background:var(--red-lt);border-radius:4px;overflow:hidden;border:1px solid var(--border)">
+        <div style="position:absolute;left:0;top:0;height:100%;background:${b.color};width:${b.totalVal?Math.round(b.currentVal/b.totalVal*100):0}%;border-radius:4px;transition:width .4s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">AED ${b.currentVal.toLocaleString()} current of AED ${b.totalVal.toLocaleString()}</div>
+    </div>`).join('')
+
+  // Count chart
+  const maxCount = Math.max(...stats.map(b=>b.count), 1)
+  document.getElementById('bc-count-chart').innerHTML = stats.map(b => `
+    <div class="rbar-wrap" style="margin-bottom:14px">
+      <div class="rbar-label"><span style="font-weight:700">${b.code}</span><span>${b.count} assets</span></div>
+      <div class="rbar-track"><div class="rbar-fill" style="background:${b.color};width:${Math.round(b.count/maxCount*100)}%"></div></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${b.available} available · ${b.maintenance} maintenance</div>
+    </div>`).join('')
+
+  // Fastest depreciating assets
+  const withVal = assets.filter(a=>a.value&&a.date&&a.value>0)
+  const deprAssets = withVal.map(a=>{
+    const curr = deprValue(a,'straight',4)||0
+    const lost = a.value - curr
+    const pct  = Math.round(lost/a.value*100)
+    return { ...a, curr, lost, pct }
+  }).sort((a,b)=>b.pct-a.pct).slice(0,8)
+
+  document.getElementById('bc-depr-tbody').innerHTML = deprAssets.map(a=>`<tr>
+    <td><div style="font-weight:600;font-size:13px">${a.name}</div><div class="mono">${a.brand||''}</div></td>
+    <td><span class="tag">${a.dept||'—'}</span></td>
+    <td style="font-size:12px">AED ${Number(a.value).toLocaleString()}</td>
+    <td style="font-size:12px;color:var(--green)">AED ${a.curr.toLocaleString()}</td>
+    <td><span class="badge b-warn">${a.pct}%</span></td>
+  </tr>`).join('') || '<tr><td colspan="5" class="empty-msg">No value data</td></tr>'
+
+  // Detail table
+  document.getElementById('bc-detail-tbody').innerHTML = stats.map(b=>`<tr>
+    <td><span style="font-weight:700;color:${b.color}">${b.code}</span></td>
+    <td style="font-size:13px">${b.count}</td>
+    <td style="font-size:13px;font-weight:600">AED ${b.totalVal.toLocaleString()}</td>
+    <td style="font-size:13px;color:var(--green)">AED ${b.currentVal.toLocaleString()}</td>
+    <td><span class="badge ${b.deprPct>50?'b-warn':b.deprPct>25?'b-expiring':'b-available'}">${b.deprPct}%</span></td>
+    <td style="font-size:13px">${b.assigned}</td>
+    <td style="font-size:13px;color:var(--green)">${b.available}</td>
+    <td style="font-size:13px;color:var(--amber)">${b.maintenance}</td>
+  </tr>`).join('')
+}
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 11 — STAFF CLEARANCE ON EXIT
+// ════════════════════════════════════════════════════════════════
+let clearanceStaffName = ''
+let clearanceChecked   = new Set()
+let clearanceAssets    = []
+
+function openClearanceModal(staffName) {
+  clearanceStaffName = staffName
+  clearanceChecked   = new Set()
+  clearanceAssets    = assets.filter(a => a.assignee && a.assignee.trim().toLowerCase() === staffName.trim().toLowerCase())
+
+  document.getElementById('clearance-title').textContent = `Exit Clearance — ${staffName}`
+  const staffInfo = (staffList||[]).find(s=>s.name.toLowerCase()===staffName.toLowerCase())
+  document.getElementById('clearance-meta').textContent = [staffInfo?.branch, staffInfo?.dept, staffInfo?.empId].filter(Boolean).join(' · ')
+
+  const alert = document.getElementById('clearance-alert')
+  if (!clearanceAssets.length) {
+    alert.style.display = 'block'
+    alert.textContent   = 'No assets currently assigned to this staff member.'
+    document.getElementById('clearance-list').innerHTML = ''
+    document.getElementById('clearance-confirm-btn').style.display = 'none'
+    document.getElementById('clearance-done').style.display = 'none'
+    openModal('modal-clearance')
+    return
+  }
+  alert.style.display = 'none'
+
+  renderClearanceList()
+  document.getElementById('clearance-done').style.display = 'none'
+  document.getElementById('clearance-confirm-btn').style.display = 'none'
+  openModal('modal-clearance')
+}
+
+function renderClearanceList() {
+  document.getElementById('clearance-list').innerHTML = clearanceAssets.map((a,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:${clearanceChecked.has(a.id)?'var(--green-lt)':'var(--bg)'}">
+      <input type="checkbox" ${clearanceChecked.has(a.id)?'checked':''} onchange="toggleClearanceItem(${a.id},this)"
+        style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px">${a.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${a.type} · ${a.serial||'no serial'} · ${a.dept||'—'}</div>
+      </div>
+      <div style="text-align:right">
+        ${a.value?`<div style="font-size:12px;font-weight:600">AED ${Number(a.value).toLocaleString()}</div>`:''}
+        ${clearanceChecked.has(a.id)?'<span class="badge b-available">Returned ✓</span>':'<span class="badge b-assigned">Assigned</span>'}
+      </div>
+    </div>`
+  ).join('')
+}
+
+function toggleClearanceItem(assetId, cb) {
+  if (cb.checked) clearanceChecked.add(assetId)
+  else clearanceChecked.delete(assetId)
+  renderClearanceList()
+  // Show complete button only when all checked
+  const allDone = clearanceChecked.size === clearanceAssets.length
+  document.getElementById('clearance-confirm-btn').style.display = allDone ? 'inline-block' : 'none'
+  document.getElementById('clearance-done').style.display = allDone ? 'block' : 'none'
+}
+
+async function completeClearance() {
+  if (!confirm(`Mark all assets as returned and complete clearance for ${clearanceStaffName}?`)) return
+  const today = new Date().toISOString().slice(0,10)
+  for (const a of clearanceAssets) {
+    await sb.from('assets').update({ status:'Available', assignee:'', returned_date: today }).eq('id', a.id)
+    await sb.from('activity_log').insert({
+      action:'Returned', asset:a.name, user_label:currentUser.name,
+      changes:JSON.stringify({ employee:clearanceStaffName, returned_date:today, reason:'Exit clearance', assetId:a.id })
+    })
+  }
+  toast(`✓ Clearance complete — ${clearanceAssets.length} assets returned`, 'success', 4000)
+  closeModal('modal-clearance')
+  await loadAssets()
+  renderStaffView()
+}
+
+function printClearanceCert() {
+  const today = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})
+  const staffInfo = (staffList||[]).find(s=>s.name.toLowerCase()===clearanceStaffName.toLowerCase())
+  const totalVal = clearanceAssets.reduce((s,a)=>s+(a.value||0),0)
+  const html = `<div style="font-family:Segoe UI,sans-serif;max-width:700px;margin:0 auto;padding:2rem;color:#111">
+    <div style="border-bottom:3px solid #5B4FCF;padding-bottom:12px;margin-bottom:1.5rem">
+      <h1 style="font-size:20px;font-weight:800;color:#5B4FCF;margin:0">Raash Asset Tracker</h1>
+      <h2 style="font-size:16px;margin:4px 0 0;color:#333">Staff Exit Clearance Certificate</h2>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">
+      <tr><td style="padding:7px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5;width:35%">Staff name</td><td style="padding:7px 10px;border:1px solid #ddd">${clearanceStaffName}</td></tr>
+      <tr><td style="padding:7px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Branch</td><td style="padding:7px 10px;border:1px solid #ddd">${staffInfo?.branch||'—'}</td></tr>
+      <tr><td style="padding:7px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Department</td><td style="padding:7px 10px;border:1px solid #ddd">${staffInfo?.dept||'—'}</td></tr>
+      <tr><td style="padding:7px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Employee ID</td><td style="padding:7px 10px;border:1px solid #ddd">${staffInfo?.empId||'—'}</td></tr>
+      <tr><td style="padding:7px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Clearance date</td><td style="padding:7px 10px;border:1px solid #ddd">${today}</td></tr>
+      <tr><td style="padding:7px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Total assets returned</td><td style="padding:7px 10px;border:1px solid #ddd">${clearanceAssets.length} (AED ${totalVal.toLocaleString()})</td></tr>
+    </table>
+    <h3 style="font-size:14px;margin-bottom:8px">Assets returned</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:12px">
+      <tr style="background:#f5f5f5"><th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Asset</th><th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Type</th><th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Serial</th><th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Value</th><th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Status</th></tr>
+      ${clearanceAssets.map(a=>`<tr><td style="padding:6px 10px;border:1px solid #ddd">${a.name}</td><td style="padding:6px 10px;border:1px solid #ddd">${a.type}</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace">${a.serial||'—'}</td><td style="padding:6px 10px;border:1px solid #ddd">${a.value?'AED '+Number(a.value).toLocaleString():'—'}</td><td style="padding:6px 10px;border:1px solid #ddd;color:green">✓ Returned</td></tr>`).join('')}
+    </table>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2rem">
+      <div><div style="font-size:12px;font-weight:600;margin-bottom:40px">Staff signature</div><div style="border-top:1px solid #999;font-size:11px;color:#666">Signature &amp; date</div></div>
+      <div><div style="font-size:12px;font-weight:600;margin-bottom:40px">IT Admin signature</div><div style="border-top:1px solid #999;font-size:11px;color:#666">Signature &amp; date</div></div>
+    </div>
+    <p style="font-size:10px;color:#999;margin-top:1.5rem;border-top:1px solid #eee;padding-top:8px">Generated by Raash Asset Tracker · ${today}</p>
+  </div>`
+  document.getElementById('print-area').innerHTML = html
+  document.getElementById('print-area').style.display = 'block'
+  window.print()
+  setTimeout(()=>document.getElementById('print-area').style.display='none', 1000)
+}
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 12 — ASSET TRANSFER BETWEEN STAFF
+// ════════════════════════════════════════════════════════════════
+let transferAssetId = null
+
+function openTransferModal(assetId) {
+  const a = assets.find(x=>x.id===assetId)
+  if (!a) return
+  if (!a.assignee) { toast('This asset is not currently assigned to anyone','error'); return }
+  transferAssetId = assetId
+  document.getElementById('transfer-asset-info').innerHTML = `<b>${a.name}</b> · ${a.serial||'no serial'} · ${a.type}<br><span style="font-size:12px;color:var(--text2)">Currently assigned to: <b>${a.assignee}</b> · ${a.dept||'—'}</span>`
+  document.getElementById('tr-from').value  = a.assignee
+  document.getElementById('tr-to').value    = ''
+  document.getElementById('tr-date').value  = new Date().toISOString().slice(0,10)
+  document.getElementById('tr-notes').value = ''
+  document.getElementById('tr-suggestions').style.display = 'none'
+  closeModal('modal-view')
+  openModal('modal-transfer')
+}
+
+function filterTransferStaff(q) {
+  const box = document.getElementById('tr-suggestions')
+  const staff = window._allStaffForDropdown || []
+  const from  = document.getElementById('tr-from').value.toLowerCase()
+  const matches = q
+    ? staff.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) && s.name.toLowerCase() !== from)
+    : staff.filter(s => s.name.toLowerCase() !== from).slice(0,8)
+  if (!matches.length) { box.style.display='none'; return }
+  box.innerHTML = matches.map(s=>`
+    <div onclick="document.getElementById('tr-to').value='${s.name.replace(/'/g,"\'")}';document.getElementById('tr-suggestions').style.display='none'"
+         style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
+         onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background=''">
+      <b>${s.name}</b>${s.branch?` <span class="tag">${s.branch}</span>`:''}
+    </div>`).join('')
+  box.style.display = 'block'
+}
+
+async function confirmTransfer() {
+  const toName  = document.getElementById('tr-to').value.trim()
+  const trDate  = document.getElementById('tr-date').value
+  const reason  = document.getElementById('tr-reason').value
+  const notes   = document.getElementById('tr-notes').value.trim()
+  if (!toName) { toast('Please select the staff to transfer to','error'); return }
+
+  const a = assets.find(x=>x.id===transferAssetId)
+  const fromName = a.assignee
+  const toBranch = (window._allStaffForDropdown||[]).find(s=>s.name.toLowerCase()===toName.toLowerCase())?.branch || a.dept || ''
+
+  await sb.from('assets').update({
+    assignee:      toName,
+    dept:          toBranch || a.dept,
+    assigned_date: trDate,
+    status:        'Assigned'
+  }).eq('id', transferAssetId)
+
+  await sb.from('activity_log').insert({
+    action:'Assigned', asset:a.name, user_label:currentUser.name,
+    changes: JSON.stringify({
+      employee:      toName,
+      branch:        toBranch,
+      assigned_date: trDate,
+      transferred_from: fromName,
+      reason, notes, assetId: transferAssetId
+    })
+  })
+
+  toast(`✓ ${a.name} transferred from ${fromName} to ${toName}`, 'success', 4000)
+  closeModal('modal-transfer')
+  await loadAssets()
+  renderStaffView()
 }
 
 // ── Boot on DOM ready ─────────────────────────────────────────
