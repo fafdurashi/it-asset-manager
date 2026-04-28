@@ -1280,7 +1280,7 @@ function nav(el) {
   if (pg === 'disposal')      { renderDisposal() }
   if (pg === 'dashboard-adv') { renderAnalytics() }
   if (pg === 'depreciation')  { renderDepreciation() }
-  if (pg === 'audit')         { renderAudit() }
+  if (pg === 'audit')         { loadAudit().then(renderAudit) }
   if (pg === 'dashboard')     { renderDashboard() }
   if (pg === 'users')         { renderUsers() }
   if (pg === 'settings')       { renderSettings() }
@@ -1337,7 +1337,8 @@ async function loadHistory() {
   auditLog = data || []
 }
 async function loadAudit() {
-  const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(300)
+  const limit = currentUser?.role === 'admin' ? 1000 : 300
+  const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(limit)
   auditLog = data || []
 }
 
@@ -2131,27 +2132,51 @@ function exportDeprReport() {
 // AUDIT LOG
 // ════════════════════════════════════════════════════════════════
 function renderAudit() {
-  const q=(document.getElementById('q-audit')?.value||'').toLowerCase()
-  const fa=document.getElementById('f-audit-action')?.value||''
-  const rows=auditLog.filter(l=>{
-    const mq=!q||[l.asset,l.user_label,l.action,l.changes].some(x=>(x||'').toLowerCase().includes(q))
-    const ma=!fa||l.action.includes(fa)
-    return mq&&ma
+  // Admin sees ALL logs — other roles (if ever given access) see only their own
+  const q  = (document.getElementById('q-audit')?.value || '').toLowerCase()
+  const fa = document.getElementById('f-audit-action')?.value || ''
+
+  let rows = auditLog.filter(l => {
+    const mq = !q || [l.asset, l.user_label, l.action, l.changes].some(x => (x||'').toLowerCase().includes(q))
+    const ma = !fa || l.action.includes(fa)
+    // Admin sees everything; others see only their own actions
+    const mu = currentUser.role === 'admin' || (l.user_label === currentUser.name)
+    return mq && ma && mu
   })
-  document.getElementById('audit-tbody').innerHTML=rows.map(l=>{
-    const t=new Date(l.created_at).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
-    const colMap={Created:'b-available',Updated:'b-assigned',Deleted:'b-warn',Assigned:'b-assigned',Returned:'b-available',Disposed:'b-warn',Exported:'b-tag',Imported:'b-tag'}
-    const badge=Object.entries(colMap).find(([k])=>l.action.includes(k))
-    let changesHtml='—'
-    if(l.changes&&!l.changes.startsWith('{')){
-      changesHtml=l.changes.split(' | ').map(c=>{
-        const m=c.match(/(.+): "(.+)" → "(.+)"/)
-        if(m) return `<span>${m[1]}: <span class="diff-old">${m[2]}</span> → <span class="diff-new">${m[3]}</span></span>`
-        return c
+
+  const colMap = { Created:'b-available', Updated:'b-assigned', Deleted:'b-warn', Assigned:'b-assigned', Returned:'b-available', Disposed:'b-warn', Exported:'b-tag', Imported:'b-tag', Invoice:'b-accounts', User:'b-manager' }
+
+  document.getElementById('audit-tbody').innerHTML = rows.map(l => {
+    const t = new Date(l.created_at).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+    const badge = Object.entries(colMap).find(([k]) => l.action.includes(k))
+
+    // Find user role for colour
+    const logUser = users.find(u => u.name === l.user_label)
+    const roleBadgeMap = { admin:'b-admin', manager:'b-manager', accounts:'b-accounts', staff:'b-staff' }
+    const userBadge = logUser ? `<span class="badge ${roleBadgeMap[logUser.role]||'b-tag'}" style="font-size:9px;margin-left:4px">${logUser.role}</span>` : ''
+
+    let changesHtml = '—'
+    if (l.changes && !l.changes.startsWith('{')) {
+      changesHtml = l.changes.split(' | ').map(ch => {
+        const m = ch.match(/(.+): "(.+)" → "(.+)"/)
+        if (m) return `<span style="display:inline-block;margin-bottom:2px">${m[1]}: <span class="diff-old">${m[2]}</span> → <span class="diff-new">${m[3]}</span></span>`
+        return `<span style="color:var(--text2)">${ch}</span>`
       }).join('<br>')
+    } else if (l.changes && l.changes.startsWith('{')) {
+      try {
+        const ch = JSON.parse(l.changes)
+        if (ch.employee) changesHtml = `→ ${ch.employee}${ch.branch?' · '+ch.branch:''}${ch.condition?' · '+ch.condition:''}`
+      } catch(e) {}
     }
-    return `<tr><td style="font-size:12px;color:var(--text2)">${t}</td><td><span class="badge ${badge?badge[1]:'b-tag'}">${l.action}</span></td><td style="font-size:13px;font-weight:500">${l.asset||'—'}</td><td style="font-size:12px">${l.user_label}</td><td class="audit-diff" style="font-size:12px">${changesHtml}</td></tr>`
-  }).join('')||'<tr><td colspan="5" class="empty-msg">No audit records.</td></tr>'
+
+    return `<tr>
+      <td style="font-size:11px;color:var(--text2);white-space:nowrap">${t}</td>
+      <td><span class="badge ${badge?badge[1]:'b-tag'}">${l.action}</span></td>
+      <td style="font-size:13px;font-weight:500">${l.asset||'—'}</td>
+      <td style="font-size:12px;white-space:nowrap">${l.user_label}${userBadge}</td>
+      <td class="audit-diff" style="font-size:12px;line-height:1.6">${changesHtml}</td>
+    </tr>`
+  }).join('') || '<tr><td colspan="5" class="empty-msg">No audit records found.</td></tr>'
 }
 function exportAudit() {
   const rows=auditLog.map(l=>[l.created_at,l.action,l.asset,l.user_label,l.changes||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))
@@ -2206,16 +2231,24 @@ async function applyBulkAction() {
 // USERS
 // ════════════════════════════════════════════════════════════════
 function renderUsers() {
-  const roleBadge={admin:'b-admin',manager:'b-manager',accounts:'b-accounts',staff:'b-staff'}
-  // Rebuild users list fresh from DEMO_USERS each render
-  users = Object.entries(DEMO_USERS).map(([email,u],i)=>({id:i+1,email,...u}))
-  document.getElementById('users-tbody').innerHTML=users.map(u=>`<tr>
-    <td><div style="display:flex;align-items:center;gap:8px">${avatar(u.name)}<span style="font-weight:600">${u.name}</span></div></td>
-    <td style="font-size:13px">${u.email}</td>
-    <td><span class="badge ${roleBadge[u.role]||'b-tag'}">${u.role}</span></td>
-    <td><span class="tag">${u.branch||'All'}</span></td>
-    <td><div style="display:flex;gap:5px"><button class="btn btn-sm" onclick="editUser(${u.id})">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Remove</button></div></td>
-  </tr>`).join('')
+  const roleBadge = { admin:'b-admin', manager:'b-manager', accounts:'b-accounts', staff:'b-staff' }
+  const roleLabel = { admin:'Admin', manager:'Manager', accounts:'Accounts', staff:'Staff' }
+  document.getElementById('users-tbody').innerHTML = users.map(u => {
+    const isDefault = ['rashick2012@gmail.com','manager','accounts'].includes(u.email)
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px">${avatar(u.name)}
+        <div><div style="font-weight:600">${u.name}</div>
+        ${isDefault?'<div style="font-size:10px;color:var(--text3)">Default account</div>':''}</div>
+      </div></td>
+      <td style="font-size:13px;color:var(--text2)">${u.email}</td>
+      <td><span class="badge ${roleBadge[u.role]||'b-tag'}">${roleLabel[u.role]||u.role}</span></td>
+      <td><span class="tag">${u.branch||'All branches'}</span></td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-sm" onclick="editUser(${u.id})">Edit</button>
+        ${!isDefault?`<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Remove</button>`:''}
+      </div></td>
+    </tr>`
+  }).join('')
 }
 function openAddUserModal() {
   document.getElementById('user-modal-title').textContent='Add user'
@@ -2235,24 +2268,67 @@ function editUser(id){
   openModal('modal-user')
 }
 function saveUser() {
-  const name=document.getElementById('u-name').value.trim()
-  const email=document.getElementById('u-email').value.trim().toLowerCase()
-  if(!name||!email){toast('Name and email required','error');return}
-  const role=document.getElementById('u-role').value
-  const branch=document.getElementById('u-branch').value
-  const existing=users.find(u=>u.email===email)
-  if(existing){Object.assign(existing,{name,role,branch})}
-  else{users.push({id:Date.now(),name,email,role,branch,pass:document.getElementById('u-pass').value})}
-  DEMO_USERS[email]={name,role,branch,pass:document.getElementById('u-pass').value||'changeme'}
-  toast('✓ User saved','success')
+  const name   = document.getElementById('u-name').value.trim()
+  const email  = document.getElementById('u-email').value.trim().toLowerCase()
+  if (!name || !email) { toast('Name and email required', 'error'); return }
+  const role   = document.getElementById('u-role').value
+  const branch = document.getElementById('u-branch').value
+  const pass   = document.getElementById('u-pass').value || 'changeme'
+  // Update or add
+  const existing = users.find(u => u.email === email)
+  if (existing) {
+    Object.assign(existing, { name, role, branch, pass: pass || existing.pass })
+  } else {
+    users.push({ id: Date.now(), name, email, role, branch, pass })
+  }
+  // Sync to DEMO_USERS so login works immediately
+  DEMO_USERS[email] = { name, role, branch, pass: pass || DEMO_USERS[email]?.pass || 'changeme' }
+  // Persist to localStorage
+  persistUsers()
+  toast('✓ User saved', 'success')
   closeModal('modal-user')
   renderUsers()
+  dbLog('User updated', name, `role:${role} branch:${branch}`)
 }
-function deleteUser(id){
-  if(!confirm('Remove this user?'))return
-  users=users.filter(u=>u.id!==id)
+function deleteUser(id) {
+  const u = users.find(x => x.id === id)
+  if (!u) return
+  if (u.email === ADMIN_EMAIL) { toast('Cannot delete admin account', 'error'); return }
+  if (!confirm(`Remove user "${u.name}"?`)) return
+  users = users.filter(x => x.id !== id)
+  delete DEMO_USERS[u.email]
+  persistUsers()
   renderUsers()
-  toast('User removed')
+  toast(`User "${u.name}" removed`)
+  dbLog('User deleted', u.name, `email:${u.email}`)
+}
+function persistUsers() {
+  try {
+    // Save non-default users to localStorage
+    const toSave = users.filter(u => u.email !== 'rashick2012@gmail.com' && u.email !== 'manager' && u.email !== 'accounts')
+    const allUsers = users.map(u => ({ ...u }))
+    localStorage.setItem('itam_users', JSON.stringify(allUsers))
+    // Also update DEMO_USERS
+    users.forEach(u => { DEMO_USERS[u.email] = { name:u.name, role:u.role, branch:u.branch||'', pass:u.pass||'changeme' } })
+  } catch(e) {}
+}
+function loadPersistedUsers() {
+  try {
+    const saved = localStorage.getItem('itam_users')
+    if (saved) {
+      const savedUsers = JSON.parse(saved)
+      savedUsers.forEach(u => {
+        if (!users.find(x => x.email === u.email)) {
+          users.push(u)
+        } else {
+          // Update existing (role/branch changes)
+          const idx = users.findIndex(x => x.email === u.email)
+          if (idx !== -1) users[idx] = { ...users[idx], ...u }
+        }
+        DEMO_USERS[u.email] = { name:u.name, role:u.role, branch:u.branch||'', pass:u.pass||'changeme' }
+      })
+    }
+  } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3698,6 +3774,7 @@ function openStaffAssets(name) {
 // ── Boot on DOM ready ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   try { loadSettings() } catch(e) { console.warn('loadSettings:', e) }
+  try { loadPersistedUsers() } catch(e) { console.warn('loadPersistedUsers:', e) }
 
   // Step 1: Restore saved session (stays logged in across page refreshes)
   try {
