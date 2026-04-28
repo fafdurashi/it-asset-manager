@@ -3594,7 +3594,7 @@ function renderStaffView() {
   // Build unified staff list
   const allStaff = [...staffFromSettings]
   assigneeNames.forEach(name => {
-    if (!allStaff.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+    if (!allStaff.find(s => s.name.trim().toLowerCase() === name.trim().toLowerCase())) {
       // Found in assets but not in settings — add as unregistered staff
       const assetBranch = assets.find(a=>a.assignee===name)?.dept || ''
       allStaff.push({ name, branch: assetBranch, dept: '', empId: '', contact: '', unregistered: true })
@@ -3615,8 +3615,8 @@ function renderStaffView() {
   empty.style.display = 'none'
 
   grid.innerHTML = filtered.map(s => {
-    const staffAssets = assets.filter(a => a.assignee && a.assignee.toLowerCase() === s.name.toLowerCase())
-    const assigned    = staffAssets.filter(a => a.status === 'Assigned')
+    // Match by name OR assignee field — case-insensitive
+    const staffAssets = assets.filter(a => a.assignee && a.assignee.trim().toLowerCase() === s.name.trim().toLowerCase())
     const totalVal    = staffAssets.reduce((sum,a)=>sum+(a.value||0),0)
     const expiring    = staffAssets.filter(a => { if(!a.warranty)return false; const d=Math.ceil((new Date(a.warranty)-new Date())/86400000); return d<=90 })
 
@@ -3635,8 +3635,8 @@ function renderStaffView() {
       </div>
       <div style="padding:.9rem 1rem;display:flex;gap:0">
         <div style="flex:1;text-align:center;border-right:1px solid var(--border)">
-          <div style="font-size:20px;font-weight:700;color:var(--blue)">${assigned.length}</div>
-          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Assigned</div>
+          <div style="font-size:20px;font-weight:700;color:var(--blue)">${staffAssets.length}</div>
+          <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Assets</div>
         </div>
         <div style="flex:1;text-align:center;border-right:1px solid var(--border)">
           <div style="font-size:20px;font-weight:700;color:${expiring.length?'var(--red)':'var(--green)'}">${expiring.length}</div>
@@ -3652,7 +3652,7 @@ function renderStaffView() {
 }
 
 function openStaffAssets(name) {
-  const staffAssets = assets.filter(a => a.assignee && a.assignee.toLowerCase() === name.toLowerCase())
+  const staffAssets = assets.filter(a => a.assignee && a.assignee.trim().toLowerCase() === name.trim().toLowerCase())
   const staffInfo   = (staffList || []).find(s => s.name.toLowerCase() === name.toLowerCase())
 
   document.getElementById('staff-modal-name').textContent = name
@@ -3665,11 +3665,12 @@ function openStaffAssets(name) {
 
   // Stats
   const totalVal  = staffAssets.reduce((s,a)=>s+(a.value||0),0)
+  const currentlyAssigned = staffAssets.filter(a=>a.status==='Assigned')
   const expiring  = staffAssets.filter(a=>{ if(!a.warranty)return false; const d=Math.ceil((new Date(a.warranty)-new Date())/86400000); return d<=90 })
   document.getElementById('staff-assets-stats').innerHTML = [
-    ['Assets assigned', staffAssets.length, 'color:var(--blue)'],
+    ['Total assets', staffAssets.length, 'color:var(--blue)'],
+    ['Currently assigned', currentlyAssigned.length, 'color:var(--purple)'],
     ['Total value', totalVal ? 'AED '+totalVal.toLocaleString() : '—', 'color:var(--green)'],
-    ['Warranty alerts', expiring.length, expiring.length ? 'color:var(--red)' : 'color:var(--text2)'],
   ].map(([l,v,col])=>`<div class="stat-card" style="padding:.75rem 1rem"><div class="stat-lbl">${l}</div><div class="stat-val" style="font-size:20px;${col}">${v}</div></div>`).join('')
 
   // Assets table
