@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Raash Asset Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -259,6 +259,55 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 .toast.success{background:#1a4731}
 .toast.error{background:#4a1515}
 
+
+/* ── MOBILE RESPONSIVE ── */
+.sb-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px;color:var(--text)}
+.sb-toggle svg{width:22px;height:22px;fill:currentColor}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}
+.sb-overlay.show{display:block}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:40}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .sb-toggle{display:flex;align-items:center;justify-content:center}
+  .topbar{padding:.6rem 1rem}
+  .page{padding:1rem .75rem}
+  .stats-grid{grid-template-columns:repeat(2,1fr) !important}
+  .charts-grid{grid-template-columns:1fr !important}
+  .frow{grid-template-columns:1fr !important}
+  .frow3{grid-template-columns:1fr !important}
+  table{font-size:12px}
+  th,td{padding:7px 8px}
+  .modal{max-width:100vw;margin:.5rem;width:calc(100vw - 1rem) !important}
+  .mbg{padding:.5rem}
+  .card{border-radius:10px}
+  .toolbar{gap:6px}
+  .search-w{min-width:140px}
+  .page-title{font-size:14px}
+  .stat-val{font-size:22px}
+  #page-branch-cost .stats-grid{grid-template-columns:repeat(2,1fr) !important}
+  .staff-view-grid{grid-template-columns:1fr !important}
+  /* Hide less critical columns on mobile */
+  .hide-mobile{display:none !important}
+  /* Sticky topbar */
+  .topbar{position:sticky;top:0;z-index:30}
+  /* Bigger touch targets */
+  .btn{min-height:36px}
+  .sb-item{padding:.75rem 1rem;min-height:44px}
+  /* Full width modals */
+  .modal.wide,.modal.xl{width:calc(100vw - 1rem) !important}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr 1fr !important}
+  .branch-filter-row{gap:5px}
+  .branch-pill{padding:4px 10px;font-size:11px}
+}
+
+
+/* ── OFFLINE INDICATOR ── */
+.offline-bar{display:none;position:fixed;top:0;left:0;right:0;background:var(--amber);color:#fff;text-align:center;font-size:12px;font-weight:700;padding:5px;z-index:9999;letter-spacing:.05em}
+.offline-bar.show{display:block}
+
 /* ── MISC ── */
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -285,6 +334,51 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 .drop-zone:hover,.drop-zone.drag{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
 .import-preview-box{background:var(--bg2);border-radius:8px;padding:.75rem;font-size:12px;font-family:'Courier New',monospace;max-height:140px;overflow-y:auto;color:var(--text);border:1px solid var(--border)}
 .import-err{font-size:13px;color:var(--red);padding:8px 12px;background:var(--red-lt);border-radius:8px;margin-top:8px}
+
+/* ── MOBILE RESPONSIVE ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:100}
+  .sidebar.mob-open{transform:translateX(0)}
+  .main{margin-left:0}
+  .topbar{padding:.6rem 1rem}
+  .page{padding:1rem}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .stat-val{font-size:22px}
+  .charts-grid{grid-template-columns:1fr}
+  .frow,.frow3{grid-template-columns:1fr}
+  table{font-size:12px}
+  th,td{padding:7px 8px}
+  .modal{width:98vw;max-height:96vh;margin:.5rem}
+  .modal.wide,.modal.xl{width:98vw}
+  .toolbar{gap:6px}
+  .toolbar select{font-size:12px;padding:6px 8px}
+  .btn{padding:6px 10px;font-size:12px}
+  .btn-sm{padding:3px 8px;font-size:11px}
+  .qr-container{flex-direction:column}
+  .steps{overflow-x:auto;flex-wrap:nowrap}
+  .step{white-space:nowrap;padding:.6rem .9rem}
+  .bulk-bar{flex-wrap:wrap;gap:8px}
+  #staff-view-grid{grid-template-columns:1fr}
+  .charts-grid{grid-template-columns:1fr}
+  div[style*="grid-template-columns:2fr 1fr"],
+  div[style*="grid-template-columns:1fr 1fr"],
+  div[style*="grid-template-columns:repeat(4,1fr)"],
+  div[style*="grid-template-columns:repeat(2,1fr)"]{
+    grid-template-columns:1fr !important
+  }
+  .sb-brand{padding:1rem}
+  .page-title{font-size:14px}
+}
+
+/* Mobile hamburger menu */
+#mob-menu-btn{display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--text)}
+#mob-menu-btn svg{width:22px;height:22px;fill:currentColor}
+#mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99}
+@media (max-width:768px){
+  #mob-menu-btn{display:flex;align-items:center}
+  #mob-overlay.show{display:block}
+}
+
 </style>
 </head>
 <body>
@@ -322,6 +416,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 </div>
 
 <!-- ══ MAIN APP ══════════════════════════════════════════════════ -->
+<div class="offline-bar" id="offline-bar">⚠ You are offline — showing cached data</div>
 <div id="app" style="display:none">
   <div class="shell">
     <!-- SIDEBAR -->
@@ -364,6 +459,12 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="sb-item" data-page="disposal" onclick="nav(this)" id="nav-disposal">
           <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> Disposal
         </div>
+        <div class="sb-item" data-page="maintenance" onclick="nav(this)" id="nav-maintenance">
+          <svg viewBox="0 0 24 24"><path d="M13.78 15.3L19.78 21.3L21.89 19.14L15.89 13.14L13.78 15.3M17.5 11.5C19.43 11.5 21 9.93 21 8C21 7.61 20.94 7.24 20.83 6.88L18.5 9.22L16.8 7.5L19.13 5.17C18.77 5.06 18.4 5 18 5C15.9 5 14.5 6.56 14.5 8.5C14.5 8.9 14.56 9.28 14.69 9.63L4 19.39L5.5 21L15.27 10.33C15.62 10.46 16 10.5 16.4 10.5L17.5 11.5M6 14L3 17V21H7L10 18L6 14M5 18L6.5 16.5L7.5 17.5L6 19H5V18Z"/></svg> Maintenance
+        </div>
+        <div class="sb-item" data-page="maintenance" onclick="nav(this)" id="nav-maintenance">
+          <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg> Maintenance
+        </div>
         <div class="sb-section">Reports</div>
         <div class="sb-item" data-page="branch-cost" onclick="nav(this)">
           <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg> Branch Costs
@@ -400,6 +501,9 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
     <div class="main">
       <div class="topbar">
         <div class="topbar-left">
+          <button id="mob-menu-btn" onclick="toggleMobMenu()">
+            <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          </button>
           <span class="page-title" id="page-title">Dashboard</span>
           <span class="pill-warn" id="top-warn" style="display:none"></span>
         </div>
@@ -713,6 +817,9 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
               <button class="btn btn-success" onclick="exportCSV()">⬇ Export filtered assets (CSV)</button>
               <button class="btn" onclick="exportAudit()">⬇ Export audit log (CSV)</button>
               <button class="btn" onclick="exportDeprReport()">⬇ Export depreciation report (CSV)</button>
+              <div style="border-top:1px solid var(--border);margin:.5rem 0"></div>
+              <button class="btn btn-primary" onclick="generateMonthlyReport()">📄 Generate monthly PDF report</button>
+              <button class="btn" onclick="openQRLabelModal()">🏷 Print QR label sheet</button>
             </div>
           </div>
         </div>
@@ -872,6 +979,59 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         </table></div>
       </div>
 
+
+      <!-- MAINTENANCE PAGE -->
+      <div class="page" id="page-maintenance">
+        <div class="toolbar">
+          <div class="search-w"><span class="si">⌕</span><input type="text" id="q-maint" placeholder="Search asset, technician…" oninput="renderMaintenance()"></div>
+          <select id="f-maint-status" onchange="renderMaintenance()">
+            <option value="">All records</option>
+            <option value="open">Open / In progress</option>
+            <option value="done">Completed</option>
+          </select>
+          <select id="f-maint-branch" onchange="renderMaintenance()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
+        </div>
+        <div class="stats-grid" id="maint-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.25rem"></div>
+        <div class="card">
+          <div class="card-head">
+            <h3>Maintenance records</h3>
+            <button class="btn btn-primary btn-sm" onclick="openAddMaintModal()">+ Log maintenance</button>
+          </div>
+          <table>
+            <thead><tr>
+              <th style="width:20%">Asset</th><th style="width:12%">Branch</th>
+              <th style="width:14%">Issue</th><th style="width:13%">Technician</th>
+              <th style="width:10%">Cost (AED)</th><th style="width:10%">Date</th>
+              <th style="width:10%">Status</th><th style="width:11%">Actions</th>
+            </tr></thead>
+            <tbody id="maint-tbody"></tbody>
+          </table>
+          <div id="maint-empty" class="empty-msg" style="display:none">No maintenance records yet.</div>
+        </div>
+      </div>
+
+
+      <!-- MAINTENANCE TRACKER -->
+      <div class="page" id="page-maintenance">
+        <div class="toolbar">
+          <div class="search-w"><span class="si">⌕</span><input type="text" id="q-maint" placeholder="Search asset, technician, description…" oninput="renderMaintenance()"></div>
+          <select id="f-maint-status" onchange="renderMaintenance()"><option value="">All statuses</option><option>Open</option><option>In progress</option><option>Completed</option></select>
+          <select id="f-maint-branch" onchange="renderMaintenance()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
+          <button class="btn btn-primary" onclick="openAddMaintenanceModal()">+ Log repair</button>
+        </div>
+        <div class="stats-grid" id="maint-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:1rem"></div>
+        <div class="card">
+          <table><thead><tr>
+            <th style="width:20%">Asset</th><th style="width:10%">Branch</th>
+            <th style="width:10%">Status</th><th style="width:14%">Technician</th>
+            <th style="width:12%">Date in</th><th style="width:12%">Date out</th>
+            <th style="width:10%">Cost (AED)</th><th style="width:12%">Description</th>
+          </tr></thead>
+          <tbody id="maint-tbody"></tbody></table>
+          <div id="maint-empty" class="empty-msg" style="display:none">No maintenance records yet. Click "+ Log repair" to add one.</div>
+        </div>
+      </div>
+
     </div><!-- /main -->
   </div><!-- /shell -->
 </div><!-- /app -->
@@ -936,6 +1096,82 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 </div>
 
 <!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- QR LABEL SHEET MODAL -->
+<div class="mbg" id="modal-qr-labels">
+  <div class="modal wide">
+    <div class="mhead"><h3>🏷 Print QR label sheet</h3><button class="mclose" onclick="closeModal('modal-qr-labels')">×</button></div>
+    <div class="mbody">
+      <div class="toolbar" style="margin-bottom:1rem">
+        <select id="qrl-branch" onchange="renderQRLabelPreview()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
+        <select id="qrl-type" onchange="renderQRLabelPreview()"><option value="">All types</option><option>Laptop</option><option>Desktop</option><option>Camera</option><option>Phone</option><option>Tablet</option></select>
+        <select id="qrl-size" onchange="renderQRLabelPreview()"><option value="3">3 per row (large)</option><option value="4" selected>4 per row (medium)</option><option value="6">6 per row (small)</option></select>
+      </div>
+      <div id="qrl-count" style="font-size:13px;color:var(--text2);margin-bottom:1rem"></div>
+      <div id="qrl-preview" style="display:grid;gap:8px;max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg2)"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-qr-labels')">Cancel</button>
+      <button class="btn btn-primary" onclick="printQRLabels()">🖨 Print labels</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ADD MAINTENANCE MODAL -->
+<div class="mbg" id="modal-maintenance">
+  <div class="modal">
+    <div class="mhead"><h3 id="maint-modal-title">Log maintenance</h3><button class="mclose" onclick="closeModal('modal-maintenance')">×</button></div>
+    <div class="mbody">
+      <div class="fg"><label>Asset *</label><select id="maint-asset-sel"><option value="">— Select asset —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label>Status</label><select id="maint-status"><option>Open</option><option>In progress</option><option>Completed</option></select></div>
+        <div class="fg"><label>Priority</label><select id="maint-priority"><option>Low</option><option>Medium</option><option selected>High</option><option>Critical</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Date sent for repair *</label><input type="date" id="maint-date-in"></div>
+        <div class="fg"><label>Date returned</label><input type="date" id="maint-date-out"></div>
+      </div>
+      <div class="fg"><label>Technician / Vendor</label><input id="maint-tech" placeholder="e.g. Al Futtaim Service Center"></div>
+      <div class="fg"><label>Repair cost (AED)</label><input type="number" id="maint-cost" placeholder="0"></div>
+      <div class="fg"><label>Description *</label><textarea id="maint-desc" rows="3" placeholder="What was repaired, replaced or serviced…" style="resize:vertical"></textarea></div>
+      <div class="fg"><label>Notes</label><input id="maint-notes" placeholder="Additional notes"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-maintenance')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMaintenance()">Save record</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ADD MAINTENANCE MODAL -->
+<div class="mbg" id="modal-maint">
+  <div class="modal wide">
+    <div class="mhead"><h3 id="maint-modal-title">Log maintenance</h3><button class="mclose" onclick="closeModal('modal-maint')">×</button></div>
+    <div class="mbody">
+      <div class="fg"><label>Asset *</label><select id="maint-asset-sel"><option value="">— Select asset —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label>Issue / Work done *</label><input id="maint-issue" placeholder="e.g. Screen replacement, Battery swap"></div>
+        <div class="fg"><label>Status</label><select id="maint-status"><option value="open">In progress</option><option value="done">Completed</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Technician / Vendor</label><input id="maint-tech" placeholder="e.g. Al Barsha Electronics"></div>
+        <div class="fg"><label>Cost (AED)</label><input type="number" id="maint-cost" placeholder="0"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Start date</label><input type="date" id="maint-start"></div>
+        <div class="fg"><label>Completion date</label><input type="date" id="maint-end"></div>
+      </div>
+      <div class="fg"><label>Notes</label><textarea id="maint-notes" rows="2" placeholder="Additional details about the repair…" style="resize:vertical"></textarea></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-maint')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMaintenance()">Save record</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- STAFF CLEARANCE MODAL -->
 <div class="mbg" id="modal-clearance">
@@ -1228,6 +1464,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 </div>
 
 <!-- Handover PDF preview -->
+<div id="mob-overlay" onclick="closeMobMenu()"></div>
 <div id="print-area" style="display:none"></div>
 
 <!-- Toast -->
@@ -1348,7 +1585,7 @@ function doLogout() {
 // ════════════════════════════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════════════════════════════
-const PAGE_TITLES = { scanner:'Scan Device', settings:'Settings', 'staff-view':'Staffs', 'branch-cost':'Branch Cost Analysis', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
+const PAGE_TITLES = { scanner:'Scan Device', settings:'Settings', 'staff-view':'Staffs', 'branch-cost':'Branch Cost Analysis', maintenance:'Maintenance Tracker', 'maintenance':'Maintenance Tracker', dashboard:'Dashboard', assets:'All Assets', assign:'Assign / Return', warranty:'Warranty', disposal:'Disposal', invoices:'Invoices & Documents', 'dashboard-adv':'Analytics', depreciation:'Depreciation', audit:'Audit Log', users:'User Management', import:'Import / Export' }
 function nav(el) {
   document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'))
   el.classList.add('active')
@@ -1375,13 +1612,15 @@ function nav(el) {
     }
   }
   if (pg === 'branch-cost')    { renderBranchCost() }
+  if (pg === 'maintenance')    { renderMaintenance() }
+  if (pg === 'maintenance')    { renderMaintenance() }
   if (pg === 'scanner')        { initPageScanner() }
   if (pg === 'invoices')      { renderInvoices(); renderInvoiceSummary() }
 }
 function setTopbarActions(pg) {
   const el = document.getElementById('topbar-actions')
   if (pg === 'assets' && currentUser.role === 'admin') {
-    el.innerHTML = `<button class="btn" onclick="exportCSV()">⬇ Export filtered</button><button class="btn" onclick="nav(document.querySelector('[data-page=import]'))">⬆ Import CSV</button><button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
+    el.innerHTML = `<button class="btn btn-sm" onclick="openQRLabelPrint()" title="Print QR labels">🏷 QR labels</button><button class="btn" onclick="exportCSV()">⬇ Export</button><button class="btn" onclick="nav(document.querySelector('[data-page=import]'))">⬆ Import</button><button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
   } else if (pg === 'assets' && currentUser.role === 'accounts') {
     el.innerHTML = `<button class="btn btn-primary" onclick="openAddAssetModal()">+ Add asset</button>`
   } else if (pg === 'assets' && isManager()) {
@@ -1392,6 +1631,8 @@ function setTopbarActions(pg) {
     el.innerHTML = `<button class="btn btn-success" onclick="exportInvoicesCSV()">⬇ Export invoices CSV</button>`
   } else if (pg === 'assign' && (canAssign() || currentUser.role==='admin')) {
     el.innerHTML = `<button class="btn btn-primary" onclick="assignStep(document.querySelector('[data-step=handover]'))">+ New handover</button>`
+  } else if (pg === 'dashboard') {
+    el.innerHTML = currentUser.role==='admin' ? `<button class="btn btn-sm" onclick="generateMonthlyReport()">📄 Monthly report</button>` : ''
   } else {
     el.innerHTML = ''
   }
@@ -1410,6 +1651,7 @@ async function loadAll() {
   try { updateAssigneeDropdowns() } catch(e) {}
   renderDashboard()
   updateBadges()
+  try { cacheOfflineSummary() } catch(e){}
 }
 async function loadAssets() {
   const { data, error } = await sb.from('assets').select('*').order('created_at', { ascending: false })
@@ -1831,6 +2073,9 @@ function viewAsset(id) {
   let footBtns = `<button class="btn btn-sm" onclick="openQR(${id})">QR code</button>`
   if ((canEdit() || currentUser.role==='admin') && !isManager()) {
     footBtns += `<button class="btn btn-primary btn-sm" onclick="openEditAssetModal(${id})">Edit</button>`
+  }
+  if (canEdit() || currentUser.role==='admin') {
+    footBtns += `<button class="btn btn-sm" onclick="closeModal('modal-view');openAddMaintenanceModal(${id})" style="background:var(--amber-lt);color:var(--amber);border-color:var(--amber)">🔧 Log repair</button>`
   }
   if (a.assignee && canAssign()) {
     footBtns += `<button class="btn btn-sm" onclick="openTransferModal(${id})" style="background:var(--purple-lt);color:var(--purple);border-color:var(--purple)">⇄ Transfer</button>`
@@ -4352,9 +4597,809 @@ async function confirmTransfer() {
   renderStaffView()
 }
 
+// ════════════════════════════════════════════════════════════════
+// FEATURE 13 — MOBILE MENU
+// ════════════════════════════════════════════════════════════════
+function toggleMobMenu() {
+  document.querySelector('.sidebar').classList.toggle('mob-open')
+  document.getElementById('mob-overlay').classList.toggle('show')
+}
+function closeMobMenu() {
+  document.querySelector('.sidebar').classList.remove('mob-open')
+  document.getElementById('mob-overlay').classList.remove('show')
+}
+// Close sidebar on nav click (mobile)
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.sb-item').forEach(el => {
+    el.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeMobMenu()
+    })
+  })
+})
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 14 — OFFLINE MODE (Service Worker + localStorage cache)
+// ════════════════════════════════════════════════════════════════
+const CACHE_KEY = 'itam_offline_assets'
+let isOffline = !navigator.onLine
+
+window.addEventListener('online',  () => { isOffline=false; syncOfflineQueue(); showOfflineBanner(false) })
+window.addEventListener('offline', () => { isOffline=true;  showOfflineBanner(true) })
+
+function showOfflineBanner(show) {
+  let banner = document.getElementById('offline-banner')
+  if (!banner) {
+    banner = document.createElement('div')
+    banner.id = 'offline-banner'
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#854F0B;color:#fff;text-align:center;padding:6px;font-size:13px;font-weight:600;z-index:999;display:none'
+    banner.textContent = '⚠ You are offline — showing cached data. Changes will sync when reconnected.'
+    document.body.appendChild(banner)
+  }
+  banner.style.display = show ? 'block' : 'none'
+}
+
+function cacheAssets(data) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })) } catch(e){}
+}
+function getCachedAssets() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (cached) return JSON.parse(cached).data
+  } catch(e){}
+  return null
+}
+
+let offlineQueue = []
+function queueOfflineAction(action) {
+  offlineQueue.push(action)
+  try { localStorage.setItem('itam_offline_queue', JSON.stringify(offlineQueue)) } catch(e){}
+  toast('Saved offline — will sync when connected', 'error', 3000)
+}
+async function syncOfflineQueue() {
+  try {
+    const q = JSON.parse(localStorage.getItem('itam_offline_queue') || '[]')
+    if (!q.length) return
+    for (const action of q) {
+      if (action.type === 'update') await sb.from('assets').update(action.payload).eq('id', action.id)
+      if (action.type === 'insert') await sb.from('assets').insert(action.payload)
+    }
+    localStorage.removeItem('itam_offline_queue')
+    offlineQueue = []
+    await loadAll()
+    toast(`✓ Synced ${q.length} offline changes`, 'success', 4000)
+  } catch(e) {}
+}
+
+// Override loadAssets to use cache when offline
+const _origLoadAssets = loadAssets
+loadAssets = async function() {
+  if (isOffline) {
+    const cached = getCachedAssets()
+    if (cached) {
+      assets = cached
+      showOfflineBanner(true)
+      renderAssets()
+      populateHandoverDropdown()
+      populateReturnDropdown()
+      populateInvoiceAssetDropdown()
+      loadInvoices()
+      return
+    }
+  }
+  await _origLoadAssets()
+  if (assets.length) cacheAssets(assets)
+}
+
+// Check offline on load
+if (!navigator.onLine) showOfflineBanner(true)
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 6 — MONTHLY PDF REPORT
+// ════════════════════════════════════════════════════════════════
+function generateMonthlyReport() {
+  const now     = new Date()
+  const month   = now.toLocaleDateString('en-GB', { month:'long', year:'numeric' })
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  // Assets added this month
+  const newAssets = assets.filter(a => a.created_at && new Date(a.created_at) >= monthStart)
+  // Assignments this month
+  const assignments = auditLog.filter(l => l.action.includes('Assigned') && new Date(l.created_at) >= monthStart)
+  const returns     = auditLog.filter(l => l.action.includes('Returned') && new Date(l.created_at) >= monthStart)
+  // Warranty alerts
+  const expiring    = assets.filter(a => { if(!a.warranty)return false; const d=Math.ceil((new Date(a.warranty)-new Date())/86400000); return d<=90&&d>=0 })
+  const expired     = assets.filter(a => { if(!a.warranty)return false; return new Date(a.warranty)<new Date() })
+  // Per branch totals
+  const branchData  = ['ECP','DCP','SNP','TEL'].map(code => {
+    const ba = assets.filter(a=>a.dept===code)
+    return { code, count:ba.length, value:ba.reduce((s,a)=>s+(a.value||0),0), assigned:ba.filter(a=>a.status==='Assigned').length }
+  })
+  const totalVal = assets.reduce((s,a)=>s+(a.value||0),0)
+  const maintRecs = JSON.parse(localStorage.getItem('itam_maintenance')||'[]')
+  const maintThisMonth = maintRecs.filter(m => m.startDate && new Date(m.startDate) >= monthStart)
+  const maintCost = maintThisMonth.reduce((s,m)=>s+(m.cost||0),0)
+
+  const html = `
+  <div style="font-family:'Segoe UI',sans-serif;max-width:750px;margin:0 auto;padding:2rem;color:#111;font-size:13px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #5B4FCF;padding-bottom:12px;margin-bottom:1.5rem">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:#5B4FCF;text-transform:uppercase;letter-spacing:.1em">Raash Asset Tracker</div>
+        <h1 style="font-size:22px;font-weight:800;margin:4px 0 0">Monthly Asset Report</h1>
+        <div style="color:#666;font-size:13px;margin-top:2px">${month} · Generated ${now.toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</div>
+      </div>
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,#5B4FCF,#7B6FEF);border-radius:12px;display:flex;align-items:center;justify-content:center">
+        <span style="font-size:20px;font-weight:800;color:#fff">RS</span>
+      </div>
+    </div>
+
+    <!-- Summary stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem">
+      ${[
+        ['Total assets', assets.length, '#185FA5'],
+        ['Total value', 'AED '+totalVal.toLocaleString(), '#3B6D11'],
+        ['New this month', newAssets.length, '#534AB7'],
+        ['Warranty alerts', expiring.length+expired.length, '#A32D2D'],
+      ].map(([l,v,col])=>`<div style="border:1px solid #e5e5e2;border-radius:8px;padding:.75rem 1rem">
+        <div style="font-size:10px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${l}</div>
+        <div style="font-size:20px;font-weight:700;color:${col};margin-top:4px">${v}</div>
+      </div>`).join('')}
+    </div>
+
+    <!-- Activity -->
+    <h2 style="font-size:14px;font-weight:700;border-bottom:1px solid #e5e5e2;padding-bottom:6px;margin-bottom:12px">This month's activity</h2>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:12px">
+      <tr><td style="padding:6px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5;width:40%">New assets added</td><td style="padding:6px 10px;border:1px solid #ddd">${newAssets.length}</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Assets assigned</td><td style="padding:6px 10px;border:1px solid #ddd">${assignments.length}</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Assets returned</td><td style="padding:6px 10px;border:1px solid #ddd">${returns.length}</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid #ddd;font-weight:600;background:#f5f5f5">Maintenance jobs</td><td style="padding:6px 10px;border:1px solid #ddd">${maintThisMonth.length} (AED ${maintCost.toLocaleString()})</td></tr>
+    </table>
+
+    <!-- Branch breakdown -->
+    <h2 style="font-size:14px;font-weight:700;border-bottom:1px solid #e5e5e2;padding-bottom:6px;margin-bottom:12px">Branch breakdown</h2>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:12px">
+      <tr style="background:#f5f5f5">
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Branch</th>
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Assets</th>
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Total value</th>
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Assigned</th>
+      </tr>
+      ${branchData.map(b=>`<tr>
+        <td style="padding:6px 10px;border:1px solid #ddd;font-weight:700">${b.code}</td>
+        <td style="padding:6px 10px;border:1px solid #ddd">${b.count}</td>
+        <td style="padding:6px 10px;border:1px solid #ddd">AED ${b.value.toLocaleString()}</td>
+        <td style="padding:6px 10px;border:1px solid #ddd">${b.assigned}</td>
+      </tr>`).join('')}
+    </table>
+
+    <!-- Warranty alerts -->
+    ${expiring.length||expired.length ? `
+    <h2 style="font-size:14px;font-weight:700;border-bottom:1px solid #e5e5e2;padding-bottom:6px;margin-bottom:12px;color:#A32D2D">⚠ Warranty alerts</h2>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:12px">
+      <tr style="background:#f5f5f5">
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Asset</th>
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Branch</th>
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Expires</th>
+        <th style="padding:7px 10px;border:1px solid #ddd;text-align:left">Status</th>
+      </tr>
+      ${[...expired,...expiring].slice(0,15).map(a=>{
+        const isExp = new Date(a.warranty)<new Date()
+        return `<tr><td style="padding:6px 10px;border:1px solid #ddd">${a.name}</td><td style="padding:6px 10px;border:1px solid #ddd">${a.dept||'—'}</td><td style="padding:6px 10px;border:1px solid #ddd">${fmtDate(a.warranty)}</td><td style="padding:6px 10px;border:1px solid #ddd;color:${isExp?'#A32D2D':'#854F0B'};font-weight:600">${isExp?'EXPIRED':'Expiring soon'}</td></tr>`
+      }).join('')}
+    </table>` : ''}
+
+    <p style="font-size:10px;color:#999;border-top:1px solid #eee;padding-top:8px;margin-top:1.5rem">
+      Generated by Raash Asset Tracker · ${now.toLocaleString('en-GB')} · Admin: ${currentUser.name}
+    </p>
+  </div>`
+
+  document.getElementById('print-area').innerHTML = html
+  document.getElementById('print-area').style.display = 'block'
+  window.print()
+  setTimeout(() => document.getElementById('print-area').style.display='none', 1000)
+  dbLog('Monthly report generated', month)
+}
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 3 — MAINTENANCE TRACKER
+// ════════════════════════════════════════════════════════════════
+let maintRecords = []
+let editingMaintId = null
+
+function loadMaintenance() {
+  try { maintRecords = JSON.parse(localStorage.getItem('itam_maintenance') || '[]') } catch(e) { maintRecords = [] }
+}
+function saveMaintenance_data() {
+  try { localStorage.setItem('itam_maintenance', JSON.stringify(maintRecords)) } catch(e){}
+}
+
+function renderMaintenance() {
+  loadMaintenance()
+  const q  = (document.getElementById('q-maint')?.value||'').toLowerCase()
+  const fs = document.getElementById('f-maint-status')?.value||''
+  const fb = document.getElementById('f-maint-branch')?.value||''
+
+  const filtered = maintRecords.filter(m => {
+    const a = assets.find(x=>x.id===m.assetId)
+    const branch = a?.dept || m.branch || ''
+    const mq = !q || [m.issue, m.technician, a?.name, a?.serial].some(x=>(x||'').toLowerCase().includes(q))
+    const ms = !fs || m.status === fs
+    const mb = !fb || branch === fb
+    return mq && ms && mb
+  }).sort((a,b)=>new Date(b.startDate||0)-new Date(a.startDate||0))
+
+  // Stats
+  const totalCost = maintRecords.reduce((s,m)=>s+(m.cost||0),0)
+  const open = maintRecords.filter(m=>m.status==='open').length
+  const done = maintRecords.filter(m=>m.status==='done').length
+  document.getElementById('maint-stats').innerHTML = [
+    ['Total records', maintRecords.length, '', ''],
+    ['In progress', open, 'color:var(--amber)', ''],
+    ['Completed', done, 'color:var(--green)', ''],
+    ['Total cost', `AED ${totalCost.toLocaleString()}`, 'color:var(--red)', ''],
+  ].map(([l,v,col])=>`<div class="stat-card"><div class="stat-lbl">${l}</div><div class="stat-val" style="font-size:22px;${col}">${v}</div></div>`).join('')
+
+  const tbody = document.getElementById('maint-tbody')
+  const empty = document.getElementById('maint-empty')
+
+  if (!filtered.length) { tbody.innerHTML=''; empty.style.display='block'; return }
+  empty.style.display='none'
+
+  tbody.innerHTML = filtered.map(m => {
+    const a = assets.find(x=>x.id===m.assetId)
+    const isOpen = m.status==='open'
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${a?.name||'Unknown asset'}</div><div class="mono">${a?.serial||'—'}</div></td>
+      <td><span class="tag">${a?.dept||m.branch||'—'}</span></td>
+      <td style="font-size:12px">${m.issue||'—'}</td>
+      <td style="font-size:12px">${m.technician||'—'}</td>
+      <td style="font-size:12px;font-weight:500">${m.cost?'AED '+Number(m.cost).toLocaleString():'—'}</td>
+      <td style="font-size:12px">${m.startDate?fmtDate(m.startDate):'—'}${m.endDate&&!isOpen?`<br><span style="color:var(--green)">→ ${fmtDate(m.endDate)}</span>`:''}</td>
+      <td><span class="badge ${isOpen?'b-maintenance':'b-available'}">${isOpen?'In progress':'Completed'}</span></td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn btn-sm" onclick="editMaintRecord(${m.id})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMaintRecord(${m.id})">×</button>
+      </div></td>
+    </tr>`
+  }).join('')
+}
+
+function openAddMaintModal() {
+  editingMaintId = null
+  document.getElementById('maint-modal-title').textContent = 'Log maintenance'
+  ;['maint-issue','maint-tech','maint-notes'].forEach(id=>document.getElementById(id).value='')
+  document.getElementById('maint-cost').value=''
+  document.getElementById('maint-status').value='open'
+  document.getElementById('maint-start').value=new Date().toISOString().slice(0,10)
+  document.getElementById('maint-end').value=''
+  // Populate asset dropdown
+  const sel = document.getElementById('maint-asset-sel')
+  sel.innerHTML = '<option value="">— Select asset —</option>' +
+    assets.map(a=>`<option value="${a.id}">${a.name} ${a.serial?'('+a.serial+')':''} · ${a.dept||'—'}</option>`).join('')
+  openModal('modal-maint')
+}
+
+function editMaintRecord(id) {
+  const m = maintRecords.find(x=>x.id===id)
+  if (!m) return
+  editingMaintId = id
+  document.getElementById('maint-modal-title').textContent = 'Edit maintenance record'
+  const sel = document.getElementById('maint-asset-sel')
+  sel.innerHTML = '<option value="">— Select asset —</option>' +
+    assets.map(a=>`<option value="${a.id}">${a.name} ${a.serial?'('+a.serial+')':''} · ${a.dept||'—'}</option>`).join('')
+  sel.value = m.assetId
+  document.getElementById('maint-issue').value     = m.issue||''
+  document.getElementById('maint-tech').value      = m.technician||''
+  document.getElementById('maint-cost').value      = m.cost||''
+  document.getElementById('maint-status').value    = m.status||'open'
+  document.getElementById('maint-start').value     = m.startDate||''
+  document.getElementById('maint-end').value       = m.endDate||''
+  document.getElementById('maint-notes').value     = m.notes||''
+  openModal('modal-maint')
+}
+
+function saveMaintenance() {
+  const assetId   = parseInt(document.getElementById('maint-asset-sel').value)
+  const issue     = document.getElementById('maint-issue').value.trim()
+  if (!assetId || !issue) { toast('Asset and issue are required','error'); return }
+  const technician= document.getElementById('maint-tech').value.trim()
+  const cost      = parseFloat(document.getElementById('maint-cost').value)||0
+  const status    = document.getElementById('maint-status').value
+  const startDate = document.getElementById('maint-start').value
+  const endDate   = document.getElementById('maint-end').value
+  const notes     = document.getElementById('maint-notes').value.trim()
+  const asset     = assets.find(a=>a.id===assetId)
+
+  const record = { id: editingMaintId||Date.now(), assetId, issue, technician, cost, status, startDate, endDate, notes, branch: asset?.dept||'' }
+
+  if (editingMaintId) {
+    const idx = maintRecords.findIndex(m=>m.id===editingMaintId)
+    if (idx!==-1) maintRecords[idx] = record
+    toast('✓ Maintenance record updated','success')
+  } else {
+    maintRecords.push(record)
+    // Update asset status to Maintenance if open
+    if (status==='open' && asset?.status !== 'Maintenance') {
+      sb.from('assets').update({status:'Maintenance'}).eq('id',assetId).then(()=>loadAssets())
+    }
+    toast(`✓ Maintenance logged for ${asset?.name}`,'success')
+    dbLog('Maintenance logged', asset?.name||'', `Issue: ${issue} · Cost: AED ${cost}`)
+  }
+  saveMaintenance_data()
+  closeModal('modal-maint')
+  renderMaintenance()
+}
+
+function deleteMaintRecord(id) {
+  if (!confirm('Delete this maintenance record?')) return
+  maintRecords = maintRecords.filter(m=>m.id!==id)
+  saveMaintenance_data()
+  renderMaintenance()
+  toast('Record deleted')
+}
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 1 — QR LABEL SHEET PRINTING
+// ════════════════════════════════════════════════════════════════
+function openQRLabelPrint() {
+  // Get filtered assets or all
+  const q  = (document.getElementById('q-assets')?.value||'').toLowerCase()
+  const ft = document.getElementById('f-type')?.value||''
+  const fd = document.getElementById('f-dept')?.value||''
+  const fs = document.getElementById('f-status')?.value||''
+
+  const toLabel = assets.filter(a=>{
+    const mq = !q || [a.name,a.serial,a.assignee].some(x=>(x||'').toLowerCase().includes(q))
+    const mt = !ft || a.type===ft
+    const md = !fd || a.dept===fd
+    const ms = !fs || a.status===fs
+    return mq&&mt&&md&&ms
+  }).slice(0,40) // max 40 labels per sheet
+
+  if (!toLabel.length) { toast('No assets to print labels for','error'); return }
+
+  // Generate QR data URLs using canvas
+  const labels = toLabel.map(a => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 120; canvas.height = 120
+    const ctx = canvas.getContext('2d')
+    // Draw simple QR-style pattern
+    const data = `ID:${a.id}|SN:${a.serial||''}|${a.name}`
+    let h=0; for(let i=0;i<data.length;i++) h=(h*31+data.charCodeAt(i))>>>0
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,120,120)
+    ctx.fillStyle='#000'
+    const mods=21, cell=Math.floor(116/mods)
+    for(let r=0;r<mods;r++) for(let cc=0;cc<mods;cc++){
+      const inF=(r<7&&cc<7)||(r<7&&cc>=mods-7)||(r>=mods-7&&cc<7)
+      if(inF){const rr=r<7?r:r-(mods-7),rc=cc<7?cc:cc-(mods-7);if((rr===0||rr===6||rc===0||rc===6)||(rr>=2&&rr<=4&&rc>=2&&rc<=4))ctx.fillRect(2+cc*cell,2+r*cell,cell,cell)}
+      else if((h^(r*mods+cc)*2654435761)%3===0) ctx.fillRect(2+cc*cell,2+r*cell,cell,cell)
+    }
+    return { asset: a, qr: canvas.toDataURL() }
+  })
+
+  const html = `
+  <div style="font-family:sans-serif">
+    <div style="text-align:center;margin-bottom:12px;font-size:12px;color:#666">
+      Raash Asset Tracker — QR Labels (${labels.length} assets) — Print on A4
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:8px">
+      ${labels.map(({asset:a,qr})=>`
+        <div style="border:1px solid #ccc;border-radius:6px;padding:8px;text-align:center;break-inside:avoid;page-break-inside:avoid">
+          <img src="${qr}" width="100" height="100" style="display:block;margin:0 auto 4px">
+          <div style="font-size:9px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${a.name}</div>
+          <div style="font-size:8px;color:#555;font-family:monospace">${a.serial||'—'}</div>
+          <div style="font-size:8px;color:#888">${a.dept||''} · ${a.type}</div>
+        </div>`).join('')}
+    </div>
+  </div>`
+
+  document.getElementById('print-area').innerHTML = html
+  document.getElementById('print-area').style.display = 'block'
+  window.print()
+  setTimeout(()=>document.getElementById('print-area').style.display='none', 1500)
+  toast(`✓ Printing ${labels.length} QR labels`, 'success')
+}
+
+// ── MOBILE SIDEBAR TOGGLE ──
+function toggleSidebar() {
+  const sb  = document.querySelector('.sidebar')
+  const ov  = document.getElementById('sb-overlay')
+  const open = sb.classList.toggle('open')
+  ov.classList.toggle('show', open)
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open')
+  document.getElementById('sb-overlay').classList.remove('show')
+}
+// Close sidebar on nav item click (mobile)
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.sb-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidebar()
+    })
+  })
+})
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 3 — MAINTENANCE TRACKER
+// ════════════════════════════════════════════════════════════════
+let maintenanceLog = []
+
+async function loadMaintenance() {
+  try {
+    const saved = localStorage.getItem('itam_maintenance')
+    if (saved) maintenanceLog = JSON.parse(saved)
+  } catch(e) { maintenanceLog = [] }
+}
+
+function saveMaintenance_store() {
+  try { localStorage.setItem('itam_maintenance', JSON.stringify(maintenanceLog)) } catch(e){}
+}
+
+// (declared above)
+
+function openAddMaintenanceModal(assetId) {
+  editingMaintId = null
+  document.getElementById('maint-modal-title').textContent = 'Log maintenance'
+  document.getElementById('maint-date-in').value  = new Date().toISOString().slice(0,10)
+  document.getElementById('maint-date-out').value = ''
+  document.getElementById('maint-tech').value     = ''
+  document.getElementById('maint-cost').value     = ''
+  document.getElementById('maint-desc').value     = ''
+  document.getElementById('maint-notes').value    = ''
+  document.getElementById('maint-status').value   = 'Open'
+  document.getElementById('maint-priority').value = 'High'
+  // Populate asset dropdown
+  const sel = document.getElementById('maint-asset-sel')
+  sel.innerHTML = '<option value="">— Select asset —</option>' +
+    assets.map(a=>`<option value="${a.id}" ${a.id===assetId?'selected':''}>${a.name}${a.serial?' ('+a.serial+')':''}</option>`).join('')
+  openModal('modal-maintenance')
+}
+
+function saveMaintenance() {
+  const assetId = parseInt(document.getElementById('maint-asset-sel').value)
+  const desc    = document.getElementById('maint-desc').value.trim()
+  if (!assetId) { toast('Please select an asset','error'); return }
+  if (!desc)    { toast('Please enter a description','error'); return }
+
+  const asset  = assets.find(a=>a.id===assetId)
+  const record = {
+    id:        editingMaintId || Date.now(),
+    assetId,
+    assetName: asset?.name || '',
+    assetSerial: asset?.serial || '',
+    branch:    asset?.dept || '',
+    status:    document.getElementById('maint-status').value,
+    priority:  document.getElementById('maint-priority').value,
+    dateIn:    document.getElementById('maint-date-in').value,
+    dateOut:   document.getElementById('maint-date-out').value,
+    tech:      document.getElementById('maint-tech').value.trim(),
+    cost:      parseFloat(document.getElementById('maint-cost').value)||0,
+    desc,
+    notes:     document.getElementById('maint-notes').value.trim(),
+    createdAt: new Date().toISOString(),
+    createdBy: currentUser.name,
+  }
+
+  if (editingMaintId) {
+    const idx = maintenanceLog.findIndex(m=>m.id===editingMaintId)
+    if (idx!==-1) maintenanceLog[idx] = record
+    toast('✓ Maintenance record updated','success')
+  } else {
+    maintenanceLog.unshift(record)
+    // Update asset status to Maintenance if open
+    if (record.status === 'Open' || record.status === 'In progress') {
+      sb.from('assets').update({status:'Maintenance'}).eq('id',assetId).then(()=>loadAssets())
+    } else if (record.status === 'Completed') {
+      sb.from('assets').update({status:'Available'}).eq('id',assetId).then(()=>loadAssets())
+    }
+    dbLog('Maintenance logged', record.assetName, `${record.status} · ${record.tech} · AED ${record.cost}`)
+    toast('✓ Maintenance record saved','success')
+  }
+
+  saveMaintenance_store()
+  closeModal('modal-maintenance')
+  renderMaintenance()
+}
+
+function editMaintenance(id) {
+  const m = maintenanceLog.find(x=>x.id===id); if(!m) return
+  editingMaintId = id
+  document.getElementById('maint-modal-title').textContent = 'Edit maintenance'
+  const sel = document.getElementById('maint-asset-sel')
+  sel.innerHTML = '<option value="">— Select asset —</option>' +
+    assets.map(a=>`<option value="${a.id}" ${a.id===m.assetId?'selected':''}>${a.name}</option>`).join('')
+  document.getElementById('maint-status').value   = m.status
+  document.getElementById('maint-priority').value = m.priority||'High'
+  document.getElementById('maint-date-in').value  = m.dateIn||''
+  document.getElementById('maint-date-out').value = m.dateOut||''
+  document.getElementById('maint-tech').value     = m.tech||''
+  document.getElementById('maint-cost').value     = m.cost||''
+  document.getElementById('maint-desc').value     = m.desc||''
+  document.getElementById('maint-notes').value    = m.notes||''
+  openModal('modal-maintenance')
+}
+
+function deleteMaintenance(id) {
+  if (!confirm('Delete this maintenance record?')) return
+  maintenanceLog = maintenanceLog.filter(m=>m.id!==id)
+  saveMaintenance_store()
+  renderMaintenance()
+  toast('Record deleted')
+}
+
+function renderMaintenance() {
+  loadMaintenance()
+  const q  = (document.getElementById('q-maint')?.value||'').toLowerCase()
+  const fs = document.getElementById('f-maint-status')?.value||''
+  const fb = document.getElementById('f-maint-branch')?.value||''
+
+  const filtered = maintenanceLog.filter(m=>{
+    const mq = !q || [m.assetName,m.tech,m.desc,m.notes].some(x=>(x||'').toLowerCase().includes(q))
+    const ms = !fs || m.status===fs
+    const mb = !fb || m.branch===fb
+    return mq&&ms&&mb
+  })
+
+  // Stats
+  const open     = maintenanceLog.filter(m=>m.status==='Open').length
+  const inProg   = maintenanceLog.filter(m=>m.status==='In progress').length
+  const done     = maintenanceLog.filter(m=>m.status==='Completed').length
+  const totalCost= maintenanceLog.reduce((s,m)=>s+(m.cost||0),0)
+  document.getElementById('maint-stats').innerHTML=[
+    ['Open repairs', open, 'needs attention', open?'color:var(--red)':''],
+    ['In progress',  inProg, 'being serviced', inProg?'color:var(--amber)':''],
+    ['Completed',    done, 'repaired', 'color:var(--green)'],
+    ['Total repair cost', `AED ${totalCost.toLocaleString()}`, 'all time', ''],
+  ].map(([l,v,s,col])=>`<div class="stat-card"><div class="stat-lbl">${l}</div><div class="stat-val" style="font-size:22px;${col}">${v}</div><div class="stat-sub">${s}</div></div>`).join('')
+
+  const statusBadge = {Open:'b-warn','In progress':'b-expiring',Completed:'b-available'}
+  const priorityColor = {Critical:'color:var(--red);font-weight:700',High:'color:var(--amber)',Medium:'',Low:'color:var(--text3)'}
+
+  document.getElementById('maint-empty').style.display = filtered.length?'none':'block'
+  document.getElementById('maint-tbody').innerHTML = filtered.map(m=>{
+    const days = m.dateIn && m.dateOut
+      ? Math.ceil((new Date(m.dateOut)-new Date(m.dateIn))/86400000)
+      : m.dateIn ? Math.ceil((new Date()-new Date(m.dateIn))/86400000) : 0
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${m.assetName}</div>
+          <div class="mono">${m.assetSerial||''}</div>
+          <div style="font-size:10px;${priorityColor[m.priority]||''}">${m.priority||''}</div></td>
+      <td><span class="tag">${m.branch||'—'}</span></td>
+      <td><span class="badge ${statusBadge[m.status]||'b-tag'}">${m.status}</span></td>
+      <td style="font-size:12px">${m.tech||'—'}</td>
+      <td style="font-size:12px">${m.dateIn?fmtDate(m.dateIn):'—'}</td>
+      <td style="font-size:12px">${m.dateOut?fmtDate(m.dateOut):`<span style="color:var(--amber)">${days}d ongoing</span>`}</td>
+      <td style="font-size:12px;font-weight:600">${m.cost?'AED '+m.cost.toLocaleString():'—'}</td>
+      <td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.desc}">${m.desc}</td>
+    </tr>`
+  }).join('')||''
+}
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 6 — MONTHLY PDF REPORT
+// ════════════════════════════════════════════════════════════════
+function generateMonthlyReport() {
+  const now      = new Date()
+  const month    = now.toLocaleDateString('en-GB',{month:'long',year:'numeric'})
+  const today    = now.toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})
+
+  // This month's new assets
+  const thisMonth = now.toISOString().slice(0,7) // YYYY-MM
+  const newAssets = assets.filter(a => a.created_at && a.created_at.startsWith(thisMonth))
+
+  // Warranty alerts
+  const expiring  = assets.filter(a => {
+    if (!a.warranty) return false
+    const d = Math.ceil((new Date(a.warranty)-now)/86400000)
+    return d <= 90 && d >= 0
+  })
+  const expired = assets.filter(a => {
+    if (!a.warranty) return false
+    return new Date(a.warranty) < now
+  })
+
+  // This month's assignments from audit log
+  const thisMonthAssign = auditLog.filter(l =>
+    l.action.includes('Assigned') && l.created_at?.startsWith(thisMonth)
+  )
+
+  // Branch breakdown
+  const branchData = ['ECP','DCP','SNP','TEL'].map(code => {
+    const ba = assets.filter(a=>a.dept===code)
+    return { code, count:ba.length, assigned:ba.filter(a=>a.status==='Assigned').length, value:ba.reduce((s,a)=>s+(a.value||0),0) }
+  })
+
+  const totalVal = assets.reduce((s,a)=>s+(a.value||0),0)
+  const maintOpen = maintenanceLog.filter(m=>m.status==='Open'||m.status==='In progress').length
+
+  const html = `
+    <div style="font-family:Segoe UI,sans-serif;max-width:750px;margin:0 auto;padding:2rem;color:#111;font-size:13px">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #5B4FCF;padding-bottom:12px;margin-bottom:1.5rem">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#5B4FCF">Raash Asset Tracker</div>
+          <div style="font-size:16px;font-weight:600;color:#333;margin-top:4px">Monthly Asset Report — ${month}</div>
+        </div>
+        <div style="text-align:right;font-size:11px;color:#666">
+          <div>Generated: ${today}</div>
+          <div>By: ${currentUser.name}</div>
+        </div>
+      </div>
+
+      <!-- Summary stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem">
+        ${[
+          ['Total assets', assets.length, '#185FA5'],
+          ['Total value', 'AED '+totalVal.toLocaleString(), '#3B6D11'],
+          ['New this month', newAssets.length, '#534AB7'],
+          ['Open maintenance', maintOpen, maintOpen?'#A32D2D':'#3B6D11'],
+        ].map(([l,v,c])=>`<div style="border:1px solid #e5e5e2;border-radius:8px;padding:.75rem;text-align:center">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#666;margin-bottom:4px">${l}</div>
+          <div style="font-size:18px;font-weight:700;color:${c}">${v}</div>
+        </div>`).join('')}
+      </div>
+
+      <!-- Asset status -->
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;color:#333">Asset status overview</h3>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">
+        <tr style="background:#f5f5f5">
+          ${['Status','Count','% of total'].map(h=>`<th style="padding:7px 10px;border:1px solid #ddd;text-align:left;font-size:12px">${h}</th>`).join('')}
+        </tr>
+        ${['Available','Assigned','Maintenance','Retired'].map(s=>{
+          const n = assets.filter(a=>a.status===s).length
+          const pct = assets.length ? Math.round(n/assets.length*100) : 0
+          const colors={Available:'#3B6D11',Assigned:'#185FA5',Maintenance:'#854F0B',Retired:'#5F5E5A'}
+          return `<tr><td style="padding:6px 10px;border:1px solid #ddd;color:${colors[s]||'#333'};font-weight:600">${s}</td>
+            <td style="padding:6px 10px;border:1px solid #ddd">${n}</td>
+            <td style="padding:6px 10px;border:1px solid #ddd">${pct}%</td></tr>`
+        }).join('')}
+      </table>
+
+      <!-- Branch breakdown -->
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;color:#333">Branch breakdown</h3>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">
+        <tr style="background:#f5f5f5">
+          ${['Branch','Assets','Assigned','Total value (AED)'].map(h=>`<th style="padding:7px 10px;border:1px solid #ddd;text-align:left;font-size:12px">${h}</th>`).join('')}
+        </tr>
+        ${branchData.map(b=>`<tr>
+          <td style="padding:6px 10px;border:1px solid #ddd;font-weight:700;color:#5B4FCF">${b.code}</td>
+          <td style="padding:6px 10px;border:1px solid #ddd">${b.count}</td>
+          <td style="padding:6px 10px;border:1px solid #ddd">${b.assigned}</td>
+          <td style="padding:6px 10px;border:1px solid #ddd;font-weight:600">${b.value.toLocaleString()}</td>
+        </tr>`).join('')}
+      </table>
+
+      <!-- New assets this month -->
+      ${newAssets.length ? `
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;color:#333">New assets added this month (${newAssets.length})</h3>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:12px">
+        <tr style="background:#f5f5f5">
+          ${['Asset','Type','Branch','Value (AED)','Status'].map(h=>`<th style="padding:6px 10px;border:1px solid #ddd;text-align:left">${h}</th>`).join('')}
+        </tr>
+        ${newAssets.slice(0,15).map(a=>`<tr>
+          <td style="padding:5px 10px;border:1px solid #ddd;font-weight:600">${a.name}</td>
+          <td style="padding:5px 10px;border:1px solid #ddd">${a.type}</td>
+          <td style="padding:5px 10px;border:1px solid #ddd">${a.dept||'—'}</td>
+          <td style="padding:5px 10px;border:1px solid #ddd">${a.value?a.value.toLocaleString():'—'}</td>
+          <td style="padding:5px 10px;border:1px solid #ddd">${a.status}</td>
+        </tr>`).join('')}
+      </table>` : ''}
+
+      <!-- Warranty alerts -->
+      ${expiring.length||expired.length ? `
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;color:#A32D2D">⚠ Warranty alerts</h3>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:12px">
+        <tr style="background:#FCEBEB">
+          ${['Asset','Branch','Assignee','Expiry date','Status'].map(h=>`<th style="padding:6px 10px;border:1px solid #F7C1C1;text-align:left">${h}</th>`).join('')}
+        </tr>
+        ${[...expired,...expiring].slice(0,10).map(a=>{
+          const isExp = new Date(a.warranty)<now
+          return `<tr>
+            <td style="padding:5px 10px;border:1px solid #F7C1C1;font-weight:600">${a.name}</td>
+            <td style="padding:5px 10px;border:1px solid #F7C1C1">${a.dept||'—'}</td>
+            <td style="padding:5px 10px;border:1px solid #F7C1C1">${a.assignee||'—'}</td>
+            <td style="padding:5px 10px;border:1px solid #F7C1C1">${a.warranty}</td>
+            <td style="padding:5px 10px;border:1px solid #F7C1C1;color:${isExp?'#A32D2D':'#854F0B'};font-weight:700">${isExp?'EXPIRED':'Expiring soon'}</td>
+          </tr>`
+        }).join('')}
+      </table>` : '<p style="color:#3B6D11;margin-bottom:1.5rem">✓ No warranty alerts this month</p>'}
+
+      <!-- Footer -->
+      <div style="border-top:1px solid #e5e5e2;margin-top:1rem;padding-top:.75rem;font-size:10px;color:#999;display:flex;justify-content:space-between">
+        <span>Raash Asset Tracker · Confidential</span>
+        <span>Report generated ${today} by ${currentUser.name}</span>
+      </div>
+    </div>`
+
+  document.getElementById('print-area').innerHTML = html
+  document.getElementById('print-area').style.display = 'block'
+  window.print()
+  setTimeout(()=>document.getElementById('print-area').style.display='none', 1500)
+}
+
+// ════════════════════════════════════════════════════════════════
+// FEATURE 1 — QR LABEL SHEET PRINTING
+// ════════════════════════════════════════════════════════════════
+function openQRLabelModal() {
+  document.getElementById('qrl-branch').value = ''
+  document.getElementById('qrl-type').value   = ''
+  renderQRLabelPreview()
+  openModal('modal-qr-labels')
+}
+
+function getQRLabelAssets() {
+  const branch = document.getElementById('qrl-branch')?.value || ''
+  const type   = document.getElementById('qrl-type')?.value   || ''
+  return assets.filter(a => (!branch||a.dept===branch) && (!type||a.type===type))
+}
+
+function renderQRLabelPreview() {
+  const list  = getQRLabelAssets()
+  const cols  = parseInt(document.getElementById('qrl-size')?.value||'4')
+  document.getElementById('qrl-count').textContent = `${list.length} assets selected for printing`
+  document.getElementById('qrl-preview').style.gridTemplateColumns = `repeat(${cols},1fr)`
+  document.getElementById('qrl-preview').innerHTML = list.slice(0,24).map(a=>
+    `<div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:8px;text-align:center;font-size:10px">
+      <div style="font-weight:700;font-size:11px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.name}</div>
+      <div style="font-size:9px;color:#666;margin-bottom:4px">${a.serial||'No serial'}</div>
+      <div style="width:60px;height:60px;background:#eee;margin:0 auto 4px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#999">QR</div>
+      <div style="font-size:9px;color:#999">${a.dept||''} · ${a.type}</div>
+    </div>`
+  ).join('') + (list.length>24?`<div style="padding:1rem;text-align:center;color:var(--text2);font-size:12px">…and ${list.length-24} more</div>`:'')
+}
+
+function makeQRData(a) {
+  // Simple QR-like pattern using asset data hash
+  const data = `RAASH|ID:${a.id}|SN:${a.serial||''}|${a.name}`
+  let h = 0; for (let i=0;i<data.length;i++) h=(h*31+data.charCodeAt(i))>>>0
+  return h
+}
+
+function printQRLabels() {
+  const list = getQRLabelAssets()
+  const cols = parseInt(document.getElementById('qrl-size')?.value||'4')
+  const cellW = cols === 3 ? 180 : cols === 4 ? 140 : 100
+  const cellH = cols === 3 ? 200 : cols === 4 ? 160 : 120
+  const qrSize= cols === 3 ? 100 : cols === 4 ? 75  : 55
+
+  const labelHtml = `
+    <div style="font-family:Arial,sans-serif">
+      <div style="display:grid;grid-template-columns:repeat(${cols},${cellW}px);gap:6px;padding:10px">
+        ${list.map(a => {
+          // Draw mini QR on canvas then convert to data URL
+          const canvas = document.createElement('canvas')
+          canvas.width = canvas.height = qrSize
+          const ctx = canvas.getContext('2d')
+          ctx.fillStyle='#fff'; ctx.fillRect(0,0,qrSize,qrSize)
+          ctx.fillStyle='#000'
+          const mods=19, cell=Math.floor(qrSize/mods)
+          const h = makeQRData(a)
+          for(let r=0;r<mods;r++) for(let cc=0;cc<mods;cc++){
+            const inF=(r<5&&cc<5)||(r<5&&cc>=mods-5)||(r>=mods-5&&cc<5)
+            if(inF){const rr=r<5?r:r-(mods-5),rc=cc<5?cc:cc-(mods-5);if((rr===0||rr===4||rc===0||rc===4)||(rr>=1&&rr<=3&&rc>=1&&rc<=3))ctx.fillRect(cc*cell,r*cell,cell,cell)}
+            else if((h^(r*mods+cc)*2654435761)%3===0) ctx.fillRect(cc*cell,r*cell,cell,cell)
+          }
+          const qrUrl = canvas.toDataURL()
+          return `<div style="border:1px solid #ccc;border-radius:4px;padding:6px;text-align:center;height:${cellH}px;display:flex;flex-direction:column;align-items:center;justify-content:space-between">
+            <div style="font-weight:700;font-size:${cols===6?8:10}px;overflow:hidden;max-height:28px">${a.name}</div>
+            <img src="${qrUrl}" style="width:${qrSize}px;height:${qrSize}px">
+            <div style="font-size:${cols===6?7:9}px;color:#333;font-family:monospace">${a.serial||a.id}</div>
+            <div style="font-size:${cols===6?7:8}px;color:#666">${a.dept||''} · ${a.type}</div>
+          </div>`
+        }).join('')}
+      </div>
+    </div>`
+
+  document.getElementById('print-area').innerHTML = labelHtml
+  document.getElementById('print-area').style.display = 'block'
+  window.print()
+  setTimeout(()=>{ document.getElementById('print-area').style.display='none'; closeModal('modal-qr-labels') }, 1500)
+}
+
 // ── Boot on DOM ready ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   try { loadSettings() } catch(e) { console.warn('loadSettings:', e) }
+  try { loadMaintenance() } catch(e) {}
   try { loadPersistedUsers() } catch(e) { console.warn('loadPersistedUsers:', e) }
 
   // Step 1: Restore saved session (stays logged in across page refreshes)
