@@ -835,17 +835,13 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
         <div class="toolbar">
           <div class="search-w"><span class="si">⌕</span><input type="text" id="q-staff" placeholder="Search staff name, branch, department…" oninput="renderStaffView()"></div>
           <select id="f-staff-branch" onchange="renderStaffView()"><option value="">All branches</option><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select>
-          <button class="btn btn-sm" onclick="openBulkStaffModal()">⬆ Bulk upload</button>
-          <button class="btn btn-primary btn-sm" onclick="openAddStaffModal()">+ Add staff</button>
+          <span id="staff-page-btns"></span>
         </div>
         <div id="staff-count-bar" style="font-size:13px;color:var(--text2);margin-bottom:12px"></div>
         <div id="staff-view-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
         <div id="staff-view-empty" class="empty-msg" style="display:none">
           No staff found.<br>
-          <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
-            <button class="btn btn-primary" onclick="openAddStaffModal()">+ Add staff</button>
-            <button class="btn" onclick="openBulkStaffModal()">⬆ Bulk upload CSV</button>
-          </div>
+          <div id="staff-empty-btns" style="margin-top:12px;display:flex;gap:8px;justify-content:center"></div>
         </div>
       </div>
 
@@ -1370,7 +1366,14 @@ function nav(el) {
   if (pg === 'dashboard')     { renderDashboard() }
   if (pg === 'users')         { renderUsers() }
   if (pg === 'settings')       { renderSettings() }
-  if (pg === 'staff-view')     { renderStaffView() }
+  if (pg === 'staff-view')     {
+    renderStaffView()
+    // Only admin sees add/bulk upload buttons
+    const sa = document.getElementById('topbar-actions')
+    if (pg === 'staff-view' && currentUser.role === 'admin') {
+      sa.innerHTML = `<button class="btn btn-sm" onclick="openBulkStaffModal()">⬆ Bulk upload</button><button class="btn btn-primary btn-sm" onclick="openAddStaffModal()">+ Add staff</button>`
+    }
+  }
   if (pg === 'branch-cost')    { renderBranchCost() }
   if (pg === 'scanner')        { initPageScanner() }
   if (pg === 'invoices')      { renderInvoices(); renderInvoiceSummary() }
@@ -3929,6 +3932,15 @@ function downloadStaffTemplate() {
 // STAFF VIEW PAGE
 // ════════════════════════════════════════════════════════════════
 function renderStaffView() {
+  // Show/hide add buttons based on role
+  const staffBtns = document.getElementById('staff-page-btns')
+  if (staffBtns) {
+    staffBtns.innerHTML = currentUser.role === 'admin'
+      ? `<button class="btn btn-sm" onclick="openBulkStaffModal()">⬆ Bulk upload</button>
+         <button class="btn btn-primary btn-sm" onclick="openAddStaffModal()">+ Add staff</button>`
+      : ''
+  }
+
   const q  = (document.getElementById('q-staff')?.value || '').toLowerCase()
   const fb = document.getElementById('f-staff-branch')?.value || ''
 
@@ -3961,7 +3973,16 @@ function renderStaffView() {
     ? `${filtered.length} staff member${filtered.length!==1?'s':''} · ${assets.filter(a=>a.assignee).length} assets assigned`
     : ''
 
-  if (!filtered.length) { grid.innerHTML=''; empty.style.display='block'; return }
+  if (!filtered.length) {
+    grid.innerHTML=''
+    empty.style.display='block'
+    const eb = document.getElementById('staff-empty-btns')
+    if (eb) eb.innerHTML = currentUser.role === 'admin'
+      ? `<button class="btn btn-primary" onclick="openAddStaffModal()">+ Add staff</button>
+         <button class="btn" onclick="openBulkStaffModal()">⬆ Bulk upload CSV</button>`
+      : '<span style="font-size:13px;color:var(--text3)">Contact admin to add staff</span>'
+    return
+  }
   empty.style.display = 'none'
 
   grid.innerHTML = filtered.map(s => {
