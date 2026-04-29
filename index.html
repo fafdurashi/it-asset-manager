@@ -1825,8 +1825,13 @@ function renderDashboard() {
     </div>`
   }).join('')
 
-  // Branch filters — dynamic from settings
-  const brs = (branches && branches.length) ? branches : [{code:'ECP'},{code:'DCP'},{code:'SNP'},{code:'TEL'}]
+  // Branch filters — always read fresh from settings (localStorage)
+  const freshBranches = JSON.parse(localStorage.getItem('itam_branches')||'[]')
+  const brs = freshBranches.length ? freshBranches : (branches && branches.length ? branches : [{code:'ECP'},{code:'DCP'},{code:'SNP'},{code:'TEL'}])
+  // Sync to memory
+  if (freshBranches.length) branches = freshBranches
+  // Reset filter if selected branch no longer exists
+  if (currentBranchFilter && !brs.find(b=>b.code===currentBranchFilter)) currentBranchFilter = ''
   document.getElementById('branch-filters').innerHTML =
     `<button class="branch-pill ${!currentBranchFilter?'active':''}" onclick="setBranchFilter('')">All branches</button>` +
     brs.map(b=>`<button class="branch-pill ${currentBranchFilter===b.code?'active':''}" onclick="setBranchFilter('${b.code}')">${b.code} (${assets.filter(a=>a.dept===b.code).length})</button>`).join('')
@@ -2666,25 +2671,53 @@ function renderBulkFields() {
   document.getElementById('bulk-fields').innerHTML=fields[action]||''
 }
 async function applyBulkAction() {
-  const action=document.getElementById('bulk-action').value
-  if(!action){toast('Select an action','error');return}
-  const val=document.getElementById('bulk-val')?.value
-  const ids=[...selectedIds]
+  const action = document.getElementById('bulk-action').value
+  if (!action) { toast('Select an action', 'error'); return }
+  const val  = document.getElementById('bulk-val')?.value
+  const ids  = [...selectedIds]
+  if (!ids.length) { toast('No assets selected', 'error'); return }
+
+  const btn = document.querySelector('#modal-bulk .btn-primary')
+  if (btn) { btn.textContent = 'Applying…'; btn.disabled = true }
+
   try {
-    if(action==='delete'){
-      if(!confirm(`Delete ${ids.length} assets permanently?`))return
-      for(const id of ids) await sb.from('assets').delete().eq('id',id)
-      await dbLog('Deleted',`${ids.length} assets (bulk)`)
+    if (action === 'delete') {
+      if (!confirm(`Delete ${ids.length} assets permanently?`)) {
+        if (btn) { btn.textContent = 'Apply'; btn.disabled = false }
+        return
+      }
+      // Batch delete using IN filter
+      const { error } = await sb.from('assets').delete().in('id', ids)
+      if (error) throw error
+      await dbLog('Deleted', `${ids.length} assets (bulk)`)
+
     } else {
-      const update=action==='type'?{type:val}:action==='status'?{status:val}:action==='assign'?{assignee:val,status:'Assigned'}:action==='warranty'?{warranty:val}:{dept:val}
-      for(const id of ids) await sb.from('assets').update(update).eq('id',id)
-      await dbLog(`Bulk ${action}`,`${ids.length} assets → ${val}`)
+      // Single batch update using IN filter — much faster than looping
+      const update =
+        action === 'type'     ? { type: val } :
+        action === 'status'   ? { status: val } :
+        action === 'assign'   ? { assignee: val, status: 'Assigned' } :
+        action === 'warranty' ? { warranty: val } :
+        action === 'dept'     ? { dept: val } : {}
+
+      if (!Object.keys(update).length) { toast('Unknown action', 'error'); return }
+
+      const { error } = await sb.from('assets').update(update).in('id', ids)
+      if (error) throw error
+      await dbLog(`Bulk ${action}`, `${ids.length} assets → ${val}`)
     }
-    toast(`✓ Bulk action applied to ${ids.length} assets`,'success')
+
+    toast(`✓ Updated ${ids.length} assets`, 'success')
     closeModal('modal-bulk')
     clearSelection()
-    await loadAssets(); renderDashboard()
-  } catch(e){toast('Error: '+e.message,'error')}
+    await loadAssets()
+    renderDashboard()
+  } catch(e) {
+    console.error('Bulk action error:', e)
+    toast('Error: ' + (e.message || JSON.stringify(e)), 'error', 6000)
+  } finally {
+    if (btn) { btn.textContent = 'Apply'; btn.disabled = false }
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -5538,6 +5571,8 @@ This will update ALL assets and staff records. Cannot be undone.`)) return
     try { localStorage.setItem('itam_offline_assets', JSON.stringify(assets)) } catch(e){}
 
     // ── Step 6: Refresh all UI — dropdowns, dashboard, staff, branch list
+    // Reset currentBranchFilter if it was the old code
+    if (currentBranchFilter === oldCode) currentBranchFilter = newCode
     syncDropdowns()
     renderBranchList()
     renderAssets()
