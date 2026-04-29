@@ -1097,6 +1097,33 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
 
 <!-- ══ MODALS ══════════════════════════════════════════════════ -->
 
+<!-- RENAME BRANCH CODE MODAL -->
+<div class="mbg" id="modal-rename-branch">
+  <div class="modal">
+    <div class="mhead"><h3>Rename branch code</h3><button class="mclose" onclick="closeModal('modal-rename-branch')">×</button></div>
+    <div class="mbody">
+      <div id="rename-branch-info" style="background:var(--bg2);border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:13px"></div>
+      <div class="fg">
+        <label>Current code</label>
+        <input id="rename-old-code" readonly style="background:var(--bg2);color:var(--text2)">
+      </div>
+      <div class="fg">
+        <label>New code * (short, e.g. HO, SNP2)</label>
+        <input id="rename-new-code" placeholder="e.g. HO" maxlength="10" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase();previewRenameImpact()">
+      </div>
+      <div id="rename-impact" style="display:none;margin-top:8px"></div>
+      <div style="background:var(--amber-lt);border:1px solid var(--amber);border-radius:8px;padding:.75rem 1rem;margin-top:12px;font-size:12px;color:var(--amber)">
+        ⚠ This will update ALL assets and staff records with the old code to the new code. This cannot be undone.
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('modal-rename-branch')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRenameBranchCode()">✓ Rename &amp; update all</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- QR LABEL SHEET MODAL -->
 <div class="mbg" id="modal-qr-labels">
   <div class="modal wide">
@@ -3791,21 +3818,28 @@ function deleteType(idx) {
 
 // ── BRANCHES ───────────────────────────────────────────────────
 function renderBranchList() {
-  document.getElementById('branch-list').innerHTML = branches.map((b,i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px">
-      <div>
-        <span style="font-weight:700;font-size:13px;color:var(--blue)">${b.code}</span>
-        <span style="font-size:13px;color:var(--text);margin-left:8px">${b.name}</span>
-        ${b.loc?`<span style="font-size:11px;color:var(--text2);margin-left:6px">· ${b.loc}</span>`:''}
-      </div>
-      <div style="display:flex;gap:5px">
-        <button class="btn btn-sm" onclick="editBranch(${i})">Edit</button>
-        ${DEFAULT_BRANCHES.find(d=>d.code===b.code)?'':
-          `<button class="btn btn-sm btn-danger" onclick="deleteBranch(${i})">Remove</button>`
-        }
+  document.getElementById('branch-list').innerHTML = branches.map((b,i) => {
+    const assetCount = assets.filter(a => a.dept === b.code).length
+    const staffCount = (staffList||[]).filter(s => s.branch === b.code).length
+    return `
+    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2)">
+        <div>
+          <span style="font-weight:800;font-size:14px;color:var(--blue)">${b.code}</span>
+          <span style="font-size:13px;color:var(--text);margin-left:8px">${b.name}</span>
+          ${b.loc?`<span style="font-size:11px;color:var(--text2);margin-left:6px">· ${b.loc}</span>`:''}
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <span style="font-size:11px;color:var(--text3);margin-right:4px">${assetCount} assets · ${staffCount} staff</span>
+          <button class="btn btn-sm" onclick="editBranch(${i})">Edit name</button>
+          <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple);border-color:var(--purple)" onclick="openRenameBranchCode(${i})">Rename code</button>
+          ${DEFAULT_BRANCHES.find(d=>d.code===b.code)?'':
+            `<button class="btn btn-sm btn-danger" onclick="deleteBranch(${i})">Remove</button>`
+          }
+        </div>
       </div>
     </div>`
-  ).join('')
+  }).join('')
 }
 
 let editingBranchIdx = null
@@ -5394,6 +5428,117 @@ function printQRLabels() {
   document.getElementById('print-area').style.display = 'block'
   window.print()
   setTimeout(()=>{ document.getElementById('print-area').style.display='none'; closeModal('modal-qr-labels') }, 1500)
+}
+
+// ════════════════════════════════════════════════════════════════
+// RENAME BRANCH CODE — updates all assets + staff in bulk
+// ════════════════════════════════════════════════════════════════
+let renameBranchIdx = null
+
+function openRenameBranchCode(idx) {
+  renameBranchIdx = idx
+  const b = branches[idx]
+  const assetCount = assets.filter(a => a.dept === b.code).length
+  const staffCount = (staffList||[]).filter(s => s.branch === b.code).length
+
+  document.getElementById('rename-old-code').value = b.code
+  document.getElementById('rename-new-code').value = ''
+  document.getElementById('rename-branch-info').innerHTML = `
+    <div style="font-weight:700;font-size:14px;color:var(--blue);margin-bottom:6px">${b.code} — ${b.name}</div>
+    <div style="display:flex;gap:16px;margin-top:4px">
+      <span><b style="color:var(--blue)">${assetCount}</b> assets will be updated</span>
+      <span><b style="color:var(--purple)">${staffCount}</b> staff records will be updated</span>
+    </div>`
+  document.getElementById('rename-impact').style.display = 'none'
+  openModal('modal-rename-branch')
+  setTimeout(() => document.getElementById('rename-new-code').focus(), 150)
+}
+
+function previewRenameImpact() {
+  const newCode    = document.getElementById('rename-new-code').value.trim().toUpperCase()
+  const b          = branches[renameBranchIdx]
+  const assetCount = assets.filter(a => a.dept === b.code).length
+  const staffCount = (staffList||[]).filter(s => s.branch === b.code).length
+  const impact     = document.getElementById('rename-impact')
+
+  if (!newCode || newCode === b.code) { impact.style.display='none'; return }
+
+  // Check if new code already exists
+  const exists = branches.find((br,i) => br.code === newCode && i !== renameBranchIdx)
+  if (exists) {
+    impact.style.display = 'block'
+    impact.innerHTML = `<div style="background:var(--red-lt);border:1px solid var(--red);border-radius:8px;padding:.75rem;font-size:13px;color:var(--red)">⚠ Branch code "${newCode}" already exists. Choose a different code.</div>`
+    return
+  }
+
+  impact.style.display = 'block'
+  impact.innerHTML = `
+    <div style="background:var(--green-lt);border:1px solid var(--green);border-radius:8px;padding:.75rem 1rem;font-size:13px">
+      <div style="font-weight:700;color:var(--green);margin-bottom:6px">✓ Ready to rename</div>
+      <div style="color:var(--text);line-height:1.8">
+        <div>• Branch code: <b>${b.code}</b> → <b>${newCode}</b></div>
+        <div>• <b>${assetCount}</b> asset records will be updated in Supabase</div>
+        <div>• <b>${staffCount}</b> staff records will be updated locally</div>
+        <div>• All dropdowns will refresh automatically</div>
+      </div>
+    </div>`
+}
+
+async function confirmRenameBranchCode() {
+  const oldCode = branches[renameBranchIdx].code
+  const newCode = document.getElementById('rename-new-code').value.trim().toUpperCase()
+
+  if (!newCode) { toast('Please enter a new branch code', 'error'); return }
+  if (newCode === oldCode) { toast('New code is the same as old code', 'error'); return }
+  if (branches.find((b,i) => b.code === newCode && i !== renameBranchIdx)) {
+    toast('Branch code already exists', 'error'); return
+  }
+  if (!confirm(`Rename branch "${oldCode}" to "${newCode}"?
+
+This will update ALL assets and staff records. Cannot be undone.`)) return
+
+  const btn = document.querySelector('#modal-rename-branch .btn-primary')
+  btn.textContent = 'Updating…'; btn.disabled = true
+
+  try {
+    // ── Update Supabase assets in batches
+    const affectedAssets = assets.filter(a => a.dept === oldCode)
+    let updatedAssets = 0
+
+    // Batch update (Supabase supports .eq filter)
+    const { error: assetErr } = await sb.from('assets').update({ dept: newCode }).eq('dept', oldCode)
+    if (assetErr) throw assetErr
+    updatedAssets = affectedAssets.length
+
+    // ── Update staff in localStorage
+    let updatedStaff = 0
+    staffList.forEach(s => {
+      if (s.branch === oldCode) { s.branch = newCode; updatedStaff++ }
+    })
+    saveSettings()
+
+    // ── Update branch in branches array
+    branches[renameBranchIdx].code = newCode
+    saveSettings()
+
+    // ── Refresh everything
+    await loadAssets()
+    syncDropdowns()
+    renderBranchList()
+    renderStaffView()
+
+    // Log the change
+    dbLog('Branch renamed', `${oldCode} → ${newCode}`, `${updatedAssets} assets, ${updatedStaff} staff updated`)
+
+    closeModal('modal-rename-branch')
+    toast(`✓ Branch renamed: ${oldCode} → ${newCode} · ${updatedAssets} assets + ${updatedStaff} staff updated`, 'success', 6000)
+
+  } catch(e) {
+    toast('Rename failed: ' + (e.message || JSON.stringify(e)), 'error', 7000)
+    console.error('Branch rename error:', e)
+  } finally {
+    btn.textContent = '✓ Rename & update all'; btn.disabled = false
+  }
 }
 
 // ── Boot on DOM ready ─────────────────────────────────────────
