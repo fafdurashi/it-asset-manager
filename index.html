@@ -1466,7 +1466,7 @@ canvas.sig-pad{display:block;width:100%;cursor:crosshair;touch-action:none}
     <div class="mhead"><h3>Bulk action</h3><button class="mclose" onclick="closeModal('modal-bulk')">×</button></div>
     <div class="mbody">
       <div id="bulk-asset-count" style="font-size:13px;color:var(--text2);margin-bottom:1rem"></div>
-      <div class="fg"><label>Action</label><select id="bulk-action" onchange="renderBulkFields()"><option value="">— Select —</option><option value="status">Change status</option><option value="assign">Assign to employee</option><option value="warranty">Set warranty date</option><option value="dept">Change branch</option><option value="delete">Delete selected</option></select></div>
+      <div class="fg"><label>Action</label><select id="bulk-action" onchange="renderBulkFields()"><option value="">— Select —</option><option value="type">Change type</option><option value="status">Change status</option><option value="assign">Assign to employee</option><option value="warranty">Set warranty date</option><option value="dept">Change branch</option><option value="delete">Delete selected</option></select></div>
       <div id="bulk-fields"></div>
     </div>
     <div class="mfoot"><button class="btn" onclick="closeModal('modal-bulk')">Cancel</button><button class="btn btn-primary" onclick="applyBulkAction()">Apply</button></div>
@@ -2649,11 +2649,18 @@ function openBulkModal() {
 }
 function renderBulkFields() {
   const action=document.getElementById('bulk-action').value
+  const typeOptions = (assetTypes||[]).length
+    ? assetTypes.map(t=>`<option>${t.name}</option>`).join('')
+    : '<option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Phone</option><option>Tablet</option><option>Camera</option><option>SIM</option><option>Printer</option><option>Keyboard</option><option>Mouse</option><option>Headset</option><option>Other</option>'
+  const branchOptions = (branches||[]).length
+    ? branches.map(b=>`<option value="${b.code}">${b.code}</option>`).join('')
+    : '<option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option>'
   const fields={
+    type:`<div class="fg"><label>New type</label><select id="bulk-val">${typeOptions}</select></div>`,
     status:`<div class="fg"><label>New status</label><select id="bulk-val"><option>Available</option><option>Assigned</option><option>Maintenance</option><option>Retired</option></select></div>`,
     assign:`<div class="fg"><label>Assign to employee</label><input id="bulk-val" placeholder="Employee name"></div>`,
     warranty:`<div class="fg"><label>Warranty expiry date</label><input type="date" id="bulk-val"></div>`,
-    dept:`<div class="fg"><label>Branch</label><select id="bulk-val"><option>ECP</option><option>DCP</option><option>SNP</option><option>TEL</option></select></div>`,
+    dept:`<div class="fg"><label>Branch</label><select id="bulk-val">${branchOptions}</select></div>`,
     delete:`<div style="font-size:13px;color:var(--red);padding:8px;background:var(--red-lt);border-radius:8px">⚠ This will permanently delete ${selectedIds.size} assets.</div>`,
   }
   document.getElementById('bulk-fields').innerHTML=fields[action]||''
@@ -2669,7 +2676,7 @@ async function applyBulkAction() {
       for(const id of ids) await sb.from('assets').delete().eq('id',id)
       await dbLog('Deleted',`${ids.length} assets (bulk)`)
     } else {
-      const update=action==='status'?{status:val}:action==='assign'?{assignee:val,status:'Assigned'}:action==='warranty'?{warranty:val}:{dept:val}
+      const update=action==='type'?{type:val}:action==='status'?{status:val}:action==='assign'?{assignee:val,status:'Assigned'}:action==='warranty'?{warranty:val}:{dept:val}
       for(const id of ids) await sb.from('assets').update(update).eq('id',id)
       await dbLog(`Bulk ${action}`,`${ids.length} assets → ${val}`)
     }
