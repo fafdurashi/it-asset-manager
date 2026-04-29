@@ -3818,24 +3818,24 @@ function deleteType(idx) {
 
 // ── BRANCHES ───────────────────────────────────────────────────
 function renderBranchList() {
+  // Ensure staffList is loaded before counting
+  const sl = staffList || []
   document.getElementById('branch-list').innerHTML = branches.map((b,i) => {
     const assetCount = assets.filter(a => a.dept === b.code).length
-    const staffCount = (staffList||[]).filter(s => s.branch === b.code).length
-    return `
-    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2)">
+    const staffCount = sl.filter(s => s.branch === b.code).length
+    const isDefault  = DEFAULT_BRANCHES.find(d => d.code === b.code)
+    return `<div style="border:1px solid var(--border);border-radius:8px;background:var(--bg);margin-bottom:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;flex-wrap:wrap;gap:8px">
         <div>
-          <span style="font-weight:800;font-size:14px;color:var(--blue)">${b.code}</span>
+          <span style="font-weight:800;font-size:15px;color:var(--blue)">${b.code}</span>
           <span style="font-size:13px;color:var(--text);margin-left:8px">${b.name}</span>
-          ${b.loc?`<span style="font-size:11px;color:var(--text2);margin-left:6px">· ${b.loc}</span>`:''}
+          ${b.loc ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${b.loc}</div>` : ''}
         </div>
-        <div style="display:flex;gap:5px;align-items:center">
-          <span style="font-size:11px;color:var(--text3);margin-right:4px">${assetCount} assets · ${staffCount} staff</span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text3)">${assetCount} assets · ${staffCount} staff</span>
           <button class="btn btn-sm" onclick="editBranch(${i})">Edit name</button>
           <button class="btn btn-sm" style="background:var(--purple-lt);color:var(--purple);border-color:var(--purple)" onclick="openRenameBranchCode(${i})">Rename code</button>
-          ${DEFAULT_BRANCHES.find(d=>d.code===b.code)?'':
-            `<button class="btn btn-sm btn-danger" onclick="deleteBranch(${i})">Remove</button>`
-          }
+          ${!isDefault ? `<button class="btn btn-sm btn-danger" onclick="deleteBranch(${i})">Remove</button>` : ''}
         </div>
       </div>
     </div>`
@@ -3870,8 +3870,9 @@ function saveNewBranch() {
   if (!code || !name) { toast('Code and name are required', 'error'); return }
 
   if (editingBranchIdx !== null) {
+    // Only updating name/loc — code stays same, no data migration needed
     branches[editingBranchIdx] = { code, name, loc }
-    toast(`✓ Branch "${code}" updated`, 'success')
+    toast(`✓ Branch "${code}" name updated`, 'success')
   } else {
     if (branches.find(b => b.code === code)) { toast('Branch code already exists', 'error'); return }
     branches.push({ code, name, loc })
@@ -3880,6 +3881,7 @@ function saveNewBranch() {
   saveSettings()
   syncDropdowns()
   renderBranchList()
+  renderDashboard()
   closeModal('modal-add-branch')
 }
 
@@ -5501,37 +5503,42 @@ This will update ALL assets and staff records. Cannot be undone.`)) return
   btn.textContent = 'Updating…'; btn.disabled = true
 
   try {
-    // ── Update Supabase assets in batches
+    // ── Step 1: Update all assets in Supabase
     const affectedAssets = assets.filter(a => a.dept === oldCode)
-    let updatedAssets = 0
-
-    // Batch update (Supabase supports .eq filter)
     const { error: assetErr } = await sb.from('assets').update({ dept: newCode }).eq('dept', oldCode)
     if (assetErr) throw assetErr
-    updatedAssets = affectedAssets.length
+    const updatedAssets = affectedAssets.length
 
-    // ── Update staff in localStorage
+    // ── Step 2: Update local assets array immediately (no reload needed)
+    assets.forEach(a => { if (a.dept === oldCode) a.dept = newCode })
+
+    // ── Step 3: Update staff in staffList + localStorage
     let updatedStaff = 0
-    staffList.forEach(s => {
+    ;(staffList||[]).forEach(s => {
       if (s.branch === oldCode) { s.branch = newCode; updatedStaff++ }
     })
     saveSettings()
 
-    // ── Update branch in branches array
+    // ── Step 4: Update the branch code in branches array + save
     branches[renameBranchIdx].code = newCode
     saveSettings()
 
-    // ── Refresh everything
-    await loadAssets()
+    // ── Step 5: Also update offline cache
+    try { localStorage.setItem('itam_offline_assets', JSON.stringify(assets)) } catch(e){}
+
+    // ── Step 6: Refresh all UI — dropdowns, dashboard, staff, branch list
     syncDropdowns()
     renderBranchList()
-    renderStaffView()
+    renderAssets()
+    renderDashboard()
+    try { renderStaffView() } catch(e){}
+    try { renderSettings() } catch(e){}
 
-    // Log the change
-    dbLog('Branch renamed', `${oldCode} → ${newCode}`, `${updatedAssets} assets, ${updatedStaff} staff updated`)
+    // ── Step 7: Log
+    await dbLog('Branch renamed', `${oldCode} → ${newCode}`, `${updatedAssets} assets + ${updatedStaff} staff updated`)
 
     closeModal('modal-rename-branch')
-    toast(`✓ Branch renamed: ${oldCode} → ${newCode} · ${updatedAssets} assets + ${updatedStaff} staff updated`, 'success', 6000)
+    toast(`✓ Renamed ${oldCode} → ${newCode} · ${updatedAssets} assets + ${updatedStaff} staff updated`, 'success', 6000)
 
   } catch(e) {
     toast('Rename failed: ' + (e.message || JSON.stringify(e)), 'error', 7000)
