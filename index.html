@@ -1825,11 +1825,11 @@ function renderDashboard() {
     </div>`
   }).join('')
 
-  // Branch filters
-  const brs = ['ECP','DCP','SNP','TEL']
+  // Branch filters — dynamic from settings
+  const brs = (branches && branches.length) ? branches : [{code:'ECP'},{code:'DCP'},{code:'SNP'},{code:'TEL'}]
   document.getElementById('branch-filters').innerHTML =
     `<button class="branch-pill ${!currentBranchFilter?'active':''}" onclick="setBranchFilter('')">All branches</button>` +
-    brs.map(b=>`<button class="branch-pill ${currentBranchFilter===b?'active':''}" onclick="setBranchFilter('${b}')">${b} (${assets.filter(a=>a.dept===b).length})</button>`).join('')
+    brs.map(b=>`<button class="branch-pill ${currentBranchFilter===b.code?'active':''}" onclick="setBranchFilter('${b.code}')">${b.code} (${assets.filter(a=>a.dept===b.code).length})</button>`).join('')
 
   // Filtered table title
   const tableTitle = currentStatFilter
@@ -1851,7 +1851,11 @@ function renderDashboard() {
   const colors = ['#185FA5','#3B6D11','#854F0B','#534AB7','#0F6E56','#A32D2D','#888']
   document.getElementById('dash-breakdown').innerHTML = Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<div class="rbar-wrap"><div class="rbar-label"><span>${k}</span><span style="color:var(--text2)">${v}</span></div><div class="rbar-track"><div class="rbar-fill" style="background:${colors[i%colors.length]};width:${Math.round(v/branchFiltered.length*100)}%"></div></div></div>`).join('')
 }
-function setBranchFilter(b) { currentBranchFilter = b; currentStatFilter = ''; renderDashboard() }
+function setBranchFilter(b) {
+  currentBranchFilter = b
+  currentStatFilter   = ''
+  renderDashboard()
+}
 
 // ════════════════════════════════════════════════════════════════
 // ASSETS TABLE
@@ -2475,11 +2479,11 @@ async function confirmDisposal() {
 function renderAnalytics() {
   const filtered = currentBranchFilter ? assets.filter(a=>a.dept===currentBranchFilter) : assets
 
-  // Branch pills
-  const branches=['ECP','DCP','SNP','TEL']
+  // Branch pills — dynamic from settings
+  const analyticsBrs = (branches && branches.length) ? branches : [{code:'ECP'},{code:'DCP'},{code:'SNP'},{code:'TEL'}]
   document.getElementById('analytics-branch-filters').innerHTML=
     `<button class="branch-pill ${!currentBranchFilter?'active':''}" onclick="currentBranchFilter='';renderAnalytics()">All</button>`+
-    branches.map(b=>`<button class="branch-pill ${currentBranchFilter===b?'active':''}" onclick="currentBranchFilter='${b}';renderAnalytics()">${b}</button>`).join('')
+    analyticsBrs.map(b=>`<button class="branch-pill ${currentBranchFilter===b.code?'active':''}" onclick="currentBranchFilter='${b.code}';renderAnalytics()">${b.code}</button>`).join('')
 
   const makeChart=(id,type,labels,data,colors,opts={})=>{
     if(charts[id])charts[id].destroy()
@@ -4356,7 +4360,7 @@ function openStaffAssets(name) {
 // FEATURE 7 — BRANCH COST ANALYSIS
 // ════════════════════════════════════════════════════════════════
 function renderBranchCost() {
-  const branchList = (window.branches||[]).length ? window.branches.map(b=>b.code) : ['ECP','DCP','SNP','TEL']
+  const branchList = (branches && branches.length) ? branches.map(b=>b.code) : ['ECP','DCP','SNP','TEL']
   const colors = ['#185FA5','#3B6D11','#854F0B','#534AB7','#0F6E56','#A32D2D']
 
   // Per-branch stats
